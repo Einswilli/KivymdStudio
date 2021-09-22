@@ -1,0 +1,3 @@
+{
+    "files": ["studio.py", "mql/studio.qml","qml/TabView.qml"]
+}
