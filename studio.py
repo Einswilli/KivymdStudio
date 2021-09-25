@@ -17,6 +17,10 @@ from plyer import notification
 import datetime
 import sys,os,requests,tempfile
 import sqlite3
+from pygments import highlight
+from pygments.lexers.python import PythonLexer
+from pygments.formatters.html import HtmlFormatter
+
 
 class Studio(QObject):
 
@@ -24,6 +28,12 @@ class Studio(QObject):
         QObject.__init__(self)
     folderOpen=Signal(dict)
     fileOpen=Signal(dict)
+    colorhighlight=Signal(str)
+
+    @Slot(str,result='QString')
+    def colorify(self,text):
+        self.colorhighlight.emit(highlight(text,PythonLexer(),HtmlFormatter(full=True)))
+        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style='monokai'))
 
     @Slot(str,str,result='QVariant')
     def newfile(self,filename,path):
