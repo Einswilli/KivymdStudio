@@ -6,13 +6,14 @@ import QtCharts 2.15
 import QtQuick.Layouts 1.0
 
 Item{
-    
+    id:root
     property color theme_color
     property color border_color
     property string message:'Create new file'
     
-    signal Okay(string filename)
-    onOkay:return filename
+    property alias get_field: field
+    property alias get_filename: field.text
+    
 
     Rectangle{
         width:220
@@ -21,14 +22,16 @@ Item{
         border.width:1
         border.color:border_color
         Text{
-            x:15
+            y:25
             text:message
-            color:'#123863'
-            font.pixelSize:15
+            color:'#A8B2BD'
+            font.pixelSize:22
+            font.family:'Olivia Kevin'
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
         TextField{
+            id:field
             background: Rectangle{
                 radius:12
                 color:'#19191A'
@@ -39,20 +42,14 @@ Item{
             placeholderText: 'filename'
             placeholderTextColor: '#838485'
             bottomPadding: 3
-            font.pixelSize: 14
+            font.pixelSize: 16
             leftPadding: 15
+            color:'white'
+            focus:true
             anchors.horizontalCenter: parent.horizontalCenter
-        }
-        Button{
-            id:but
-            flat: true
-            width:70
-            height:35
-            y:120
-            x:140
-        }
-        Component.onCompleted:{
-            but.clicked.connect(Okay)
+            // Keys.onReturnPressed:{
+            //     root.visible=false
+            // }
         }
 
     }

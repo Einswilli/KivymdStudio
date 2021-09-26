@@ -4,7 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
-import '../highlightcolor.js' as Logic
+//import '../highlightcolor.js' as Logic
 //import '..highlight.js/lib/core' as Logic
 //import ArcGIS.AppFramework.Scripting 1.0
 //import Qt5Compat.GraphicalEffects
@@ -31,6 +31,10 @@ ApplicationWindow {
         }
 
     }
+
+    // Component.onCompleted: {
+    //     root.showFullScreen();
+    // }
 
     function verify(lst,word ){
         var found=false
@@ -71,9 +75,41 @@ ApplicationWindow {
     property color hovercolor:'#609EAD96'
     property string emustate:'off'
 
-    // Keys.onPressed:{
-    //     if(event.key==Qt.key_crtl)
-    // }
+    Shortcut {
+        sequence: "Ctrl+T"
+        onActivated: terminal.visible=true
+    }
+    Shortcut {
+        sequence: "Alt+Ctrl+T"
+        onActivated: terminal.visible=false
+    }
+    Shortcut {
+        sequence: "Ctrl+N"
+        onActivated: {
+            console.log('new file')
+            fileop.visible=true
+        }
+    }
+    Shortcut {
+        sequence: "Alt+O"
+        onActivated: console.log('open file')
+    }
+    Shortcut {
+        sequence: "Alt+K"
+        onActivated: console.log(' folder new')
+    }
+    Shortcut {
+        sequence: "Alt+K+O"
+        onActivated: console.log('open folder')
+    }
+    Shortcut {
+        sequence: "Alt+S"
+        onActivated: console.log('save file')
+    }
+    Shortcut {
+        sequence: "Alt+Shift+S"
+        onActivated: console.log('save file as')
+    }
     
     Rectangle{
         id:leftbar
@@ -564,7 +600,7 @@ ApplicationWindow {
                         anchors.fill: parent
                         hoverEnabled:true
                         onClicked:{
-
+                            helpmen.open()
                         }
                         onEntered:{
                             parent.color=hovercolor
@@ -573,6 +609,38 @@ ApplicationWindow {
                             parent.color=top_bar.color
                         }
                     }
+                }
+            }
+        }
+        
+        Menu{
+            id:helpmen
+            x:260
+            y:top_bar.height
+            width:150
+            height:100
+            background: Rectangle{
+                color:barclaire
+                border.width:1
+                anchors.fill: parent
+                border.color:bordercolor
+            }
+            MenuItem{
+                Text{
+                    text:'Help'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            MenuItem{
+                Text{
+                    text:'About'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
@@ -792,7 +860,107 @@ ApplicationWindow {
                 }
             }
 
+            Rectangle{
+                id:list
+                width:30
+                height:parent.height-2
+                anchors.right:parent.right
+                radius:4
+                color:parent.color
+                border.color:bordercolor
+                border.width:1
+                anchors.margins: 30
+                anchors.verticalCenter: parent.verticalCenter
+                Image{
+                    source:'../assets/icons/list.png'
+                    width:parent.width-5
+                    height:parent.height-5
+                    anchors.centerIn: parent
+                }
 
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onClicked:{
+                        avd.open()
+                    }
+                    onEntered:{
+                        parent.color=hovercolor
+                    }
+                    onExited:{
+                        parent.color=top_bar.color
+                    }
+                }
+                
+            }
+            Menu{
+                id:avd
+                y:top_bar.height
+                width:200
+                height:250
+                x:list.x
+                //anchors.right:parent.right
+                //anchors.margins: 15
+                
+                background:Rectangle{
+                    anchors.fill: parent
+                    color:barclaire
+                }
+                MenuItem{
+                    Text{
+                        text:'Android 11'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Android 10  '
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Android 9'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Iphone 12'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Iphone 11'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Iphone 7'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
         }
     }
     Rectangle{
@@ -864,6 +1032,19 @@ ApplicationWindow {
                             color:'white'
                             anchors.centerIn: parent
                         }
+                        MouseArea{
+                            anchors.fill: parent
+                            hoverEnabled:true
+                            onEntered:{
+                                parent.color=hovercolor
+                            }
+                            onExited:{
+                                parent.color=barfonce
+                            }
+                            onClicked:{
+                                codetab.remove(codetab.currentIndex)
+                            }
+                        }
                     }
                     Rectangle{
                         width:1
@@ -872,7 +1053,7 @@ ApplicationWindow {
                         anchors.right:parent.right
                     }
                 }
-                frame: Rectangle { color: "steelblue" }
+                frame: Rectangle { color: root.color }
                 tabsMovable: true
             }
             
@@ -890,151 +1071,83 @@ ApplicationWindow {
                         //font.bold:true
                         color:'#C6D6DF'
                         font.pixelSize:48
-                        y:80
+                        y:parent.height/5
                         anchors.horizontalCenter: parent.horizontalCenter
                         
                     }
 
-                    Rectangle{
-                        x:40
-                        y:weltext.height+90
-                        width:150
-                        height:150
-                        color:parent.color
-                        border.color:bordercolor
-                        border.width:1
-
-                        Image{
-                            width:150
-                            height:99
-                            y:1
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            source:'../assets/images/android.png'
-                        }
-
-                        Text{
-                            text:qsTr('Android')
-                            color:weltext.color
-                            font.pixelSize:14
-                            y:114
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
+                    DeviceBox{
+                        id:android
+                        src:'../assets/images/android.png'
+                        name:'Android'
+                        text_color:weltext.color
+                        rect_height:linux.rect_height
+                        rect_width:linux.rect_width
+                        anchors.left:parent.left
+                        anchors.margins: 80
+                        y:linux.y
+                        back:parent.color
+                    }
+                    
+                    DeviceBox{
+                        id:ios
+                        src:'../assets/images/apple.png'
+                        name:'IOs X'
+                        text_color:weltext.color
+                        rect_height:linux.rect_height
+                        rect_width:linux.rect_width
+                        anchors.left:parent.left
+                        anchors.margins: android.rect_width+120
+                        back:parent.color
+                        y:linux.y
                     }
 
-                    Rectangle{
-                        x:190+40
-                        y:weltext.height+90
-                        width:150
-                        height:150
-                        color:parent.color
-                        border.color:bordercolor
-                        border.width:1
-
-                        Image{
-                            width:110
-                            height:99
-                            y:1
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            source:'../assets/images/apple.png'
-                        }
-
-                        Text{
-                            text:qsTr('Ios')
-                            color:weltext.color
-                            font.pixelSize:14
-                            y:114
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
+                    DeviceBox{
+                        id:win10
+                        src:'../assets/images/win10.png'
+                        name:'Windows'
+                        text_color:weltext.color
+                        rect_height:linux.rect_height
+                        rect_width:linux.rect_width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        back:parent.color
+                        y:linux.y
                     }
 
-                    Rectangle{
-                        x:230+190
-                        y:weltext.height+90
-                        width:150
-                        height:150
-                        color:parent.color
-                        border.color:bordercolor
-                        border.width:1
-
-                        Image{
-                            width:120
-                            height:99
-                            y:1
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            source:'../assets/images/win10.png'
-                        }
-
-                        Text{
-                            text:qsTr('Windows')
-                            color:weltext.color
-                            font.pixelSize:14
-                            y:114
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
+                    DeviceBox{
+                        id:macos
+                        src:'../assets/images/mac.png'
+                        name:'Mac Os'
+                        text_color:weltext.color
+                        rect_height:linux.rect_height
+                        rect_width:linux.rect_width
+                        anchors.right:parent.right
+                        anchors.margins: linux.rect_width+120
+                        back:parent.color
+                        y:linux.y
                     }
-
-                    Rectangle{
-                        x:230+380
-                        y:weltext.height+90
-                        width:150
-                        height:150
-                        color:parent.color
-                        border.color:bordercolor
-                        border.width:1
-
-                        Image{
-                            width:120
-                            height:100
-                            y:4
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            source:'../assets/images/mac.png'
-                        }
-
-                        Text{
-                            text:qsTr('Mac OS')
-                            color:weltext.color
-                            font.pixelSize:14
-                            y:114
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                    }
-
-                    Rectangle{
-                        x:230+380+190
-                        y:weltext.height+90
-                        width:150
-                        height:150
-                        color:parent.color
-                        border.color:bordercolor
-                        border.width:1
-
-                        Image{
-                            width:150
-                            height:99
-                            y:1
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            source:'../assets/images/linux.png'
-                        }
-
-                        Text{
-                            text:qsTr('Linux')
-                            color:weltext.color
-                            font.pixelSize:14
-                            y:114
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
+                    
+                    DeviceBox{
+                        id:linux
+                        src:'../assets/images/linux.png'
+                        name:'Linux'
+                        text_color:weltext.color
+                        rect_height:(parent.height/4)-10
+                        rect_width:(parent.width/5)-30
+                        anchors.right:parent.right
+                        anchors.margins: 80
+                        back:parent.color
+                        y:weltext.height+weltext.y+10
+                        
                     }
                     Rectangle{
-                        y:weltext.height+90+170
+                        y:weltext.height+50+170
                         width:parent.width
                         color:parent.color
                         height:(parent.height/3)+50
                         anchors.bottom:parent.bottom
+                        anchors.margins: 20
+                        
 
                         Rectangle{
                             id:recents
@@ -1042,11 +1155,11 @@ ApplicationWindow {
                             // y:weltext.height+90+170
                             border.width:1
                             border.color:bordercolor
-                            width:parent.width/3
-                            height:parent.height/3
+                            width:(parent.width/3)+30
+                            height:parent.height-10
                             color:barfonce
                             anchors.left:parent.left
-                            anchors.margins: 80
+                            anchors.margins: 90
                             anchors.verticalCenter: parent.verticalCenter
                             
                         }
@@ -1055,8 +1168,8 @@ ApplicationWindow {
                             id:racourscis
                             //x:(parent.width/5)+recents.width+100
                             //y:recents.y
-                            width:parent.width/3
-                            height:parent.height/3
+                            width:(parent.width/3)+30
+                            height:parent.height-10
                             color:parent.color
                             anchors.right:parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -1256,147 +1369,15 @@ ApplicationWindow {
                         height:parent.height
                         //x:60
 
-                        Flickable {
-                            id: flickb
-                            //anchors.fill: parent
-                            width:parent.width-20 
-                            height: parent.height-20
-                            anchors.centerIn: parent
-                            contentWidth: editor.paintedWidth
-                            contentHeight: editor.paintedHeight+300
-                            clip: true
-
-                            function ensureVisible(r)
-                            {
-                                if (contentX >= r.x)
-                                    contentX = r.x;
-                                else if (contentX+width <= r.x+r.width)
-                                    contentX = r.x+r.width-width;
-                                if (contentY >= r.y)
-                                    contentY += r.y//-120;
-                                
-                                else if (contentY+height <= r.y+r.height)
-                                    contentY = r.y+r.height-height;
-                            }
-
-                            Rectangle{
-                                id:lines
-                                width:60
-                                height:(editor.lineCount*25)+parent.height
-                                anchors.left:parent.left
-                                color:barfonce
-
-                                Component{
-                                    id:comp
-                                    Rectangle{
-                                        width:58
-                                        height:25
-                                        color:barclaire
-
-                                        Text{
-                                            text:num
-                                            color:'white'
-                                            font.pixelSize:14
-                                            anchors.centerIn: parent
-                                        }
-                                        Rectangle{
-                                            width:parent.width
-                                            height:1
-                                            color:'black'
-                                            anchors.bottom:parent.bottom
-                                        }
-                                    }
-                                }
-
-                                ListModel{
-                                    id:mod
-                                    ListElement{
-                                        num:1
-                                    }
-                                    dynamicRoles: true
-                                    //append(jsobjectdict)
-                                    //clear()
-                                    //insert(intindex,jsobjectdict)
-                                    //move(intfrom,intto,intn)
-                                    //remove(intindex,intcount=1)
-                                    //set(intindex,jsobjectdict)
-                                    //setProperty(intindex,stringproperty,variantvalue)
-                                    //sync()
-                                }
-
-                                ListView{
-                                    y:5
-                                    model:mod
-                                    delegate:comp
-                                    anchors.fill: parent
-                                }
-                            }
-
-                            TextEdit{
-                                id:editor
-                                focus:true
-                                width: flickb.width
-                                height: (lineCount*25)+flickb.height//flickb.height
-                                color:'white'
-                                mouseSelectionMode:TextEdit.SelectCharacters
-                                font.pixelSize:15
-                                selectByMouse: true
-                                selectionColor: '#1C98E0'
-                                tabStopDistance: 40
-                                textFormat: TextEdit.RichText
-                                property bool processing:false
-                                leftPadding :65
-                                topPadding:4
-                                selectedTextColor :'#060707'
-                                //baselineOffset :35
-                                
-
-                                onCursorRectangleChanged:{
-                                    flickb.ensureVisible(cursorRectangle)
-                                    flickb.ensureVisible(lines)
-                                }
-                                // onCursorPositionChanged: {
-                                //     if(cursorRectangle.y < 10 - editor.y){//Cursor went off the front
-                                //         editor.y = 10 - Math.max(0, cursorRectangle.y);
-                                //     }else if(cursorRectangle.y > parent.height - 20 - editor.y){//Cursor went off the end
-                                //         editor.y = 10 - Math.max(0, cursorRectangle.y - (parent.height - 20) + cursorRectangle.height);
-                                //     }
-                                // }
-                                //Keys.onEnterPressed:{
-                                    
-                                // }
-                                
-                                onTextChanged: {
-
-                                    mod.clear()
-                                    var itm=[];
-                                    for (let i=1;i<=editor.lineCount+5;i++){
-                                        //console.log(i)
-                                        itm.push({'num':i})
-                                        //console.log(itm)
-                                    }
-                                    mod.append(JSON.parse(JSON.stringify(itm)))
-                        
-                                    if (!processing) {
-                                        processing = true;
-                                        let p = cursorPosition;
-                                        let hltext=root.colorify(text)
-                                        //console.log(hltext)
-                                        let markUp = getText(0, length).replace(
-                                            /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,
-                                            function(f) {
-                                            });
-                                        text = hltext;
-                                        cursorPosition = p;
-                                        processing = false;
-                                    }
-                                }
-                            }
+                        CodeEditor{
+                            compcolor:barclaire
+                            edit_height:parent.height-20
+                            edit_width:parent.width-20
+                            anchors.fill: parent
                         }
                     }
                 }
             }
-            
 
             Tab{
                 title: 'main.kv'
@@ -1406,6 +1387,12 @@ ApplicationWindow {
                     color:body.color
                     anchors.fill: parent
                     
+                    CodeEditor{
+                        compcolor:barclaire
+                        edit_height:parent.height-20
+                        edit_width:parent.width-20
+                        anchors.fill: parent
+                    }
                     
                 }
             }
@@ -1421,6 +1408,42 @@ ApplicationWindow {
         border.width:1
         anchors.bottom:parent.bottom
         visible:false
+
+        Rectangle{
+            id:terferm
+            width:30
+            height:30
+            radius:6
+            color:parent.color
+            anchors.top:parent.top
+            anchors.right:parent.right
+            anchors.margins: 15
+            
+            Text{
+                anchors.centerIn: parent
+                font.pixelSize:16
+                color:'white'
+                text:qsTr('×')
+            }
+        }
+
+        Rectangle{
+            width:30
+            height:30
+            //anchors.top:parent.top
+            y:terferm.y
+            radius:6
+            color:parent.color
+            anchors.right:parent.right
+            anchors.margins: 45
+            
+            Text{
+                anchors.centerIn: parent
+                font.pixelSize:16
+                color:'white'
+                text:qsTr('^')
+            }
+        }
     }
 
     NumberAnimation{
@@ -1532,7 +1555,7 @@ ApplicationWindow {
                     height:20
                     width:20
                     anchors.centerIn: parent
-                    source:'../assets/icons/sho.png'
+                    source:'../assets/icons/hide.png'
                 }
                 MouseArea{
                     anchors.fill: parent
@@ -1544,7 +1567,7 @@ ApplicationWindow {
                         parent.color=barclaire
                     }
                     onClicked:{
-                        
+                        emmubox.visible=false
                     }
                 }
             }
@@ -1593,4 +1616,30 @@ ApplicationWindow {
             }
         }
     }
+
+    Component{
+        id:codebox
+        Rectangle{
+            color:root.color
+            CodeEditor{
+                compcolor:barclaire
+                edit_height:parent.height-20
+                edit_width:parent.width-20
+                anchors.fill: parent
+            }
+        }
+    }
+
+    FileOpenDialog{
+        id:fileop
+        anchors.centerIn: parent
+        visible:false
+        theme_color:barclaire
+        border_color:bordercolor
+        Keys.onReturnPressed:{
+            visible=false
+            codetab.addTab(fileop.get_filename,codebox)
+        }
+    }
+
 }

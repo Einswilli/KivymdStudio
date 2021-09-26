@@ -36,7 +36,7 @@ if (!processing) {
             console.log("f: ", JSON.stringify(f));
             if (f.match(/^[A-Z][A-Za-z_]*$/)) {
                 return "<span style='color:#00EBCB'>" + f + "</span>";
-            } else if (f.match(/(?<=#)(.)*)$/)) {
+            } else if (f.match(/#[^\n]*/)) {
                 return "<span style='color:#0F572D'>" + f + "</span>";
             } else if (f.match(/^[a-z][A-Za-z]*$/))
                 var re = f.match(/^[a-z][A-Za-z]*$/)
@@ -55,7 +55,7 @@ if (!processing) {
             else if (f.match(/^[A-Z0-9_]*$/))
                 return "<span style='color:#009FCF'>" + f + "</span>";
 
-            else if (f.match(/(?<=def)\w*(?=()/))
+            else if (f.match(/(?<=def)\w*|\w*(?=\()/))
                 return "<span style='color:#A39C3D'>" + f + "</span>";
 
             else if (f.match(/^[ ]/))

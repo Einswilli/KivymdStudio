@@ -22,6 +22,10 @@ from pygments.lexers.python import PythonLexer
 from pygments.formatters.html import HtmlFormatter
 
 
+class SyntaxCOlor():
+    #qmlRegisterType(CamFeed, 'CFeed', 1, 0, 'CamFeed')
+    pass
+
 class Studio(QObject):
 
     def __init__(self):
@@ -30,8 +34,9 @@ class Studio(QObject):
     fileOpen=Signal(dict)
     colorhighlight=Signal(str)
 
-    @Slot(str,result='QString')
+    @Slot(str,result='QTextCharFormat')
     def colorify(self,text):
+        #QSyntaxHighlighter()
         self.colorhighlight.emit(highlight(text,PythonLexer(),HtmlFormatter(full=True)))
         return highlight(text,PythonLexer(),HtmlFormatter(full=True,style='monokai'))
 
