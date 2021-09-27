@@ -4,6 +4,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
+import QtQuick.Dialogs 1.2
+import Qt.labs.folderlistmodel 2.15
 //import '../highlightcolor.js' as Logic
 //import '..highlight.js/lib/core' as Logic
 //import ArcGIS.AppFramework.Scripting 1.0
@@ -52,6 +54,10 @@ ApplicationWindow {
         return found
     }
 
+    function removeTab(){
+        codetab.remove(codetab.currentIndex)
+    }
+
     function colorify(text) {
         //import hljs from 'highlight.js/lib/core';
         //import python from 'highlight.js/lib/languages/python';
@@ -91,24 +97,29 @@ ApplicationWindow {
         }
     }
     Shortcut {
-        sequence: "Alt+O"
-        onActivated: console.log('open file')
+        sequence: "Ctrl+O"
+        onActivated: {
+            console.log('open file')
+            opfile.open()
+        }
     }
     Shortcut {
         sequence: "Alt+K"
         onActivated: console.log(' folder new')
     }
     Shortcut {
-        sequence: "Alt+K+O"
+        sequence: "Crtl+K+O"
         onActivated: console.log('open folder')
     }
     Shortcut {
-        sequence: "Alt+S"
+        sequence: "Ctrl+S"
         onActivated: console.log('save file')
     }
     Shortcut {
-        sequence: "Alt+Shift+S"
-        onActivated: console.log('save file as')
+        sequence: "Ctrl+Shift+S"
+        onActivated: {
+            console.log('save file as')
+        }
     }
     
     Rectangle{
@@ -306,13 +317,14 @@ ApplicationWindow {
         color:moyen
 
         Rectangle{
+            id:expbox
             width:parent.width
             height:35
             color:moyen
             border.color:bordercolor
             border.width:1
             
-            Text{
+            UIText{
                 y:10
                 text:qsTr('Explorer')
                 font.pixelSize:12
@@ -349,6 +361,120 @@ ApplicationWindow {
                     onClicked:{
                         opt.visible=true
                     }
+                }
+            }
+        }
+
+        Rectangle{
+            id:tree
+            y:expbox.height
+            color:parent.color
+            width:parent.width
+            height:parent.height-expbox.height
+
+
+            TreeView{
+                
+                anchors.fill: parent
+                model:fileSystemModel
+                //rootIndex:rootPathIdex
+                rowDelegate:Rectangle{
+                    width: parent.width
+                    height:30
+                    color:moyen
+                    border.width:1
+                    border.color:bordercolor
+                }
+                style:TreeViewStyle{
+                    branchDelegate: Rectangle{
+                        width:parent.width
+                        height:30
+                        color:styleData.isExpanded? barfonce: moyen
+                    }
+                    backgroundColor:moyen
+                    //control: TreeView
+                    //headerDelegate: Component
+                    //indentation: int
+                    //itemDelegate: mod
+                    rowDelegate:Rectangle{
+                        height:30
+                        width:parent.width
+                        color:'red'
+                    }
+                    //control: ScrollView
+                    //corner: Component
+                    //decrementControl: Component
+                    frame: Rectangle{
+                        color:moyen
+                        anchors.fill: parent
+                    }
+                    //handle: Component
+                    //handleOverlap: int
+                    //incrementControl: Component
+                    //minimumHandleLength: int
+                    //scrollBarBackground: Component
+                    //scrollToClickedPosition: bool
+                    //transientScrollBars: bool
+                }
+                //currentIndex: QModelIndex
+                //itemDelegate: rowd
+                //model: QAbstractItemModel
+                //rootIndex: QModelIndex
+                //section.criteria: enumeration
+                //section.delegate: Component
+                //section.labelPositioning: enumeration
+                //section.property: string
+                //selection: ItemSelectionModel
+                //activated(QModelIndexindex)
+                //clicked(QModelIndexindex)
+                //collapsed(QModelIndexindex)
+                //doubleClicked(QModelIndexindex)
+                //expanded(QModelIndexindex)
+                //pressAndHold(QModelIndexindex)
+                //contentItem: Item
+                //flickableItem: Item
+                //frameVisible: bool
+                //highlightOnFocus: bool
+                //horizontalScrollBarPolicy: enumeration
+                //style: Component
+                //verticalScrollBarPolicy: enumeration
+                //viewport: Item
+
+                TableViewColumn{
+                    //delegate: Component
+                    //elideMode: int
+                    //horizontalAlignment: int
+                    //movable: bool
+                    //resizable: bool
+                    role: '#DotPy'
+                    title: 'hello'
+                    //visible: bool
+                    width: 150
+                    //objectName: string
+                }
+                TableViewColumn{
+                    //delegate: Component
+                    //elideMode: int
+                    //horizontalAlignment: int
+                    //movable: bool
+                    //resizable: bool
+                    role: '#DotPy'
+                    title: 'hello'
+                    //visible: bool
+                    width: 150
+                    //objectName: string
+                }
+                TableViewColumn{
+                    //delegate: Component
+                    //elideMode: int
+                    //horizontalAlignment: int
+                    //movable: bool
+                    //resizable: bool
+                    role: '#DotPy'
+                    title: 'hello'
+                    //visible: bool
+                    width: 150
+                    //objectName: string
                 }
             }
         }
@@ -422,7 +548,7 @@ ApplicationWindow {
                         parent.color=barfonce
                     }
                     onClicked:{
-
+                        fileop.visible=true
                     }
                 }
             }
@@ -488,6 +614,7 @@ ApplicationWindow {
                 
             }
         }
+        
     }
     Rectangle{
         id:top_bar
@@ -664,6 +791,9 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                onClicked:{
+                    terminal.visible=true
+                }
             }
             MenuItem{
                 Text{
@@ -672,6 +802,9 @@ ApplicationWindow {
                     font.pixelSize:15
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked:{
+                    terminal.visible=false
                 }
             }
         }
@@ -750,20 +883,26 @@ ApplicationWindow {
             }
             MenuItem{
                 Text{
+                    text:'New file'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked:{
+                    fileop.visible=true
+                }
+            }
+            MenuItem{
+                Text{
                     text:'Open file'
                     color:'#3B7EAC'
                     font.pixelSize:15
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
-            }
-            MenuItem{
-                Text{
-                    text:'New file'
-                    color:'#3B7EAC'
-                    font.pixelSize:15
-                    x:15
-                    anchors.verticalCenter: parent.verticalCenter
+                onClicked:{
+                    opfile.open()
                 }
             }
             MenuItem{
@@ -1042,7 +1181,8 @@ ApplicationWindow {
                                 parent.color=barfonce
                             }
                             onClicked:{
-                                codetab.remove(codetab.currentIndex)
+                                console.log(codetab.currentIndex)
+                                root.removeTab()
                             }
                         }
                     }
@@ -1067,7 +1207,7 @@ ApplicationWindow {
 
                     Text{
                         id:weltext
-                        text:qsTr('Wellcome To Kivymd Studio')
+                        text:qsTr('Welcome To Kivymd Studio')
                         //font.bold:true
                         color:'#C6D6DF'
                         font.pixelSize:48
@@ -1161,6 +1301,26 @@ ApplicationWindow {
                             anchors.left:parent.left
                             anchors.margins: 90
                             anchors.verticalCenter: parent.verticalCenter
+                            UIText{
+                                id:uit
+                                y:7
+                                text:qsTr('Recents')
+                                font.pixelSize:16
+                                color:bordercolor
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Rectangle{
+                                y:uit.height+10
+                                height:parent.height-uit.height-11
+                                width:parent.width-2
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                color:parent.color
+
+                                ScrollView{
+                                    anchors.fill: parent
+                                    
+                                }
+                            }
                             
                         }
 
@@ -1278,7 +1438,7 @@ ApplicationWindow {
                                     x:210
                                     back_color:parent.color
                                     text_color:'#9B9FA5'
-                                    butt_text:'N'
+                                    butt_text:'K'
                                     //anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Text{
@@ -1400,7 +1560,7 @@ ApplicationWindow {
     }
     Rectangle{
         id:terminal
-        height:290
+        height:(parent.height/3)+50
         color:barclaire
         x:leftbar.width+leftbox.width
         width:parent.width-(leftbar.width+leftbox.width)
@@ -1408,6 +1568,15 @@ ApplicationWindow {
         border.width:1
         anchors.bottom:parent.bottom
         visible:false
+
+        UIText{
+            anchors.left:parent.left
+            anchors.margins: 50
+            y:20
+            text:'TERMINAL'
+            font.pixelSize:15
+            color:'white'
+        }
 
         Rectangle{
             id:terferm
@@ -1420,10 +1589,24 @@ ApplicationWindow {
             anchors.margins: 15
             
             Text{
+                id:xx
                 anchors.centerIn: parent
                 font.pixelSize:16
                 color:'white'
                 text:qsTr('×')
+            }
+            MouseArea{
+                anchors.fill: parent
+                hoverEnabled:true
+                onEntered:{
+                    xx.font.pixelSize=26
+                }
+                onExited:{
+                    xx.font.pixelSize=16
+                }
+                onClicked:{
+                    terminal.visible=false
+                }
             }
         }
 
@@ -1438,12 +1621,31 @@ ApplicationWindow {
             anchors.margins: 45
             
             Text{
+                id:xxx
                 anchors.centerIn: parent
                 font.pixelSize:16
                 color:'white'
                 text:qsTr('^')
             }
+            MouseArea{
+                anchors.fill: parent
+                hoverEnabled:true
+                onEntered:{
+                    xxx.font.pixelSize=26
+                }
+                onExited:{
+                    xxx.font.pixelSize=16
+                }
+                onClicked:{
+                    if(terminal.height<=(body.height/3)+50){
+                        terminal.height=(body.height/2)+150
+                    }else{
+                        terminal.height=(body.height/3)+50
+                    }
+                }
+            }
         }
+
     }
 
     NumberAnimation{
@@ -1626,6 +1828,20 @@ ApplicationWindow {
                 edit_height:parent.height-20
                 edit_width:parent.width-20
                 anchors.fill: parent
+                code:''
+            }
+        }
+    }
+    Component{
+        id:cb
+        Rectangle{
+            color:root.color
+            CodeEditor{
+                compcolor:barclaire
+                edit_height:parent.height-20
+                edit_width:parent.width-20
+                anchors.fill: parent
+                code:text
             }
         }
     }
@@ -1639,6 +1855,29 @@ ApplicationWindow {
         Keys.onReturnPressed:{
             visible=false
             codetab.addTab(fileop.get_filename,codebox)
+        }
+    }
+
+    FileDialog{
+        id:opfile
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: false
+        selectMultiple: false
+        //selectedNameFilter: string
+        //shortcuts: Object
+        //sidebarVisible: bool
+        title: 'Open file'
+        //visible: bool
+        onAccepted:{
+            var text=backend.openfile(fileUrl)
+            var titre=backend.get_filename(fileUrl)
+            codetab.addTab(titre,cb)
         }
     }
 

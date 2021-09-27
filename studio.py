@@ -46,7 +46,18 @@ class Studio(QObject):
 
     @Slot(str,result='QString')
     def openfile(self,path):
-        pass
+        print(path)
+        try:
+            with open(path,'r') as f: code=f.read()
+            self.fileOpen.emit(code)
+            return code
+        except FileNotFoundError:
+            return ''
+
+    @Slot(str,result='QString')
+    def get_filename(self,path):
+        filename=str(path).split('/')[-1]
+        return filename
 
     @Slot(str,result='QVariant')
     def newfolder(self,foldername):

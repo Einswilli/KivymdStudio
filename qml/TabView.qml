@@ -118,6 +118,7 @@ FocusScope {
         if (currentIndex > 0)
             currentIndex--
         __setOpacities()
+        return 0
     }
 
     /*! Moves a tab \a from index \a to another. */

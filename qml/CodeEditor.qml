@@ -30,6 +30,7 @@ Item{
     property int edit_width
     property color flk_color
     property color compcolor
+    property alias code:editor.text
 
     Flickable {
         id: flickb

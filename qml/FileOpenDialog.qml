@@ -16,17 +16,18 @@ Item{
     
 
     Rectangle{
+        id:cadre
         width:220
         height:150
         color:theme_color
         border.width:1
         border.color:border_color
-        Text{
+        UIText{
             y:25
             text:message
             color:'#A8B2BD'
             font.pixelSize:22
-            font.family:'Olivia Kevin'
+            //font.family:'Olivia Kevin'
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
@@ -50,6 +51,36 @@ Item{
             // Keys.onReturnPressed:{
             //     root.visible=false
             // }
+        }
+        Rectangle{
+            width:18
+            height:18
+            radius:30
+            anchors.right:parent.right
+            anchors.top:parent.top
+            anchors.margins: 5
+            color:parent.color
+            
+            Text{
+                text:'×'
+                font.pixelSize:16
+                anchors.centerIn: parent
+                color:'white'
+            }
+
+            MouseArea{
+                anchors.fill: parent
+                hoverEnabled:true
+                onEntered:{
+                    parent.color='#A8B2BD'
+                }
+                onExited:{
+                    parent.color=cadre.color
+                }
+                onClicked:{
+                    root.visible=false
+                }
+            }
         }
 
     }
