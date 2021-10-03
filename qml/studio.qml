@@ -6,6 +6,9 @@ import QtCharts 2.15
 import QtQuick.Layouts 1.0
 import QtQuick.Dialogs 1.2
 import Qt.labs.folderlistmodel 2.15
+import QtQml.Models 2.2
+//import QtQuick.Controls 1.4 as OV
+//import DotPy.FolderTreeView 1.0
 //import '../highlightcolor.js' as Logic
 //import '..highlight.js/lib/core' as Logic
 //import ArcGIS.AppFramework.Scripting 1.0
@@ -20,7 +23,13 @@ ApplicationWindow {
     title: qsTr("Kivymd-STudio")
 
     QtObject{
+        id:obj
         objectName: 'backend'
+
+        function listfolder(value){
+            var dic=value
+            return JSON.parse(dic)
+        }
     }
 
     Connections{
@@ -31,12 +40,16 @@ ApplicationWindow {
         function onColorhighlight(value){
             return value
         }
+        function onFolderOpen(value){
+            return JSON.stringify(value)
+        }
 
     }
 
-    // Component.onCompleted: {
-    //     root.showFullScreen();
-    // }
+    Component.onCompleted: {
+        // root.showFullScreen();
+        //backend.chargeTree(tree)
+    }
 
     function verify(lst,word ){
         var found=false
@@ -50,7 +63,7 @@ ApplicationWindow {
                 found=false
             }
         }
-        console.log(found)
+        //console.log(found)
         return found
     }
 
@@ -80,6 +93,7 @@ ApplicationWindow {
     property color bordercolor:'#535353'
     property color hovercolor:'#609EAD96'
     property string emustate:'off'
+    property string cde
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -104,12 +118,15 @@ ApplicationWindow {
         }
     }
     Shortcut {
-        sequence: "Alt+K"
+        sequence: "Ctrl+K"
         onActivated: console.log(' folder new')
     }
     Shortcut {
-        sequence: "Crtl+K+O"
-        onActivated: console.log('open folder')
+        sequence: "Alt+Ctrl+K"
+        onActivated: {
+            console.log('open folder')
+            opfold.open()
+        }
     }
     Shortcut {
         sequence: "Ctrl+S"
@@ -371,112 +388,17 @@ ApplicationWindow {
             color:parent.color
             width:parent.width
             height:parent.height-expbox.height
-
-
+            objectName:'folder'
+            
             TreeView{
-                
                 anchors.fill: parent
-                model:fileSystemModel
-                //rootIndex:rootPathIdex
-                rowDelegate:Rectangle{
-                    width: parent.width
-                    height:30
-                    color:moyen
-                    border.width:1
-                    border.color:bordercolor
-                }
+                model:StItem
                 style:TreeViewStyle{
-                    branchDelegate: Rectangle{
-                        width:parent.width
-                        height:30
-                        color:styleData.isExpanded? barfonce: moyen
-                    }
-                    backgroundColor:moyen
-                    //control: TreeView
-                    //headerDelegate: Component
-                    //indentation: int
-                    //itemDelegate: mod
-                    rowDelegate:Rectangle{
-                        height:30
-                        width:parent.width
-                        color:'red'
-                    }
-                    //control: ScrollView
-                    //corner: Component
-                    //decrementControl: Component
-                    frame: Rectangle{
-                        color:moyen
-                        anchors.fill: parent
-                    }
-                    //handle: Component
-                    //handleOverlap: int
-                    //incrementControl: Component
-                    //minimumHandleLength: int
-                    //scrollBarBackground: Component
-                    //scrollToClickedPosition: bool
-                    //transientScrollBars: bool
-                }
-                //currentIndex: QModelIndex
-                //itemDelegate: rowd
-                //model: QAbstractItemModel
-                //rootIndex: QModelIndex
-                //section.criteria: enumeration
-                //section.delegate: Component
-                //section.labelPositioning: enumeration
-                //section.property: string
-                //selection: ItemSelectionModel
-                //activated(QModelIndexindex)
-                //clicked(QModelIndexindex)
-                //collapsed(QModelIndexindex)
-                //doubleClicked(QModelIndexindex)
-                //expanded(QModelIndexindex)
-                //pressAndHold(QModelIndexindex)
-                //contentItem: Item
-                //flickableItem: Item
-                //frameVisible: bool
-                //highlightOnFocus: bool
-                //horizontalScrollBarPolicy: enumeration
-                //style: Component
-                //verticalScrollBarPolicy: enumeration
-                //viewport: Item
-
-                TableViewColumn{
-                    //delegate: Component
-                    //elideMode: int
-                    //horizontalAlignment: int
-                    //movable: bool
-                    //resizable: bool
-                    role: '#DotPy'
-                    title: 'hello'
-                    //visible: bool
-                    width: 150
-                    //objectName: string
-                }
-                TableViewColumn{
-                    //delegate: Component
-                    //elideMode: int
-                    //horizontalAlignment: int
-                    //movable: bool
-                    //resizable: bool
-                    role: '#DotPy'
-                    title: 'hello'
-                    //visible: bool
-                    width: 150
-                    //objectName: string
-                }
-                TableViewColumn{
-                    //delegate: Component
-                    //elideMode: int
-                    //horizontalAlignment: int
-                    //movable: bool
-                    //resizable: bool
-                    role: '#DotPy'
-                    title: 'hello'
-                    //visible: bool
-                    width: 150
-                    //objectName: string
+                    backgroundColor:tree.color
+                    
                 }
             }
+
         }
 
         Rectangle{
@@ -913,6 +835,9 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                onClicked:{
+                    opfold.open()
+                }
             }
             MenuItem{
                 Text{
@@ -1181,8 +1106,8 @@ ApplicationWindow {
                                 parent.color=barfonce
                             }
                             onClicked:{
-                                console.log(codetab.currentIndex)
-                                root.removeTab()
+                                // parent.styleData.selected
+                                codetab.rmTab(styleData.index)
                             }
                         }
                     }
@@ -1611,6 +1536,7 @@ ApplicationWindow {
         }
 
         Rectangle{
+            id:xyw
             width:30
             height:30
             //anchors.top:parent.top
@@ -1643,6 +1569,19 @@ ApplicationWindow {
                         terminal.height=(body.height/3)+50
                     }
                 }
+            }
+        }
+
+        Rectangle{
+            y:xyw.height+15
+            width:parent.width-2
+            height:parent.height-xyw.height-1
+            color:parent.color
+            anchors.horizontalCenter: parent.horizontalCenter
+            TextEdit{
+                anchors.fill: parent
+                anchors.margins: 15
+                color:'#E07229'
             }
         }
 
@@ -1836,14 +1775,23 @@ ApplicationWindow {
         id:cb
         Rectangle{
             color:root.color
+            width:codetab.width
+            height:codetab.height
             CodeEditor{
+                id:ce
                 compcolor:barclaire
                 edit_height:parent.height-20
                 edit_width:parent.width-20
                 anchors.fill: parent
-                code:text
+                //code:text
             }
-        }
+            Component.onCompleted:{
+                ce.code=cde.toString()
+                // for (let l of cde.split(/\r\n|\r|\n/)){
+                //     ce.code+='\n'+l
+                // }
+            }
+       }
     }
 
     FileOpenDialog{
@@ -1877,7 +1825,37 @@ ApplicationWindow {
         onAccepted:{
             var text=backend.openfile(fileUrl)
             var titre=backend.get_filename(fileUrl)
+            cde=text
+            console.log(text)
+            //var c=Qt.createComponent('CodeEditor.qml')
+            //var incubator = c.incubateObject(cb, { compcolor:barclaire, edit_height:c.height-20, edit_width:c.width-20});
+            //var Code = c.createObject(CodeEditor, { 'compcolor':barclaire,'edit_height':c.height-20,'edit_width':c.width-20,'anchors.fill': c});
+            //root.setcode(text)
+            // cb.code=text
             codetab.addTab(titre,cb)
+            //root.setcode(text)
+        }
+    }
+    FileDialog{
+        id:opfold
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: true
+        selectMultiple: true
+        //selectedNameFilter: string
+        //shortcuts: Object
+        //sidebarVisible: bool
+        title: 'Open folder'
+        //visible: bool
+        onAccepted:{
+            var text=opfold.fileUrl
+            console.log(text)
+            //fold.model.append(text)//appendRows(backend.openfolder(text))
         }
     }
 

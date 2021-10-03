@@ -118,7 +118,10 @@ FocusScope {
         if (currentIndex > 0)
             currentIndex--
         __setOpacities()
-        return 0
+        
+    }
+    function rmTab(index){
+        removeTab(index)
     }
 
     /*! Moves a tab \a from index \a to another. */
