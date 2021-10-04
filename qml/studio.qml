@@ -16,8 +16,8 @@ import QtQml.Models 2.2
 
 ApplicationWindow {
     id:root
-    width: 1100
-    height: 700
+    // width: 1100
+    // height: 700
     visible: true
     color: "#1F1F20"
     title: qsTr("Kivymd-STudio")
@@ -49,6 +49,9 @@ ApplicationWindow {
     Component.onCompleted: {
         // root.showFullScreen();
         //backend.chargeTree(tree)
+        root.width=parseInt(backend.getScreen().split(',')[0])
+        root.height=parseInt(backend.getScreen().split(',')[1])
+        console.log(root.height,root.width)
     }
 
     function verify(lst,word ){

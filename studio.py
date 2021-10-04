@@ -73,7 +73,23 @@ class Studio(QObject):
     folderOpen=Signal(dict)
     fileOpen=Signal(dict)
     colorhighlight=Signal(str)
+    screeninfo=Signal(dict)
     
+    @Slot(result='QString')
+    def getScreen(self):
+        # screen=QGuiApplication.primaryScreen()
+        # x=screen.size.width()
+        # y=screen.size.height()
+        try:
+            import tkinter as tk
+
+            root = tk.Tk()
+            width = root.winfo_screenwidth()
+            height = root.winfo_screenheight()
+            #print(width,height)
+            self.screeninfo.emit([width,height])
+            return f'{width},{height}'
+        except:pass
 
     @Slot(str,result='QRichtext')
     def colorify(self,text):
