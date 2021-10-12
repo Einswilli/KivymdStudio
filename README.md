@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/Einswilli/KivymdStudio/assets/images/kv.png" height="60"><br>
+<img src="https://github.com/Einswilli/KivymdStudio/master/assets/images/kv.png" height="60"><br>
 A kivyMD devellopment studio
 </p>
 
@@ -29,16 +29,16 @@ A kivyMD devellopment studio
 ## Screenshots
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
-|<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/1.png"> 
-    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/1.png">
+|<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png"> 
+    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png">
     
 </a> | 
-<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/2.png"> 
-    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/2png"> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2.png"> 
+    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2png"> 
     
 </a> |
-<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/3.png">
- <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/3.png"> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png">
+ <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png"> 
  </a>||
 
 ## To do make_list
