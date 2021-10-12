@@ -30,7 +30,7 @@ A kivyMD devellopment studio
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
 |<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png"> 
-    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png">
+    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/blob/master/Screenshots/1.png">
     
 </a> | 
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2.png"> 
