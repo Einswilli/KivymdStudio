@@ -6,7 +6,6 @@ test.py
 tree.py
 *.autosave
 *.a
-*.md
 *.core
 *.moc
 *.o
