@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/Einswilli/KivymdStudio/master/assets/images/kv.png?raw=true" height="60"><br>
+<img src="assets/images/kv.png?raw=true" height="60"><br>
 A kivyMD devellopment studio
 </p>
 
@@ -30,7 +30,7 @@ A kivyMD devellopment studio
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
 |<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png?raw=true"> 
-    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/blob/master/Screenshots/1.png?raw=true">
+    <img width="1604" src="Screenshots/1.png?raw=true">
     
 </a> | 
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2.png?raw=true"> 
@@ -50,7 +50,7 @@ A kivyMD devellopment studio
     - Custom Terminal
     - Emmulator
 
-# Bugs
+## Bugs
 
     - Syntax Highlight doesn't work well
     - Indentations d'oesn't work well
