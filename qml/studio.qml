@@ -16,8 +16,8 @@ import QtQml.Models 2.2
 
 ApplicationWindow {
     id:root
-    // width: 1100
-    // height: 700
+    width: 1000
+    height: 700
     visible: true
     color: "#1F1F20"
     title: qsTr("Kivymd-STudio")
@@ -51,7 +51,7 @@ ApplicationWindow {
         //backend.chargeTree(tree)
         root.width=parseInt(backend.getScreen().split(',')[0])
         root.height=parseInt(backend.getScreen().split(',')[1])
-        console.log(root.height,root.width)
+        //console.log(root.height,root.width)
     }
 
     function verify(lst,word ){
@@ -131,16 +131,17 @@ ApplicationWindow {
             opfold.open()
         }
     }
-    Shortcut {
-        sequence: "Ctrl+S"
-        onActivated: console.log('save file')
-    }
+    // Shortcut {
+    //     sequence: "Ctrl+S"
+    //     onActivated: console.log('save file')
+    // }
     Shortcut {
         sequence: "Ctrl+Shift+S"
         onActivated: {
             console.log('save file as')
         }
     }
+    
     
     Rectangle{
         id:leftbar
@@ -163,6 +164,14 @@ ApplicationWindow {
                 source:'../assets/icons/loupe.png'
                 anchors.centerIn: parent
             }
+            Rectangle{
+                id:shov
+                height:parent.height
+                width:3
+                color:'white'
+                anchors.left:parent.left
+                visible:false
+            }
 
             MouseArea{
                 anchors.fill: parent
@@ -174,7 +183,45 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    if (leftbox.width==0){
+                        expbox.visible=true
+                        exptxt.text='SEARCH'
+                        thov.visible=false
+                        shov.visible=true
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=true
+                        tree.visible=false
+                        lb_on.start()
+                    }
+                    else if(leftbox.width>0 && searchbox.visible==true){
+                        expbox.visible=false
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_off.start()
+                    }
+                    else{
+                        exptxt.text='SEARCH'
+                        thov.visible=false
+                        shov.visible=true
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=true
+                        tree.visible=false
+                    }
                 }
             }
         }
@@ -193,6 +240,15 @@ ApplicationWindow {
                 anchors.centerIn: parent
             }
 
+            Rectangle{
+                id:thov
+                height:parent.height
+                width:3
+                color:'white'
+                anchors.left:parent.left
+                visible:false
+            }
+
             MouseArea{
                 anchors.fill: parent
                 hoverEnabled:true
@@ -203,7 +259,45 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    if (leftbox.width==0){
+                        expbox.visible=true
+                        exptxt.text='EXPLORER'
+                        thov.visible=true
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=true
+                        lb_on.start()
+                    }
+                    else if(leftbox.width>0 && tree.visible==true){
+                        expbox.visible=false
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_off.start()
+                    }
+                    else{
+                        exptxt.text='EXPLORER'
+                        thov.visible=true
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=true
+                    }
                 }
             }
             
@@ -222,6 +316,14 @@ ApplicationWindow {
                 source:'../assets/icons/menu(1).png'
                 anchors.centerIn: parent
             }
+            Rectangle{
+                id:xhov
+                height:parent.height
+                width:3
+                color:'white'
+                anchors.left:parent.left
+                visible:false
+            }
 
             MouseArea{
                 anchors.fill: parent
@@ -233,7 +335,45 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    if (leftbox.width==0){
+                        expbox.visible=true
+                        exptxt.text='EXTENTIONS'
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=true
+                        xte.visible=true
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_on.start()
+                    }
+                    else if(leftbox.width>0 && xte.visible==true){
+                        expbox.visible=false
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_off.start()
+                    }
+                    else{
+                        exptxt.text='EXTENTIONS'
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=true
+                        xte.visible=true
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                    }
                 }
             }
             
@@ -252,6 +392,14 @@ ApplicationWindow {
                 source:'../assets/icons/github(1).png'
                 anchors.centerIn: parent
             }
+            Rectangle{
+                id:ghov
+                height:parent.height
+                width:3
+                color:'white'
+                anchors.left:parent.left
+                visible:false
+            }
 
             MouseArea{
                 anchors.fill: parent
@@ -263,7 +411,45 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    if (leftbox.width==0){
+                        expbox.visible=true
+                        exptxt.text='GITHUB'
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=true
+                        git.visible=true
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_on.start()
+                    }
+                    else if(leftbox.width>0 && git.visible==true){
+                        expbox.visible=false
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=false
+                        git.visible=false
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                        lb_off.start()
+                    }
+                    else{
+                        exptxt.text='GITHUB'
+                        thov.visible=false
+                        shov.visible=false
+                        xhov.visible=false
+                        xte.visible=false
+                        ghov.visible=true
+                        git.visible=true
+                        tree.visible=false
+                        searchbox.visible=false
+                        tree.visible=false
+                    }
                 }
             }
             
@@ -329,10 +515,26 @@ ApplicationWindow {
             
         }
     }
+    NumberAnimation{
+        id:lb_on
+        from: 0
+        to: (root.width/5)
+        duration: 200
+        property: 'width'
+        target:leftbox
+    }
+    NumberAnimation{
+        id:lb_off
+        from: (root.width/5)
+        to: 0
+        duration: 200
+        property: 'width'
+        target:leftbox
+    }
     Rectangle{
         id:leftbox
         x:leftbar.width
-        width:240
+        width:(root.width/5)
         height:parent.height
         color:moyen
 
@@ -345,6 +547,7 @@ ApplicationWindow {
             border.width:1
             
             UIText{
+                id:exptxt
                 y:10
                 text:qsTr('Explorer')
                 font.pixelSize:12
@@ -386,22 +589,192 @@ ApplicationWindow {
         }
 
         Rectangle{
+            id:searchbox
+            y:expbox.height+1
+            width:parent.width
+            height:parent.height-expbox.height-2
+            color:parent.color
+            visible:false
+
+            TextField{
+                y:20
+                width:parent.width-20
+                height:30
+                anchors.horizontalCenter: parent.horizontalCenter
+                color:'#AEB5BD'
+                font.pixelSize:13
+                background: Rectangle{
+                    anchors.fill: parent
+                    radius:10
+                    color:barfonce
+                    border.width:1
+                    border.color:'#045685'
+                }
+                placeholderText: 'Search...'
+                placeholderTextColor: moyen
+                leftPadding: 10
+                bottomPadding:3
+                
+            }
+            Image{
+                width:150
+                height:200
+                source:'../assets/icons/magnify.png'
+                anchors.centerIn: parent
+            }
+        }
+
+        Rectangle{
             id:tree
             y:expbox.height
             color:parent.color
             width:parent.width
             height:parent.height-expbox.height
             objectName:'folder'
-            
-            TreeView{
+
+            FileManager{
+                id:fm
                 anchors.fill: parent
-                model:StItem
-                style:TreeViewStyle{
-                    backgroundColor:tree.color
-                    
-                }
+                bscolor:parent.color
             }
 
+            // CustomTree{
+            //     id:ftree
+            //     anchors.fill: parent
+            // }
+
+            // Component{
+            //     id:lstdlg
+            //     Rectangle{
+            //         id:lrec
+            //         width:tree.width
+            //         height:30
+            //         color:'#34373A'
+            //         radius:8
+            //         border.width:1
+            //         border.color:bordercolor
+
+            //         Image{
+            //             id:fimg
+            //             width:15
+            //             height:15
+            //             anchors.left:parent.left
+            //             anchors.leftMargin:10
+            //             anchors.verticalCenter: parent.verticalCenter
+            //             source:'../assets/icons/folderadd.png'
+            //         }
+            //         Text{
+            //             id:ftx
+            //             text:filename
+            //             font.pixelSize:14
+            //             color:'white'
+            //             x:5
+            //             anchors.verticalCenter: parent.verticalCenter
+            //         }
+            //         MouseArea{
+            //             anchors.fill: parent
+            //             hoverEnabled:true
+            //             onEntered:{
+            //                 parent.color=hovercolor
+            //                 //parent.visible=false
+            //             }
+            //             onExited:{
+            //                 parent.color='#34373A'
+            //             }
+            //             onClicked:{
+            //                 var xx=lll.currentItem.x
+            //                 var yy=lll.currentItem.y
+            //                 var colps=false
+            //                 if(colps==false){
+
+            //                     for(var i=lll.currentIndex+1;i<lll.count;i++){
+            //                         lll.incrementCurrentIndex()
+            //                         if(lll.currentItem.x>xx){
+            //                             lll.currentItem.visible=false
+            //                         }else{
+            //                             break
+            //                         }
+            //                     }
+            //                     colps=true
+            //                 }else{
+            //                     for(var i=lll.currentIndex+1;i<lll.count;i++){
+            //                         lll.incrementCurrentIndex()
+            //                         if(lll.currentItem.x>xx){
+            //                             lll.currentItem.visible=true
+            //                         }else{
+            //                             break
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //         Component.onCompleted:{
+            //             //f=ftx.text.match(/  |/)
+            //             var o=ftx.text.toString().split(/├─|└─|[  ]|│ /).length-1
+            //             var l=o*2
+            //             ftx.text=ftx.text.substr(l-1,ftx.text.length-l)
+            //             if(ftx.text.length>13){
+            //                 ftx.text=ftx.text.substr(0,10)+'...'
+            //             }
+            //             ftx.x=40
+            //             lrec.x=(o)*10
+            //             lrec.width-=lrec.x
+            //         }
+            //     }
+            // }
+            
+            // ListModel{
+            //     id:tmod
+            //     // ListElement{
+            //     //     filename:'/root'
+            //     // }
+                
+            // }
+            
+
+            // ScrollView{
+            //     anchors.fill: parent
+            //     ListView{
+            //         id:lll
+            //         model:tmod
+            //         delegate:lstdlg
+            //         //draggingVertically: true
+            //     }
+            // }
+            
+        }
+        Rectangle{
+            id:xte
+            y:expbox.height+1
+            width:parent.width
+            height:parent.height-expbox.height-2
+            color:parent.color
+            visible:false
+            Text{
+                text:'Extentions'
+                anchors.centerIn: parent
+                color:'white'
+            }
+        }
+        Rectangle{
+            id:git
+            y:expbox.height+1
+            width:parent.width
+            height:parent.height-expbox.height-2
+            color:parent.color
+            visible:false
+            Image{
+                y:150
+                width:150
+                height:200
+                source:'../assets/icons/git.png'
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text{
+                text:'Github'
+                anchors.centerIn: parent
+                color:'white'
+            }
         }
 
         Rectangle{
@@ -1036,7 +1409,7 @@ ApplicationWindow {
         color:appcolor
         x:leftbar.width+leftbox.width
         height:parent.height-top_bar.height
-        width:parent.width-(leftbar.width+leftbox.width)
+        width:root.width-leftbar.width-leftbox.width
 
         
         TabView{
@@ -1073,6 +1446,12 @@ ApplicationWindow {
                             fileimage.source='../assets/images/py.png'
                         }else if(ext=='ome'){
                             fileimage.source='../assets/images/coding.png'
+                        }else if(ext=='cpp'){
+                            fileimage.source='../assets/images/cpp.png'
+                        }else if(ext=='.js'){
+                            fileimage.source='../assets/images/js.png'
+                        }else if(ext=='.md'){
+                            fileimage.source='../assets/images/md.png'
                         }
                     }
 
@@ -1138,78 +1517,80 @@ ApplicationWindow {
                         text:qsTr('Welcome To Kivymd Studio')
                         //font.bold:true
                         color:'#C6D6DF'
-                        font.pixelSize:48
-                        y:parent.height/5
+                        font.pixelSize:parent.height/12
+                        y:parent.height/6
                         anchors.horizontalCenter: parent.horizontalCenter
-                        
-                    }
 
-                    DeviceBox{
-                        id:android
-                        src:'../assets/images/android.png'
-                        name:'Android'
-                        text_color:weltext.color
-                        rect_height:linux.rect_height
-                        rect_width:linux.rect_width
-                        anchors.left:parent.left
-                        anchors.margins: 80
-                        y:linux.y
-                        back:parent.color
-                    }
-                    
-                    DeviceBox{
-                        id:ios
-                        src:'../assets/images/apple.png'
-                        name:'IOs X'
-                        text_color:weltext.color
-                        rect_height:linux.rect_height
-                        rect_width:linux.rect_width
-                        anchors.left:parent.left
-                        anchors.margins: android.rect_width+120
-                        back:parent.color
-                        y:linux.y
-                    }
-
-                    DeviceBox{
-                        id:win10
-                        src:'../assets/images/win10.png'
-                        name:'Windows'
-                        text_color:weltext.color
-                        rect_height:linux.rect_height
-                        rect_width:linux.rect_width
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        back:parent.color
-                        y:linux.y
-                    }
-
-                    DeviceBox{
-                        id:macos
-                        src:'../assets/images/mac.png'
-                        name:'Mac Os'
-                        text_color:weltext.color
-                        rect_height:linux.rect_height
-                        rect_width:linux.rect_width
-                        anchors.right:parent.right
-                        anchors.margins: linux.rect_width+120
-                        back:parent.color
-                        y:linux.y
-                    }
-                    
-                    DeviceBox{
-                        id:linux
-                        src:'../assets/images/linux.png'
-                        name:'Linux'
-                        text_color:weltext.color
-                        rect_height:(parent.height/4)-10
-                        rect_width:(parent.width/5)-30
-                        anchors.right:parent.right
-                        anchors.margins: 80
-                        back:parent.color
-                        y:weltext.height+weltext.y+10
                         
                     }
                     Rectangle{
-                        y:weltext.height+50+170
+                        y:weltext.height+weltext.y+10
+                        height:parent.height/4
+                        width:parent.width-120
+                        color:parent.color
+                        DeviceBox{
+                            id:android
+                            src:'../assets/images/android.png'
+                            name:'Android'
+                            text_color:weltext.color
+                            rect_height:linux.rect_height
+                            rect_width:linux.rect_width
+                            anchors.left:parent.left
+                            anchors.margins: 80
+                            y:linux.y
+                            back:parent.color
+                        }
+                        DeviceBox{
+                            id:ios
+                            src:'../assets/images/apple.png'
+                            name:'IOs X'
+                            text_color:weltext.color
+                            rect_height:linux.rect_height
+                            rect_width:linux.rect_width
+                            anchors.left:parent.left
+                            anchors.margins: android.rect_width+120
+                            back:parent.color
+                            y:linux.y
+                        }
+                        DeviceBox{
+                            id:win10
+                            src:'../assets/images/win10.png'
+                            name:'Windows'
+                            text_color:weltext.color
+                            rect_height:linux.rect_height
+                            rect_width:linux.rect_width
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            back:parent.color
+                            y:linux.y
+                        }
+                        DeviceBox{
+                            id:macos
+                            src:'../assets/images/mac.png'
+                            name:'Mac Os'
+                            text_color:weltext.color
+                            rect_height:linux.rect_height
+                            rect_width:linux.rect_width
+                            anchors.right:parent.right
+                            anchors.margins: linux.rect_width+120
+                            back:parent.color
+                            y:linux.y
+                        }
+                        DeviceBox{
+                            id:linux
+                            src:'../assets/images/linux.png'
+                            name:'Linux'
+                            text_color:weltext.color
+                            rect_height:parent.height-10
+                            rect_width:(parent.width/5)-30
+                            anchors.right:parent.right
+                            anchors.margins: 80
+                            back:parent.color
+                            y:5//weltext.height+weltext.y+10
+                        }
+                    }
+                    
+                    Rectangle{
+                        y:weltext.height+60+linux.height
                         width:parent.width
                         color:parent.color
                         height:(parent.height/3)+50
@@ -1249,7 +1630,6 @@ ApplicationWindow {
                                     
                                 }
                             }
-                            
                         }
 
                         Rectangle{
@@ -1352,7 +1732,7 @@ ApplicationWindow {
                                     x:140
                                     back_color:parent.color
                                     text_color:'#9B9FA5'
-                                    butt_text:'crtl'
+                                    butt_text:'Alt'
                                     //anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Text{
@@ -1366,21 +1746,21 @@ ApplicationWindow {
                                     x:210
                                     back_color:parent.color
                                     text_color:'#9B9FA5'
-                                    butt_text:'K'
+                                    butt_text:'Ctrl'
                                     //anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Text{
-                                    x:240
+                                    x:265
                                     text:'+'
                                     color:'#9B9FA5'
                                     font.pixelSize:14
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Butts{
-                                    x:255
+                                    x:285
                                     back_color:parent.color
                                     text_color:'#9B9FA5'
-                                    butt_text:'O'
+                                    butt_text:'K'
                                     //anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
@@ -1438,8 +1818,6 @@ ApplicationWindow {
                             source:'../assets/icons/DotPy.png'
                         }
                     }
-
-                    
                 }
                 
             }
@@ -1766,11 +2144,23 @@ ApplicationWindow {
         Rectangle{
             color:root.color
             CodeEditor{
+                id:nfc
                 compcolor:barclaire
                 edit_height:parent.height-20
                 edit_width:parent.width-20
                 anchors.fill: parent
-                code:''
+                //code:''
+                
+            }
+            Shortcut {
+                sequence: "Ctrl+S"
+                onActivated: {
+                    console.log('saving file...')
+                    cde=nfc.scode.getText(0,nfc.code.length)
+                    //console.log(cde)
+                    backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
+                    //cde=''
+                }
             }
         }
     }
@@ -1789,12 +2179,21 @@ ApplicationWindow {
                 //code:text
             }
             Component.onCompleted:{
-                ce.code=cde.toString()
-                // for (let l of cde.split(/\r\n|\r|\n/)){
-                //     ce.code+='\n'+l
-                // }
+                ce.code=qsTr(cde).replace('\n\r',qsTr('\n'))
+                
             }
-       }
+            Shortcut {
+                sequence: "Ctrl+S"
+                onActivated: {
+                    console.log('saving file...')
+                    cde=ce.scode.getText(0,ce.code.length)
+                    //console.log(cde)
+                    //backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,codetab.getTab(codetab.currentIndex).item.code)
+                    backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
+                    //cde=''
+                }
+            }
+        }
     }
 
     FileOpenDialog{
@@ -1805,7 +2204,9 @@ ApplicationWindow {
         border_color:bordercolor
         Keys.onReturnPressed:{
             visible=false
-            codetab.addTab(fileop.get_filename,codebox)
+            //console.log()
+            backend.newfile(fileop.get_filename,fm.folder.toString())
+            codetab.addTab(fileop.get_filename,cb)
         }
     }
 
@@ -1829,13 +2230,10 @@ ApplicationWindow {
             var text=backend.openfile(fileUrl)
             var titre=backend.get_filename(fileUrl)
             cde=text
-            console.log(text)
-            //var c=Qt.createComponent('CodeEditor.qml')
-            //var incubator = c.incubateObject(cb, { compcolor:barclaire, edit_height:c.height-20, edit_width:c.width-20});
-            //var Code = c.createObject(CodeEditor, { 'compcolor':barclaire,'edit_height':c.height-20,'edit_width':c.width-20,'anchors.fill': c});
-            //root.setcode(text)
-            // cb.code=text
+            //console.log(cde)
+            
             codetab.addTab(titre,cb)
+            //cde=''
             //root.setcode(text)
         }
     }
@@ -1857,8 +2255,12 @@ ApplicationWindow {
         //visible: bool
         onAccepted:{
             var text=opfold.fileUrl
-            console.log(text)
-            //fold.model.append(text)//appendRows(backend.openfolder(text))
+            console.log(text.toString())//.substr(6,text.length-6))
+            //tmod.clear()
+            fm.folder=text.toString()//.substr(6,text.length-6)
+            fm.show()
+            //tmod.append(obj.listfolder(backend.openfolder(text)))
+            //ftree.addchild(obj.listfolder(backend.openfolder(text)))//appendRows(backend.openfolder(text))
         }
     }
 

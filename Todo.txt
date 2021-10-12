@@ -1,0 +1,15 @@
+Bugs:
+=====
+    -Syntax Highlight doesn't work well
+    -Indentations d'oesn't work well
+    -TreeView doesn't work well
+    -Editor doesn't format well when opening file
+
+To do make_list:
+================
+
+    -File Explorer (TreeView)
+    -Auto Suggestion in CodeEditor
+    -Syntax Highlight in CodeEditor
+    -General Project Search 
+    -Custom Terminal

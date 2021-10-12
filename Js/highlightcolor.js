@@ -1,17 +1,14 @@
-// import hljs from '. highlight.js/lib/core';
-// import python from '.highlight.js/lib/languages/python';
-const hljs = require('highlight.js/lib/core');
-const python = require('highlight.js/lib/languages/python');
-
-var text = 'def load():';
-
-function colorify(text) {
-    try {
-        hljs.registerLanguage('python', python);
-        console.log(hljs.highlight(text, { language: "python" }))
-        return hljs.highlight(text, { language: "python" });
-
-    } catch (error) {
-        console.log(error)
-    }
+function colorify(code) {
+    const Prism = require('prismjs');
+    const c = Prism.highlight(code, Prism.languages.javascript, 'javascript');
+    console.log(c)
+    return c
 }
+
+// Returns a highlighted HTML string
+// "language-python"
+
+// const highlight = (code, language) => {
+//     loadPrismLanguage(language)
+//     return Prism.highlight(code, Prism.languages[language])
+//    }
