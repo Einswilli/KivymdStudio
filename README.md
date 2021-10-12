@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/Einswilli/kivymdStudio/assets/images/kv.png" height="60"><br>
+<img src="https://github.com/Einswilli/KivymdStudio/assets/images/kv.png" height="60"><br>
 A kivyMD devellopment studio
 </p>
 
@@ -20,7 +20,7 @@ A kivyMD devellopment studio
     - Windows 
         - click [HERE](https://www.python.org/downloads/windows/) for downloads
 
-2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/kivymdStudio/master)
+2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/KivymdStudio/master)
 
 3. In the extracted folder, run these commands
     - `python install.py` <- install dependencies
@@ -29,16 +29,16 @@ A kivyMD devellopment studio
 ## Screenshots
 | | | |
 |:-------------------------:|:-------------------------:|:-------------------------:|
-|<a href="https://github.com/Einswilli/kivymdStudio/master/Screenshots/1.png"> 
-    <img width="1604" src="https://github.com/Einswilli/kivymdStudio/master/Screenshots/1.png">
+|<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/1.png"> 
+    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/1.png">
     
 </a> | 
-<a href="https://github.com/Einswilli/kivymdStudio/master/Screenshots/2.png"> 
-    <img width="1604" src="https://github.com/Einswilli/kivymdStudio/master/Screenshots/2png"> 
+<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/2.png"> 
+    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/2png"> 
     
 </a> |
-<a href="https://github.com/Einswilli/kivymdStudio/master/Screenshots/3.png">
- <img width="1604" src="https://github.com/Einswilli/kivymdStudio/master/Screenshots/3.png"> 
+<a href="https://github.com/Einswilli/KivymdStudio/master/Screenshots/3.png">
+ <img width="1604" src="https://github.com/Einswilli/KivymdStudio/master/Screenshots/3.png"> 
  </a>||
 
 ## To do make_list
