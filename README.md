@@ -34,11 +34,11 @@ A kivyMD devellopment studio
     
 </a> | 
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2.png?raw=true"> 
-    <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2png?raw=true"> 
+    <img width="1604" src="Screenshots/2png?raw=true"> 
     
 </a> |
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png?raw=true">
- <img width="1604" src="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png?raw=true"> 
+ <img width="1604" src="Screenshots/3.png?raw=true"> 
  </a>||
 
 ## To do make_list
