@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import sys
+import subprocess
 #import tree
 
 from PySide6.QtGui import QGuiApplication
@@ -222,17 +223,18 @@ class Studio(QObject):
         # print(cod)
             return self.colorify(code)#self.colorify(code)# cod
         except :
-            return f'Error when trying to open the file: {path}\n\r may be the file format is not supported '
+            return f'Error when trying to open the file: {path}\n\r may be the file extention is not supported '
 
     @Slot(str,result='QString')
     def get_filename(self,path):
         filename=str(path).split('/')[-1]
         return filename
 
-    @Slot(str,result='QVariant')
-    def newfolder(self,foldername):
-        os.makedirs(foldername)
-        pass
+    @Slot(str,str,result='QVariant')
+    def newfolder(self,foldername,path_):
+        os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
+        #os.makedirs(foldername)
+        #pass
 
     @Slot(str,str,str)
     def savefile(self,p,fname,contenu):
@@ -262,6 +264,14 @@ class Studio(QObject):
         # self.folderOpen.emit(Json.dumps(ls , indent=4))
         # #print(Json.dumps(ls , indent=4))
         return Json.dumps(ls , indent=4)
+
+    @Slot()
+    def emulator(self):
+        executeur=subprocess.Popen('python3 /root/KivyLiteEmulator/main.py',shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+        sortie=executeur.stdout.read()+executeur.stderr.read()
+        #strsortie=str(sortie)
+        print(sortie)
+        #os.system('python3 /root/KivyLiteEmulator/main.py')
 
     def tree_to_dict(self,path_):
         file_token = ''

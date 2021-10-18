@@ -122,7 +122,10 @@ ApplicationWindow {
     }
     Shortcut {
         sequence: "Ctrl+K"
-        onActivated: console.log(' folder new')
+        onActivated:{ 
+            console.log(' folder new')
+            foldn.visible=true
+        }
     }
     Shortcut {
         sequence: "Alt+Ctrl+K"
@@ -636,6 +639,13 @@ ApplicationWindow {
                 id:fm
                 anchors.fill: parent
                 bscolor:parent.color
+                onFileSelected:{
+                    //console.log(file,'11111111')
+                    var tx=backend.openfile(file)
+                    cde=tx
+                    var tl=backend.get_filename(file)
+                    codetab.addTab(tl,cb)
+                }
             }
 
             // CustomTree{
@@ -875,7 +885,7 @@ ApplicationWindow {
                         parent.color=barfonce
                     }
                     onClicked:{
-                        
+                        foldn.visible=true
                     }
                 }
                 
@@ -1253,27 +1263,45 @@ ApplicationWindow {
             y:5
             color:parent.color
             Rectangle{
-                x:90
+                id:runer
+                width:22
+                height:parent.height
+                radius:6
+                //border.color:bordercolor
+                //border.width:1
+                color:parent.color
+                Image{
+                    id:runimg
+                    width:15
+                    height:15
+                    source:'../assets/icons/run.png'
+                    anchors.centerIn: parent
+                }
+            }
+            Rectangle{
+                //x:90
                 color:parent.color
                 height:parent.height
-                width:95
-                radius:10
+                width:emimg.width+4
+                radius:6
                 border.color:bordercolor
+                anchors.right:parent.right
+                anchors.margins: 50+list.width
                 border.width:1
 
-                Text{
-                    text:'Emulator'
-                    color:'#5E6266'
-                    font.pixelSize:14
-                    x:5
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                // Text{
+                //     text:'Emulator'
+                //     color:'#5E6266'
+                //     font.pixelSize:14
+                //     x:5
+                //     anchors.verticalCenter: parent.verticalCenter
+                // }
                 Image{
-                    x:68
+                    id:emimg
                     width:22
                     height:22
                     source:'../assets/icons/emu.png'
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.centerIn: parent
                 }
 
                 MouseArea{
@@ -1291,6 +1319,7 @@ ApplicationWindow {
                             emmubox.visible=false
                             emustate='off'
                         }else{
+                            backend.emulator()
                             emu_on.start()
                             emmubox.visible=true
                             emustate='on'
@@ -2182,11 +2211,13 @@ ApplicationWindow {
                 ce.code=qsTr(cde).replace('\n\r',qsTr('\n'))
                 
             }
+            
             Shortcut {
                 sequence: "Ctrl+S"
+                enabled:parent.focus
                 onActivated: {
                     console.log('saving file...')
-                    cde=ce.scode.getText(0,ce.code.length)
+                    cde=ce.scode.getText(0,ce.scode.length)
                     //console.log(cde)
                     //backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,codetab.getTab(codetab.currentIndex).item.code)
                     backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
@@ -2207,6 +2238,21 @@ ApplicationWindow {
             //console.log()
             backend.newfile(fileop.get_filename,fm.folder.toString())
             codetab.addTab(fileop.get_filename,cb)
+        }
+    }
+    FileOpenDialog{
+        id:foldn
+        anchors.centerIn: parent
+        visible:false
+        theme_color:barclaire
+        border_color:bordercolor
+        message:'Create new folder'
+        field.placeholderText:'foldername'
+        Keys.onReturnPressed:{
+            visible=false
+            //console.log()
+            backend.newfolder(foldn.get_filename,fm.folder.toString())
+            //codetab.addTab(fileop.get_filename,cb)
         }
     }
 

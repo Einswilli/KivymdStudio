@@ -87,18 +87,20 @@ Rectangle {
     property string sfile
 
     signal fileSelected(string file)
+    //signal 
 
     function selectFile(file) {
         if (file !== "") {
             folder = loader.item.folders.folder
             fileBrowser.fileSelected(file)
-            sfile=file
+            //sfile=file
         }
         //loader.sourceComponent = undefined
     }
     function getselectedfile(){
         return sfile.toString()
     }
+    //onFileSelected:fileBrowser.getselectedfile()
 
     Loader {
         id: loader
@@ -151,6 +153,7 @@ Rectangle {
                             down(path);
                         else
                             fileBrowser.selectFile(path)
+                            sfile=fileName
                     }
                     width: root.width
                     height: itemHeight
@@ -206,7 +209,7 @@ Rectangle {
                                 img.source="../assets/icons/ima.svg"
                             }else if (fileName.substr(-4,4)=='.jpg'){
                                 img.source="../assets/icons/ima.svg"
-                            }else if (fileName.substr(-5,5)=='.webpm'){
+                            }else if (fileName.substr(-5,5)=='.webp'){
                                 img.source="../assets/icons/im.svg"
                             }else if (fileName.substr(-5,5)=='.jpeg'){
                                 img.source="../assets/icons/im.svg"

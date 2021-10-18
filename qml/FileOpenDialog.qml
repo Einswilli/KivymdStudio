@@ -13,6 +13,7 @@ Item{
     
     property alias get_field: field
     property alias get_filename: field.text
+    property alias field:field
     
 
     Rectangle{
