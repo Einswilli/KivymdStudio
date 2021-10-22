@@ -52,6 +52,7 @@ Item{
     property color flk_color
     property color compcolor
     property alias code:editor.text
+    property alias link:chemin.text
 
     Flickable {
         id: flickb
@@ -166,7 +167,7 @@ Item{
             font.pixelSize:14
             font.family:'monospace'
             selectByMouse: true
-            selectionColor: '#254655B9'//'#1C98E0'
+            selectionColor: '#254655C5'//'#1C98E0'
             tabStopDistance: 40
             textFormat: TextEdit.RichText
             property bool processing:false
@@ -297,11 +298,11 @@ Item{
                             else if (f.match(/^[ ]/))
                                 return "&nbsp;"
                             else if (f.match(/^[\t]/))
-                                return "<span style='color:#7A7A7AD7'>"+'│   '+"<span>"//U+0009
-                            else if (f.match(/\r\n|\r|\n/)){
+                                return "<span style='color:#757575E1'>"+'│'+U+0009+"<span>"//U+0009
+                            else if (f.match(/\r\n/)){
                                 console.log('retour!')
-                                return '<br/>'//(U+000A)
-                            }else if (f.match(/^['\|'''\|"""]/))
+                                return f//'<br/>'//(U+000A)
+                            }else if (f.match(/^['|'''|"""]/))
                                 return "<span style='color:#C46F37'>" + f + "</span>";
                             else if (f.match(/"(.*)"/))
                                 return "<span style='color:#9B6039'>" + f + "</span>";
@@ -326,6 +327,19 @@ Item{
             width: editor.width+100
             border.width:1
             border.color:bordercolor
+        }
+        Rectangle{
+            
+            color: "#1E1E1F"//'transparent'//'#609EAD96'
+            height: root.lineHeight/-5
+            width: flickb.width
+            visible: false
+            Text{
+                id:chemin
+                font.pixelSize:12
+                text:'le lien du fichier...'
+                color:'white'
+            }
         }
         ScrollBar.vertical: ScrollBar {
             width:15

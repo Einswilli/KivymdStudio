@@ -8,7 +8,7 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.folderlistmodel 2.15
 import QtQml.Models 2.2
 //import QtQuick.Controls 1.4 as OV
-//import DotPy.FolderTreeView 1.0
+import DotPy.Core 1.0
 //import '../highlightcolor.js' as Logic
 //import '..highlight.js/lib/core' as Logic
 //import ArcGIS.AppFramework.Scripting 1.0
@@ -51,6 +51,7 @@ ApplicationWindow {
         //backend.chargeTree(tree)
         root.width=parseInt(backend.getScreen().split(',')[0])
         root.height=parseInt(backend.getScreen().split(',')[1])
+        minal.Schow()
         //console.log(root.height,root.width)
     }
 
@@ -97,6 +98,7 @@ ApplicationWindow {
     property color hovercolor:'#609EAD96'
     property string emustate:'off'
     property string cde
+    property string lnk
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -643,6 +645,7 @@ ApplicationWindow {
                     //console.log(file,'11111111')
                     var tx=backend.openfile(file)
                     cde=tx
+                    lnk=file.toString()
                     var tl=backend.get_filename(file)
                     codetab.addTab(tl,cb)
                 }
@@ -1988,11 +1991,26 @@ ApplicationWindow {
             height:parent.height-xyw.height-1
             color:parent.color
             anchors.horizontalCenter: parent.horizontalCenter
-            TextEdit{
-                anchors.fill: parent
-                anchors.margins: 15
-                color:'#E07229'
+            Terminal{
+                id:minal
+                //anchors.fill: parent
             }
+            // TextEdit{
+            //     font.pixelSize:14
+            //     font.family:'monospace'
+            //     anchors.fill: parent
+            //     anchors.margins: 15
+            //     color:'#D6D4D3'
+            //     wrapMode:TextEdit.WordWrap
+            //     //readOnly:true
+            //     Keys.onReturnPressed:{
+            //         text=backend.terminal(getText(0,length))
+            //     }
+            // }
+            // Properties {
+            //     condition: qbs.buildVariant == "debug"
+            //     consoleApplication: true //show console
+            // }
         }
 
     }
@@ -2199,6 +2217,7 @@ ApplicationWindow {
             color:root.color
             width:codetab.width
             height:codetab.height
+            property alias cd:ce.scode
             CodeEditor{
                 id:ce
                 compcolor:barclaire
@@ -2209,7 +2228,8 @@ ApplicationWindow {
             }
             Component.onCompleted:{
                 ce.code=qsTr(cde).replace('\n\r',qsTr('\n'))
-                
+                ce.link=lnk
+                //console.log(ce.link)
             }
             
             Shortcut {
@@ -2218,9 +2238,7 @@ ApplicationWindow {
                 onActivated: {
                     console.log('saving file...')
                     cde=ce.scode.getText(0,ce.scode.length)
-                    //console.log(cde)
-                    //backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,codetab.getTab(codetab.currentIndex).item.code)
-                    backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
+                    backend.savefile(ce.link.toString(),backend.get_filename(ce.link),codetab.getTab(codetab.currentIndex).item.cd.getText(0,ce.code.length))
                     //cde=''
                 }
             }

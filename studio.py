@@ -3,6 +3,9 @@ import os
 from pathlib import Path
 import sys
 import subprocess
+from Terminal import*
+import getpass
+import socket
 #import tree
 
 from PySide6.QtGui import QGuiApplication
@@ -14,6 +17,7 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PySide2.QtQml import qmlRegisterType
+import fcntl, locale, pty, struct, sys, termios
 
 import simplejson as Json
 from plyer import notification
@@ -116,45 +120,38 @@ class DisplayablePath(object):
         return ''.join(reversed(parts))
 
 
-class StandardItem(QStandardItem):
-    def __init__(self, txt='', font_size=12, set_bold=False, color=QColor(0, 0, 0)):
-        super().__init__()
-
-        fnt = QFont('Open Sans', font_size)
-        fnt.setBold(set_bold)
-
-        self.setEditable(False)
-        self.setForeground(color)
-        self.setFont(fnt)
-        self.setText(txt)
-
-class ItemModel(QStandardItemModel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.setColumnCount(1)
-
-        root = self.invisibleRootItem()
-        group1 = QStandardItem("group1")
-        group1.setText("group1")
-        value1 = QStandardItem("value1")
-        value1.setText("value1")
-        group1.appendRow(value1)
-        root.appendRow(group1)
-
 #@QmlElement
 class FolderTree(QObject):
-    pass
-    # def __init__(self,parent=None):
-    #     super().__init__(self)
-    #     tree=QTreeView()
-    #     tree.setHeaderHidden(True)
-    #     self.elements=[]
-    #     self.rootName=''
+    #pass
+    def __init__(self):
+        QObject.__init__(self)
 
-    #     self.root=StandardItem(self.rootname,16)
+    def Schow(self):
 
+        ter=Terminal()
+        fontMetrics = ter.fontMetrics()
+        target_width = (fontMetrics.boundingRect(
+            REFERENCE_CHAR * DEFAULT_COLS
+        ).width() + app.style().pixelMetric(QStyle.PM_ScrollBarExtent))
+        ter.resize(target_width, fontMetrics.height() * DEFAULT_ROWS)
 
+        # Launch DEFAULT_TTY_CMD in the terminal
+        ter.spawn(DEFAULT_TTY_CMD)
+        ter.show()
+    
+
+DEFAULT_TTY_CMD = ['/bin/bash']
+DEFAULT_COLS = 80
+DEFAULT_ROWS = 25
+
+# NOTE: You can use any QColor instance, not just the predefined ones.
+DEFAULT_TTY_FONT = QFont('Noto', 16)
+DEFAULT_TTY_FG = Qt.lightGray
+DEFAULT_TTY_BG = Qt.black
+
+# The character to use as a reference point when converting between pixel and
+# character cell dimensions in the presence of a non-fixed-width font
+REFERENCE_CHAR = 'W'
 class Studio(QObject):
 
     def __init__(self):
@@ -163,6 +160,7 @@ class Studio(QObject):
     fileOpen=Signal(dict)
     colorhighlight=Signal(str)
     screeninfo=Signal(dict)
+    terminalReady=Signal(str)
     
     @Slot(result='QString')
     def getScreen(self):
@@ -238,8 +236,11 @@ class Studio(QObject):
 
     @Slot(str,str,str)
     def savefile(self,p,fname,contenu):
-        print(p[7:],fname,contenu)
-        with open(os.path.join(str(p)[7:],str(fname)),'w') as f:
+        if str(p).endswith(fname):
+            idx=str(p).index(fname)
+            p=p[7:idx]
+        print(p,fname,contenu)
+        with open(os.path.join(p,fname),'w') as f:
             f.write(contenu)
             f.close()
 
@@ -273,6 +274,35 @@ class Studio(QObject):
         print(sortie)
         #os.system('python3 /root/KivyLiteEmulator/main.py')
 
+    @Slot(str,result='QString')
+    def terminal(self,cmd):
+        self.pty_m, pty_s = pty.openpty()
+        term_attrs = termios.tcgetattr(pty_s)
+        term_attrs[3] &= ~termios.ECHO
+        termios.tcsetattr(pty_s, termios.TCSANOW, term_attrs)
+        child_env = os.environ.copy()
+        child_env['TERM'] = 'tty'
+        subprocess.Popen(cmd,  # nosec
+            stdin=pty_s, stdout=pty_s, stderr=pty_s,
+            env=child_env,
+            preexec_fn=os.setsid)
+        return f'{getpass.getuser()}@{socket.gethostname()}:\n\r{self.run_command(cmd)}'
+        # try:
+        #     # Use 'replace' as a not-ideal-but-better-than-nothing way to deal
+        #     # with bytes that aren't valid in the chosen encoding.
+        #     child_output = os.read(0, 1024).decode(
+        #         self.codec, 'replace')
+        # except OSError:
+        #     # Ask the event loop to exit and then return to it
+        #     #QApplication.instance().quit()
+        #     child_output=''
+        # return child_output
+        
+    def run_command(self,cmd):
+        executeur=subprocess.Popen(str(cmd),shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+        sortie=str(executeur.stdout.read()+executeur.stderr.read())
+        return sortie.replace('\n','\n\r')
+
     def tree_to_dict(self,path_):
         file_token = ''
         for root, dirs, files in os.walk(path_[6:]):
@@ -290,15 +320,9 @@ class Studio(QObject):
         app = QGuiApplication(sys.argv)
         QQuickStyle.setStyle("Material")
         engine = QQmlApplicationEngine()
-        qmlRegisterType(FolderTree,'DotPy.FolderTreeView' , 1, 0, 'FolderTree')
+        qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()
-        model=ItemModel()
-        item=StandardItem()
-        # ft=FolderTree()
-        # ft.addchildren(data)
         engine.rootContext().setContextProperty('backend',studio)
-        engine.rootContext().setContextProperty('treeModel',model)
-        engine.rootContext().setContextProperty('StItem',item)
         #engine.rootContext().setContextProperty('FolderTree',ft)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
