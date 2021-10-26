@@ -101,6 +101,7 @@ FocusScope {
         var tab = tabcomp.createObject(loader)
         tab.sourceComponent = component
         tab.title = title
+        currentIndex++
         // insert at appropriate index first, then set the parent to
         // avoid onChildrenChanged appending it to the end of the list
         __tabs.insert(index, {tab: tab})

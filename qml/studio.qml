@@ -8,7 +8,7 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.folderlistmodel 2.15
 import QtQml.Models 2.2
 //import QtQuick.Controls 1.4 as OV
-import DotPy.Core 1.0
+//import DotPy.Core 1.0
 //import '../highlightcolor.js' as Logic
 //import '..highlight.js/lib/core' as Logic
 //import ArcGIS.AppFramework.Scripting 1.0
@@ -51,7 +51,7 @@ ApplicationWindow {
         //backend.chargeTree(tree)
         root.width=parseInt(backend.getScreen().split(',')[0])
         root.height=parseInt(backend.getScreen().split(',')[1])
-        minal.Schow()
+        //minal.show()
         //console.log(root.height,root.width)
     }
 
@@ -99,6 +99,7 @@ ApplicationWindow {
     property string emustate:'off'
     property string cde
     property string lnk
+    property string imsource
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -647,7 +648,35 @@ ApplicationWindow {
                     cde=tx
                     lnk=file.toString()
                     var tl=backend.get_filename(file)
-                    codetab.addTab(tl,cb)
+                    if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
+                        imsource=file
+                        codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
+                    }else{
+                        codetab.insertTab(codetab.currentIndex+1,tl,cb)
+                    }
+                    //codetab.getTab(codetab.currentIndex+1).visible=true
+                }
+            }
+            Component{
+                id:imcomp
+                Rectangle{
+                    id:imrect
+                    color:root.color
+                    width:codetab.width-400
+                    height:codetab.height-200
+                    anchors.centerIn: parent
+                    Image{
+                        id:imv
+                        width:parent.width-200
+                        height:parent.height-200
+                        fillMode:Image.PreserveAspectFit
+                        //anchors.fill: imrect
+                        anchors.centerIn: parent
+                        source:''
+                    }
+                    Component.onCompleted:{
+                        imv.source=imsource
+                    }
                 }
             }
 
@@ -1441,7 +1470,7 @@ ApplicationWindow {
         color:appcolor
         x:leftbar.width+leftbox.width
         height:parent.height-top_bar.height
-        width:root.width-leftbar.width-leftbox.width
+        width:root.width-x//leftbar.width-leftbox.width
 
         
         TabView{
@@ -1656,9 +1685,57 @@ ApplicationWindow {
                                 width:parent.width-2
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 color:parent.color
+                                Component.onCompleted:{
+                                    recmod.append(JSON.parse(backend.recents()))
+                                }
+
+                                Component{
+                                    id:lcomp
+                                    Rectangle{
+                                        width:parent.width-4
+                                        height:30
+                                        color:'transparent'
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        
+                                        Text{
+                                            x:5
+                                            text:fname
+                                            font.pixelSize:14
+                                            color:'#4FA3E7'
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        Rectangle{
+                                            width:50
+                                            height:parent.height-10
+                                            radius:6
+                                            anchors.right:parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.margins: 5
+                                            color:'#5699D8'
+                                            
+                                            Text{
+                                                text:'open'
+                                                anchors.centerIn: parent
+                                                font.pixelSize:14
+                                                color:'white'
+                                            }
+                                            
+                                        }
+                                    }
+                                }
+
+                                ListModel{
+                                    id:recmod
+                                    
+                                }
 
                                 ScrollView{
                                     anchors.fill: parent
+                                    ListView{
+                                        delegate:lcomp
+                                        model:recmod
+                                    }
                                     
                                 }
                             }
@@ -1853,47 +1930,47 @@ ApplicationWindow {
                 }
                 
             }
-            Tab{
-                title: 'main.py'
-                active: true
-                //asynchronous: bool
-                Rectangle{
-                    color:body.color
-                    anchors.fill: parent
+            // Tab{
+            //     title: 'main.py'
+            //     active: true
+            //     //asynchronous: bool
+            //     Rectangle{
+            //         color:body.color
+            //         anchors.fill: parent
 
-                    Rectangle{
-                        color:parent.color
-                        width:parent.width
-                        height:parent.height
-                        //x:60
+            //         Rectangle{
+            //             color:parent.color
+            //             width:parent.width
+            //             height:parent.height
+            //             //x:60
 
-                        CodeEditor{
-                            compcolor:barclaire
-                            edit_height:parent.height-20
-                            edit_width:parent.width-20
-                            anchors.fill: parent
-                        }
-                    }
-                }
-            }
+            //             CodeEditor{
+            //                 compcolor:barclaire
+            //                 edit_height:parent.height-20
+            //                 edit_width:parent.width-20
+            //                 anchors.fill: parent
+            //             }
+            //         }
+            //     }
+            // }
 
-            Tab{
-                title: 'main.kv'
-                active: true
-                //asynchronous: bool
-                Rectangle{
-                    color:body.color
-                    anchors.fill: parent
+            // Tab{
+            //     title: 'main.kv'
+            //     active: true
+            //     //asynchronous: bool
+            //     Rectangle{
+            //         color:body.color
+            //         anchors.fill: parent
                     
-                    CodeEditor{
-                        compcolor:barclaire
-                        edit_height:parent.height-20
-                        edit_width:parent.width-20
-                        anchors.fill: parent
-                    }
+            //         CodeEditor{
+            //             compcolor:barclaire
+            //             edit_height:parent.height-20
+            //             edit_width:parent.width-20
+            //             anchors.fill: parent
+            //         }
                     
-                }
-            }
+            //     }
+            // }
         }
     }
     Rectangle{
@@ -1991,26 +2068,72 @@ ApplicationWindow {
             height:parent.height-xyw.height-1
             color:parent.color
             anchors.horizontalCenter: parent.horizontalCenter
-            Terminal{
-                id:minal
-                //anchors.fill: parent
+            // Terminal{
+            //     id:minal
+            //     //anchors.fill: parent
+            // }
+            Flickable{
+                id:fkb
+                anchors.fill: parent
+                
+                TextEdit{
+                    id:txdt
+                    font.pixelSize:14
+                    font.family:'monospace'
+                    width:parent.width
+                    height:(lineCount*25)+100
+                    //anchors.fill: parent
+                    anchors.margins: 15
+                    color:'#D6D4D3'
+                    wrapMode:TextEdit.WordWrap
+                    readOnly:true
+                    Component.onCompleted:{//Keys.onReturnPressed:{
+                        insert(cursorPosition,Terminal.spawn(['/bin/bash']))
+                    }
+                    Rectangle{
+                        width:parent.width
+                        height:35
+                        anchors.bottom:parent.bottom
+                        color:'transparent'
+                        Text{
+                            id:mintex
+                            text:''
+                            font.bold:true
+                            font.pixelSize:14
+                            font.family:'monospace'
+                            color:'#044B85'
+                            anchors.verticalCenter: parent.verticalCenter
+                            Component.onCompleted:{
+                                text=backend.terminal()
+                            }
+                        }
+                        TextField{
+                            y:2
+                            x:mintex.width+5
+                            width:parent.width-mintex.width
+                            height:parent.height-10
+                            //anchors.verticalCenter: parent.verticalCenter
+                            background:Rectangle{
+                                anchors.fill: parent
+                                color:barclaire
+                            }
+                            color:'white'
+                            font.pixelSize:15
+                            font.family:'monospace'
+                            topPadding:2
+                            bottomPadding:4
+                            Keys.onReturnPressed:{
+                                txdt.insert(txdt.cursorPosition,backend.run_command(text))
+                                text=''
+                            }
+                        }
+                    }
+                }
+                ScrollBar.vertical: ScrollBar {
+                    width:15
+                    active: fkb.moving || !fkb.moving
+                }
             }
-            // TextEdit{
-            //     font.pixelSize:14
-            //     font.family:'monospace'
-            //     anchors.fill: parent
-            //     anchors.margins: 15
-            //     color:'#D6D4D3'
-            //     wrapMode:TextEdit.WordWrap
-            //     //readOnly:true
-            //     Keys.onReturnPressed:{
-            //         text=backend.terminal(getText(0,length))
-            //     }
-            // }
-            // Properties {
-            //     condition: qbs.buildVariant == "debug"
-            //     consoleApplication: true //show console
-            // }
         }
 
     }
@@ -2255,7 +2378,7 @@ ApplicationWindow {
             visible=false
             //console.log()
             backend.newfile(fileop.get_filename,fm.folder.toString())
-            codetab.addTab(fileop.get_filename,cb)
+            codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
         }
     }
     FileOpenDialog{
@@ -2296,7 +2419,7 @@ ApplicationWindow {
             cde=text
             //console.log(cde)
             
-            codetab.addTab(titre,cb)
+            codetab.insertTab(codetab.currentIndex+1, titre,cb)
             //cde=''
             //root.setcode(text)
         }

@@ -265,24 +265,26 @@ Item{
                             } else if (root.verify(bleus, re)) {
                                 return "<span style='color:#19478B'><b>" + f + "<b/></span>";
                             } else if (root.verify(greens, re)) {
-                                return "<span style='color:#00EBCB'><b>" + f + "<b/></span>";
+                                return "<span style='color:#00C0A6'><b>" + f + "<b/></span>";
                             }else if (f.match(/\b(?:init|__str__|repr|__dict__|hash|annotations|delatrtr|__class__|dir|doc|eq|format|getattribute|init_subclass|module|reduce|ne|new|reduce_ex|sizeof|setattr|slots)\b/)) {
                                 return "<span style='color:#EB7200'><b>" + f + "<b/></span>";
                             }else if (f.match(/^(def\s+\w+)/))
                                 return "<span style='color:#E2D958'>" + f + "</span>";
-                            else if (f.match(/^[0-9]+$/))
+                            else if (f.match(/\b0(?:b(?:_?[01])+|o(?:_?[0-7])+|x(?:_?[a-f0-9])+)\b|(?:\b\d+(?:_\d+)*(?:\.(?:\d+(?:_\d+)*)?)?|\B\.\d+(?:_\d+)*)(?:e[+-]?\d+(?:_\d+)*)?j?(?!\w)/i))//^[0-9]+$/))
                                 return "<span style='color:#8BE2CF'>" + f + "</span>";
-                            else if (f.match(/[{}[\](),]/))
+                            else if (f.match(/[(),]/))
                                 return "<span style='color:#729DDD'>" + f + "</span>";
+                            else if (f.match(/[{}]/))
+                                return "<span style='color:#8652B8'>" + f + "</span>";
+                            else if (f.match(/[[]/))
+                                return "<span style='color:#D2DD72'>" + f + "</span>";
+                            else if (f.match(/[\]]/))
+                                return "<span style='color:#D2DD72'>" + f + "</span>";
 
                             else if (f.match(/[-+%=]=?|!=|:=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/))
                                 return "<span style='color:#C2988B'>" + f + "</span>";
                             else if(f.match(/(?<=def)(\w+)/)){
                                 return "<span style='color:#E2D958'>" + f + "</span>";
-                            }
-
-                            else if (f.match(f.match(/(MD)[A-Z]\w*)/))){
-                                return "<span style='color:#00EBCB''>" + f + "</span>";
                             }
                             // if(f.match(/(?:__init__)/)){
                             //     return "<span style='color:#009FCF'>" + f + "</span>";
@@ -298,13 +300,13 @@ Item{
                             else if (f.match(/^[ ]/))
                                 return "&nbsp;"
                             else if (f.match(/^[\t]/))
-                                return "<span style='color:#757575E1'>"+'│'+U+0009+"<span>"//U+0009
+                                return "<span style='color:#757575E1'>"+U+0009+"<span>"//U+0009
                             else if (f.match(/\r\n/)){
                                 console.log('retour!')
                                 return f//'<br/>'//(U+000A)
-                            }else if (f.match(/^['|'''|"""]/))
+                            }else if (f.match(/^[']/))
                                 return "<span style='color:#C46F37'>" + f + "</span>";
-                            else if (f.match(/"(.*)"/))
+                            else if (f.match(/([fF][rR]|[rR][fF]|[fF])?"""(.)*"""|([fF][rR]|[rR][fF]|[fF])?"""(.)*'''|([uU]|[rR])?"(.)*"/))
                                 return "<span style='color:#9B6039'>" + f + "</span>";
                             // else if (f.match(/["]/))
                             //     return "<span style='color:#9B6039'>" + f + "</span>";

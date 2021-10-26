@@ -197,20 +197,23 @@ class Terminal(QTextEdit):
 
 # Run this code if the file is launched from the command line but not if
 # it is `import`ed as a dependency.
+    #def run(self):
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    mainwin = Terminal()
+        app = QApplication(sys.argv)
+        mainwin = Terminal()
 
-    # Cheap hack to estimate what 80x25 should be in pixels and resize to it
-    fontMetrics = mainwin.fontMetrics()
-    target_width = (fontMetrics.boundingRect(
-        REFERENCE_CHAR * DEFAULT_COLS
-    ).width() + app.style().pixelMetric(QStyle.PM_ScrollBarExtent))
-    mainwin.resize(target_width, fontMetrics.height() * DEFAULT_ROWS)
+        # Cheap hack to estimate what 80x25 should be in pixels and resize to it
+        fontMetrics = mainwin.fontMetrics()
+        target_width = (fontMetrics.boundingRect(
+            REFERENCE_CHAR * DEFAULT_COLS
+        ).width() + app.style().pixelMetric(QStyle.PM_ScrollBarExtent))
+        mainwin.resize(target_width, fontMetrics.height() * DEFAULT_ROWS)
 
-    # Launch DEFAULT_TTY_CMD in the terminal
-    mainwin.spawn(DEFAULT_TTY_CMD)
+        # Launch DEFAULT_TTY_CMD in the terminal
+        mainwin.spawn(DEFAULT_TTY_CMD)
 
-    # Take advantage of how Qt lets any widget be a top-level window
-    mainwin.show()
-    app.exec_()
+        # Take advantage of how Qt lets any widget be a top-level window
+        mainwin.show()
+        app.exec_()
+
+#Terminal().run()

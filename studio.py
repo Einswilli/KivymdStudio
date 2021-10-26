@@ -35,6 +35,7 @@ import pyperclip
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
 from PyQt5.Qt import QStandardItemModel, QStandardItem,QAbstractItemModel
+from PyQt5.QtWidgets import QApplication, QStyle, QTextEdit
 from PyQt5.QtGui import QFont, QColor
 from functools import partial
 from pathlib import Path
@@ -125,29 +126,75 @@ class FolderTree(QObject):
     #pass
     def __init__(self):
         QObject.__init__(self)
+        self.pty_m=None
+        self.codec = locale.getpreferredencoding()
+        #ter=QTextEdit()
+        # ter.run()
 
-    def Schow(self):
+    #@Property()
+    #def initial(self):
 
-        ter=Terminal()
-        fontMetrics = ter.fontMetrics()
-        target_width = (fontMetrics.boundingRect(
-            REFERENCE_CHAR * DEFAULT_COLS
-        ).width() + app.style().pixelMetric(QStyle.PM_ScrollBarExtent))
-        ter.resize(target_width, fontMetrics.height() * DEFAULT_ROWS)
+    #@Slot()
+    def cb_echo(self, pty_m):
+        """Display output that arrives from the PTY"""
+        # Read pending data or assume the child exited if we can't
+        # (Not technically the proper way to detect child exit, but it works)
+        try:
+            # Use 'replace' as a not-ideal-but-better-than-nothing way to deal
+            # with bytes that aren't valid in the chosen encoding.
+            child_output = os.read(pty_m, 1024).decode(
+                self.codec, 'replace')
+            return child_output
+        except OSError:
+            # Ask the event loop to exit and then return to it
+            #QApplication.instance().quit()
+            return ''
 
-        # Launch DEFAULT_TTY_CMD in the terminal
-        ter.spawn(DEFAULT_TTY_CMD)
-        ter.show()
+    @Slot(str,result='QString')
+    def spawn(self, argv):
+        """Launch a child process in the terminal"""
+        # Clean up after any previous spawn() runs
+        # TODO: Need to reap zombie children
+        # XXX: Kill existing children if spawn is called a second time?
+        # if self.pty_m:
+        #     self.pty_m=None
+
+        # Create a new PTY with both ends open
+        self.pty_m, pty_s = pty.openpty()
+
+        # Reset this, since it's PTY-specific
+        self.backspace_budget = 0
+
+        # Stop the PTY from echoing back what we type on this end
+        term_attrs = termios.tcgetattr(pty_s)
+        term_attrs[3] &= ~termios.ECHO
+        termios.tcsetattr(pty_s, termios.TCSANOW, term_attrs)
+
+        child_env = os.environ.copy()
+        child_env['TERM'] = 'tty'
+
+        # Launch the subprocess
+        # FIXME: Keep a reference so we can reap zombie processes
+        subprocess.Popen(argv,  # nosec
+            stdin=pty_s, stdout=pty_s, stderr=pty_s,
+            env=child_env,
+            preexec_fn=os.setsid)
+
+        # Close the child side of the PTY so that we can detect when to exit
+        os.close(pty_s)
+
+        # Hook up an event handler for data waiting on the PTY
+        # (Because I didn't feel like looking into whether QProcess can be
+        #  integrated with PTYs as a subprocess.Popen alternative)
+        # self.notifier = QSocketNotifier(
+        #     self.pty_m, QSocketNotifier.Read, self)
+        # self.notifier.activated.connect(self.cb_echo)
+        return self.cb_echo(self.pty_m)
     
 
 DEFAULT_TTY_CMD = ['/bin/bash']
 DEFAULT_COLS = 80
 DEFAULT_ROWS = 25
-
-# NOTE: You can use any QColor instance, not just the predefined ones.
-DEFAULT_TTY_FONT = QFont('Noto', 16)
-DEFAULT_TTY_FG = Qt.lightGray
-DEFAULT_TTY_BG = Qt.black
 
 # The character to use as a reference point when converting between pixel and
 # character cell dimensions in the presence of a non-fixed-width font
@@ -164,6 +211,12 @@ class Studio(QObject):
     
     @Slot(result='QString')
     def getScreen(self):
+
+        """this function is used to get the screen geometry like with an the height
+
+        Returns:
+            str: a str format of the screen geometry
+        """
         # screen=QGuiApplication.primaryScreen()
         # x=screen.size.width()
         # y=screen.size.height()
@@ -180,12 +233,32 @@ class Studio(QObject):
 
     #@Slot(str,result='QString')
     def colorify(self,text):
+
+        """This is used to highlight the given text and returns a html format text
+
+        Args:
+            text str: the text which will be highlighted (it could be a code)
+
+        Returns:
+            srt: the highlighted text (in html format)
+        """
+
         #QSyntaxHighlighter()
         style = get_style_by_name('native')
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
         return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style))
 
     def richcolor(self,text):
+
+        """This is used to highlight the given text and returns a html format text
+
+        Args:
+            text str: the text which will be highlighted (it could be a code)
+
+        Returns:
+            srt: the highlighted text (in html format)
+        """
+
         #pyperclip.set_clipboard("xclip")
         console = Console(record=True)
         syntax = Syntax(text, "python",background_color="#1F1F20",indent_guides=True,tab_size=8,theme='native')
@@ -196,6 +269,12 @@ class Studio(QObject):
 
     @Slot(str,str)
     def newfile(self,filename,fpath):
+        """this is used to create a new file in a given path
+
+        Args:
+            filename str: the file name
+            fpath str: the file path
+        """
         link=os.path.join(str(fpath)[7:],str(filename))
         print(fpath)
         os.system(f'touch {link}')
@@ -203,39 +282,77 @@ class Studio(QObject):
 
     @Slot(str,result='QString')
     def highlight(self,text):
+        """This is used to highlight the given text and returns a html format text
+
+        Args:
+            text str: the text which will be highlighted (it could be a code)
+
+        Returns:
+            srt: the highlighted text (in html format)
+        """
         #print(text)
         if text=='':return ''
         return self.richcolor(text)
 
     @Slot(str,result='QString')
     def openfile(self,path):
-        path=path[7:]
-        print(path)
+        """this fonction is used to open a file from a given path,save it to the history and returns the file content
+
+        Args:
+            path str: the file path 
+
+        Returns:
+            str: the file content
+        """
         code=''
-        cod=''
+        curs,conn=self.connect_To_Db()
+        
         try:
-            with open(path,'r') as f:
+            curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
+            conn.commit()
+            conn.close()
+            with open(path[7:],'r') as f:
                 code=f.read()
-        # for l in code.split('\n'):cod+=l+'\n\r'
-        # self.fileOpen.emit(cod)
-        # print(cod)
-            return self.colorify(code)#self.colorify(code)# cod
+            return self.colorify(code)#self.richcolor(code)# cod
         except :
             return f'Error when trying to open the file: {path}\n\r may be the file extention is not supported '
 
     @Slot(str,result='QString')
     def get_filename(self,path):
+        """this function is used to get the file name from a given path
+
+        Args:
+            path str: the file path
+
+        Returns:
+            str: the file name
+        """
         filename=str(path).split('/')[-1]
         return filename
 
     @Slot(str,str,result='QVariant')
     def newfolder(self,foldername,path_):
+        """This function is used to create a new folder in a directory
+
+        Args:
+            foldername str  : the new folder name
+            path_ str       : the directory path
+        """
         os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
         #os.makedirs(foldername)
         #pass
 
     @Slot(str,str,str)
     def savefile(self,p,fname,contenu):
+        """
+        Function for saving file
+
+        Argv:
+            p         : the file path
+            fname     : the file name
+            contenue  : the file content
+        """
+
         if str(p).endswith(fname):
             idx=str(p).index(fname)
             p=p[7:idx]
@@ -246,65 +363,76 @@ class Studio(QObject):
 
     @Slot(result='QVariant')
     def recents(self):
-        pass
+        curs,conn=self.connect_To_Db()
+        lst=[]
+        try:
+            curs.execute('SELECT * FROM history')
+            lst=[{'fname':i[1]} for i in curs.fetchall()]
+        except:pass
+        
+        return Json.dumps(lst, indent=4)
+
+    #@Slot(str)
+    def save_to_history(self,path_):
+        """This function is called when we re trying to save a given file path to the history
+
+        Args:
+            path_ str: the file path
+
+        """
+        curs,conn=self.connect_To_Db()
+        try:
+            curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
+            conn.commit()
+            conn.close()
+        except:pass
     
     @Slot(str,result='QVariant')
     def openfolder(self,path_):
+        """
+        Open folder fuction
+
+        Returns:
+            a JSON encoded list of the folder
+        """
         print(path_)
         paths = DisplayablePath.make_tree(Path(path_[6:]))
         ls=[{'filename':str(path.displayable())} for path in paths]
         
-        # tree,lst=self.tree_to_dict(path_)
-        # #lst=[{'itemName':f} for f in lst]
-        # ls=[]
-        # for i in tree:
-        #     d=[{'itemName':e.name}for e in os.scandir(os.path.join(path_[6:],i))]
-        #     ls.append({'categoryName':i,'subitems':d})
-        #     #d={'categoryName':self.tree_to_dict(os.path.join(path_,i))}
-        # for i in lst:ls.append(i)
-        # self.folderOpen.emit(Json.dumps(ls , indent=4))
-        # #print(Json.dumps(ls , indent=4))
+        
         return Json.dumps(ls , indent=4)
 
     @Slot()
     def emulator(self):
+        """ This function will be used to start the kivy emulator"""
+
         executeur=subprocess.Popen('python3 /root/KivyLiteEmulator/main.py',shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
         sortie=executeur.stdout.read()+executeur.stderr.read()
         #strsortie=str(sortie)
         print(sortie)
         #os.system('python3 /root/KivyLiteEmulator/main.py')
 
-    @Slot(str,result='QString')
-    def terminal(self,cmd):
-        self.pty_m, pty_s = pty.openpty()
-        term_attrs = termios.tcgetattr(pty_s)
-        term_attrs[3] &= ~termios.ECHO
-        termios.tcsetattr(pty_s, termios.TCSANOW, term_attrs)
-        child_env = os.environ.copy()
-        child_env['TERM'] = 'tty'
-        subprocess.Popen(cmd,  # nosec
-            stdin=pty_s, stdout=pty_s, stderr=pty_s,
-            env=child_env,
-            preexec_fn=os.setsid)
-        return f'{getpass.getuser()}@{socket.gethostname()}:\n\r{self.run_command(cmd)}'
-        # try:
-        #     # Use 'replace' as a not-ideal-but-better-than-nothing way to deal
-        #     # with bytes that aren't valid in the chosen encoding.
-        #     child_output = os.read(0, 1024).decode(
-        #         self.codec, 'replace')
-        # except OSError:
-        #     # Ask the event loop to exit and then return to it
-        #     #QApplication.instance().quit()
-        #     child_output=''
-        # return child_output
+    @Slot(result='QString')
+    def terminal(self):
         
+        # subprocess.Popen(cmd,  # nosec
+        #     stdin=pty_s, stdout=pty_s, stderr=pty_s,
+        #     env=child_env,
+        #     preexec_fn=os.setsid)
+        return f'{getpass.getuser()}@{socket.gethostname()}:\n\r'
+        
+    @Slot(str,result='QString')
     def run_command(self,cmd):
+        '''Runs shell commands and returns the output'''
+
         executeur=subprocess.Popen(str(cmd),shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-        sortie=str(executeur.stdout.read()+executeur.stderr.read())
-        return sortie.replace('\n','\n\r')
+        sortie=str(executeur.stdout.read()+executeur.stderr.read())[2:-3].split('\n')
+        srt='\n\r'.join(sortie)
+        return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
 
     def tree_to_dict(self,path_):
-        file_token = ''
+        '''' transforming the directory tree in dictionnary '''
+
         for root, dirs, files in os.walk(path_[6:]):
             tree = {d: self.tree_to_dict(os.path.join(root, d)) for d in dirs}
             lst=[{'itemName': str(f)} for f in files]
@@ -320,10 +448,11 @@ class Studio(QObject):
         app = QGuiApplication(sys.argv)
         QQuickStyle.setStyle("Material")
         engine = QQmlApplicationEngine()
-        qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
+        #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()
+        ft=FolderTree()
         engine.rootContext().setContextProperty('backend',studio)
-        #engine.rootContext().setContextProperty('FolderTree',ft)
+        engine.rootContext().setContextProperty('Terminal',ft)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():
