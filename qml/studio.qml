@@ -1698,6 +1698,7 @@ ApplicationWindow {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         
                                         Text{
+                                            id:rtx
                                             x:5
                                             text:fname
                                             font.pixelSize:14
@@ -1720,7 +1721,24 @@ ApplicationWindow {
                                                 font.pixelSize:14
                                                 color:'white'
                                             }
-                                            
+                                            MouseArea{
+                                                anchors.fill:parent
+                                                hoverEnabled:true
+                                                onClicked:{
+                                                    var tx=backend.openfile('file://'+rtx.text)
+                                                    cde=tx
+                                                    lnk='file://'+rtx.text.toString()
+                                                    var tl=backend.get_filename('file://'+rtx.text)
+                                                    if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
+                                                        imsource='file://'+rtx.text
+                                                        codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
+                                                    }else{
+                                                        codetab.insertTab(codetab.currentIndex+1,tl,cb)
+                                                    }
+                                                    console.log()
+                                                    backend.openfile(rtx.text)
+                                                }
+                                            }
                                         }
                                     }
                                 }

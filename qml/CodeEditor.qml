@@ -242,9 +242,9 @@ Item{
                     var tx=getText(0, length).toString()
                     //console.log(l)
                     //for(var i in text.split('\n'))
-                    // var t=backend.highlight(getText(0,length))//.split('\n'))
+                    // var t=backend.highlight(tx)
                     // text=t
-                    //console.log(t)
+                    //console.log(tx)
                     
                     let markUp = tx.replace(
                         /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,

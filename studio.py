@@ -244,9 +244,9 @@ class Studio(QObject):
         """
 
         #QSyntaxHighlighter()
-        style = get_style_by_name('native')
+        style = get_style_by_name('monokai')
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style))
+        return str(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
 
     def richcolor(self,text):
 
@@ -261,11 +261,11 @@ class Studio(QObject):
 
         #pyperclip.set_clipboard("xclip")
         console = Console(record=True)
-        syntax = Syntax(text, "python",background_color="#1F1F20",indent_guides=True,tab_size=8,theme='native')
+        syntax = Syntax(text, "python",background_color="#1F1F20",indent_guides=True,tab_size=4,theme='native')
         console.print(syntax)
         r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
 
-        return r
+        return str(r)
 
     @Slot(str,str)
     def newfile(self,filename,fpath):
@@ -276,7 +276,7 @@ class Studio(QObject):
             fpath str: the file path
         """
         link=os.path.join(str(fpath)[7:],str(filename))
-        print(fpath)
+        #print(fpath)
         os.system(f'touch {link}')
         #print('cool!')
 
@@ -292,7 +292,7 @@ class Studio(QObject):
         """
         #print(text)
         if text=='':return ''
-        return self.richcolor(text)
+        return self.colorify(text)
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -313,6 +313,7 @@ class Studio(QObject):
             conn.close()
             with open(path[7:],'r') as f:
                 code=f.read()
+                self.richcolor(code)
             return self.colorify(code)#self.richcolor(code)# cod
         except :
             return f'Error when trying to open the file: {path}\n\r may be the file extention is not supported '
