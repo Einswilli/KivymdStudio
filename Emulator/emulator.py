@@ -68,21 +68,16 @@ Screen:
                         name:"page"
                         size:self.size
                         FitImage:
-                            source:'../assets/images/fd.jpg'
-                        MDBoxLayout:
-                            orientation:'vertical'
-                            size_hint:0.7,.3
-                            pos_hint:{'center_x':.5,'center_y':.7}
-                            canvas:
-                                Color:
-                                    rgba:hex('#FFFFFF4F')
-                                Rectangle:
-                                    pos:self.pos
-                                    size:self.size
-                            Lab:
-                                id:lab
-                                halign:'center'
-                                text:'13h : 19min'
+                            source:'../assets/images/anim4.gif'
+                            allow_strech:True
+                            anim_delay:1
+                            anim_reset:1
+                        
+                        Lab:
+                            id:lab
+                            halign:'center'
+                            text:'13h : 19min'
+                            pos_hint:{'center_x':.5,'center_y':.8}
 
             MDFloatLayout:
                 size:self.size
@@ -143,7 +138,8 @@ Screen:
 
 <Lab@MDLabel>:
     size_hint_y:None
-    height:26 #self.texture_size[1]
+    height:self.texture_size[1]
+    font_size:34
     #theme_text_color:"white"
     #font_color:'#ffffff'
     text_color:'#ffffff'
