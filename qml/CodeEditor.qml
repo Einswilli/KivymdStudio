@@ -250,7 +250,7 @@ Item{
                         /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,
                         function(f) {
                             //console.log("f: ", JSON.stringify(f));
-                            if (f.match(/(?<=class\s+)\w+/)) {
+                            if (f.match(/(?<=class )[a-zA-Z0-9_]+/mgi)) {
                                 return "<span style='color:#00EBCB'>" + f + "</span>";
                             } 
                             else if (f.match(/#/)) {
@@ -268,7 +268,7 @@ Item{
                                 return "<span style='color:#00C0A6'><b>" + f + "<b/></span>";
                             }else if (f.match(/\b(?:init|__str__|repr|__dict__|hash|annotations|delatrtr|__class__|dir|doc|eq|format|getattribute|init_subclass|module|reduce|ne|new|reduce_ex|sizeof|setattr|slots)\b/)) {
                                 return "<span style='color:#EB7200'><b>" + f + "<b/></span>";
-                            }else if (f.match(/^(def\s+\w+)/))
+                            }else if (f.match(/(?<=def )\w+/))
                                 return "<span style='color:#E2D958'>" + f + "</span>";
                             else if (f.match(/\b0(?:b(?:_?[01])+|o(?:_?[0-7])+|x(?:_?[a-f0-9])+)\b|(?:\b\d+(?:_\d+)*(?:\.(?:\d+(?:_\d+)*)?)?|\B\.\d+(?:_\d+)*)(?:e[+-]?\d+(?:_\d+)*)?j?(?!\w)/i))//^[0-9]+$/))
                                 return "<span style='color:#8BE2CF'>" + f + "</span>";
@@ -283,7 +283,7 @@ Item{
 
                             else if (f.match(/[-+%=]=?|!=|:=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/))
                                 return "<span style='color:#C2988B'>" + f + "</span>";
-                            else if(f.match(/(?<=def)(\w+)/)){
+                            else if(f.match(/(?<=def )[a-zA-Z0-9_]+/)){
                                 return "<span style='color:#E2D958'>" + f + "</span>";
                             }
                             // if(f.match(/(?:__init__)/)){

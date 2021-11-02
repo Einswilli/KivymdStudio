@@ -33,23 +33,179 @@ A kivyMD devellopment studio
     <img width="1604" src="Screenshots/14.png?raw=true">
     
 </a> |
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png?raw=true"> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/14.png?raw=true"> 
     <img width="1604" src="Screenshots/14.png?raw=true">
     
 </a> | 
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/2.png?raw=true"> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/13.png?raw=true"> 
     <img width="1604" src="Screenshots/13.png?raw=true"> 
     
 </a> |
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png?raw=true">
  <img width="1604" src="Screenshots/3.png?raw=true"> 
  </a>|
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/11.png?raw=true">
- <img width="1604" src="Screenshots/11.png?raw=true"> 
- </a>|
  <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/12.png?raw=true">
  <img width="1604" src="Screenshots/12.png?raw=true"> 
- </a>||
+ </a>|
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/15.png?raw=true">
+ <img width="1604" src="Screenshots/15.png?raw=true"> 
+ </a>|
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/17.png?raw=true">
+ <img width="1604" src="Screenshots/17.png?raw=true"> 
+ </a>|
+
+ ## Quick Start
+
+    #:import hex kivy.utils.get_color_from_hex
+
+    <ButtonGris@Button>
+        font_size: 25
+        background_color:0,0,0,0
+        canvas.before:
+            Color:
+                rgb: hex('#2e2b2b') if self.state =='normal' else (0,.7,.7,1)
+            Ellipse:
+                pos :self.pos
+                size: 55,55
+
+    <ButtonBlanc@Button>
+        font_size:25
+        background_color: 0,0,0,0
+        color: hex('#000000')
+        canvas.before:
+            Color:
+                rgb: hex('#ffffff') if self.state =='normal' else (0,.7,.7,1)
+            Ellipse:
+                pos: self.pos
+                size: 55,55
+
+    <ButtonOrange@Button>
+        font_size:25
+        background_color: 0,0,0,0
+        canvas.before:
+            Color:
+                rgb: hex('#ffa20e') if self.state =='normal' else (0,.7,.7,1)
+            Ellipse:
+                pos: self.pos
+                size: 55,55
+
+    <ButtonRectangle@Button>
+        font_size:25
+        background_color: 0,0,0,0
+        canvas.before:
+            Color:
+                rgb: hex('#2e2b2b') if self.state =='normal' else (0,.7,.7,1)
+            RoundedRectangle:
+                pos: self.pos
+                size: 110,55
+                radius: [25,]
+
+
+    Calculatrice:
+        id: calculatrice
+        display: input
+        orientation: 'vertical'
+
+
+        GridLayout:
+            orientation: 'lr-tb'
+            size_hint: (1,0.3)
+            cols: 1
+            rows: 1
+            TextInput:
+                id: input
+                background_color: hex('#000000')
+                foreground_color: hex('#ffffff')
+                font_size: 30
+                justify: 'right'
+
+        GridLayout:
+            orientation: 'lr-tb'
+            padding:'4dp'
+            cols: 4
+
+            ButtonBlanc:
+                text: 'C'
+                on_press: input.text =""
+
+            ButtonBlanc:
+                text: '+/-'
+                on_press: input.text +='±'
+
+            ButtonBlanc:
+                text: '%'
+                on_press: input.text +=self.text
+
+            ButtonOrange:
+                text: '/'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '7'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '8'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '9'
+                on_press: input.text +=self.text
+
+            ButtonOrange:
+                text: '*'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '6'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '5'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '4'
+                on_press: input.text +=self.text
+
+            ButtonOrange:
+                text: '-'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '3'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '2'
+                on_press: input.text +=self.text
+
+            ButtonGris:
+                text: '1'
+                on_press: input.text +=self.text
+
+            ButtonOrange:
+                text: '+'
+                on_press: input.text +=self.text
+
+            ButtonRectangle:
+                text: '0'
+                on_press: input.text +=self.text
+            Label
+
+            ButtonGris:
+                text: '.'
+                on_press: input.text +=self.text
+
+            ButtonOrange:
+                text: '='
+                on_press: input.text=str(eval(input.text))
+
+
+
+
+
+
 
 ## To do make_list
 

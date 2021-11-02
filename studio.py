@@ -7,6 +7,7 @@ from Terminal import*
 import getpass
 import socket
 #import tree
+#from Emulator.emulator import Emulator
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine,QmlElement
@@ -383,9 +384,12 @@ class Studio(QObject):
         """
         curs,conn=self.connect_To_Db()
         try:
-            curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
-            conn.commit()
-            conn.close()
+            try:
+                curs.execute(f"SELECT * from history WHERE fnama ={path_}")
+            except:
+                curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
+                conn.commit()
+                conn.close()
         except:pass
     
     @Slot(str,result='QVariant')
@@ -406,12 +410,9 @@ class Studio(QObject):
     @Slot()
     def emulator(self):
         """ This function will be used to start the kivy emulator"""
-
-        executeur=subprocess.Popen('python3 /root/KivyLiteEmulator/main.py',shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-        sortie=executeur.stdout.read()+executeur.stderr.read()
-        #strsortie=str(sortie)
-        print(sortie)
-        #os.system('python3 /root/KivyLiteEmulator/main.py')
+        #Emulator().run()
+        pass
+        
 
     @Slot(result='QString')
     def terminal(self):
