@@ -25,8 +25,10 @@ from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock
 import os
 from plyer import filechooser
+from datetime import datetime
+from time import *
 
-Window.size=(330,660)
+Window.size=(310,640)
 
 kv="""
 #:import HotReloadViewer kivymd.utils.hot_reload_viewer.HotReloadViewer
@@ -40,7 +42,7 @@ Screen:
     MDBoxLayout:
         id:hbox
         orientation:'vertical'
-        size_hint:.88,0.75
+        size_hint:.895,0.732
         md_bg_color:0,0,0,0
         #padding:'8dp'
         pos_hint:{'center_x':.5,'center_y':.51}
@@ -50,9 +52,38 @@ Screen:
             size:self.size
             MDFloatLayout:
                 size:self.size
-                FitImage:
-                    source:'../assets/images/emh.png'
-                    size:self.size
+                ScreenManager:
+                    id:scm1
+                    Screen:
+                        name:"boot"
+                        FitImage:
+                            source:'../assets/images/emh.png'
+                        Image:
+                            source:'../assets/images/anim7.gif'
+                            size:self.size
+                            allow_strech:True
+                            anim_delay:1
+                            anim_reset:1
+                    Screen:
+                        name:"page"
+                        size:self.size
+                        FitImage:
+                            source:'../assets/images/fd.jpg'
+                        MDBoxLayout:
+                            orientation:'vertical'
+                            size_hint:0.7,.3
+                            pos_hint:{'center_x':.5,'center_y':.7}
+                            canvas:
+                                Color:
+                                    rgba:hex('#FFFFFF4F')
+                                Rectangle:
+                                    pos:self.pos
+                                    size:self.size
+                            Lab:
+                                id:lab
+                                halign:'center'
+                                text:'13h : 19min'
+
             MDFloatLayout:
                 size:self.size
                 MDBoxLayout:
@@ -94,17 +125,28 @@ Screen:
             MDFloatLayout:
                 size:self.size
                 MDBoxLayout:
-                    id:emusc
                     orientation:'vertical'
-                    # HotReloadViewer:
-                    #     id:reloader
-                    #     size:hbox.size
-                    #     path:''#'/root/Bureau/code/emutest.kv'
-                    #     errors:True
-                    #     errors_text_color:1,.2,.3,1
-                    #     errors_background_color: 0,0,0,1
+                    Screen:
+                        name:'capbox'
+                        id:emusc
+                        size:self.size
+                        MDBoxLayout:
+                            orientation:'vertical'
+                            size:self.size
+                            HotReloadViewer:
+                                id:reloader
+                                size:hbox.size
+                                #path:app.path_to_file
+                                errors:True
+                                errors_text_color:1,.2,.3,1
+                                errors_background_color: 0,0,0,1
 
-
+<Lab@MDLabel>:
+    size_hint_y:None
+    height:26 #self.texture_size[1]
+    #theme_text_color:"white"
+    #font_color:'#ffffff'
+    text_color:'#ffffff'
 
 <Custcard@MDCard>
     orientation:'vertical'
@@ -130,9 +172,23 @@ Screen:
 
 class Emulator(MDApp):
 
+    path_to_file='calculatrice.kv'
+
     def build(self):
         self.theme_cls.theme_style='Dark'
         return Builder.load_string(kv)
+
+    def on_start(self):
+        Clock.schedule_once(self.next,18)
+        Clock.schedule_interval(self.mytime,1)
+
+    def mytime(self,*args):
+        heure=strftime("%H : %M : %S")
+        self.root.ids.lab.text=str(heure)
+        #self.root.ids.a_h.text=heure
+
+    def next(self,dt):
+        self.root.ids.scm1.current="page"
 
     def choose_file(self):
         filechooser.open_file(on_selection=self.handle_selection)
@@ -147,7 +203,8 @@ class Emulator(MDApp):
         #self.root.ids.reloader.
         path=str(selection[0])
         if path.endswith('.py') or path.endswith('.kv'):
-            self.emulate_file(path)
+            #self.emulate_file(path)
+            self.root.ids.reloader.path=path
         else:
             print(f'Unknown file format:{str(path.split("/")[-1]).split(".")[-1]}')
 
@@ -172,6 +229,7 @@ class Emulator(MDApp):
     def start_emulation(self,filename, threaded=False):
         root = None
         if os.path.splitext(filename)[1] == '.kv':  # load the kivy file directly
+            print(filename)
             try:  # cahching error with kivy files
                 Builder.unload_file(filename)
                 root = Builder.load_file(filename)
@@ -180,19 +238,22 @@ class Emulator(MDApp):
                 print("Your kivy file has a problem")
 
         elif os.path.splitext(filename)[1] == '.py':
-            self.load_defualt_kv(filename)
+            #self.load_defualt_kv(filename)
             print(filename)
 
             try:  # cahching error with python files
                 root = self.load_py_file(filename)
             except:
                 traceback.print_exc()
+                msg=MDLabel(text="Your python file has a problem",halign='center')
+                self.root.ids.emusc.add_widget(msg)
                 print("Your python file has a problem")
 
         if root:
             if threaded:
                 #####################################################------01
-                self.emulation_done(root, filename)
+                #self.emulation_done(root, filename)
+                self.root.ids.emusc.add_widget(root)
                 pass
             else:
                 pass
@@ -214,7 +275,11 @@ class Emulator(MDApp):
     def load_defualt_kv(self,filename):
         app_cls_name = self.get_app_cls_name(filename)
         if app_cls_name is None:
-            return 
+            kv_filename=str(filename).replace('.py','.kv')
+            if os.path.exists(kv_filename):
+                root = Builder.load_file(kv_filename)
+                return root
+            else:return None
 
         kv_name = app_cls_name.lower()
         if app_cls_name.endswith('App'):
@@ -224,23 +289,23 @@ class Emulator(MDApp):
         if app_cls_name:
             file_dir = os.path.dirname(filename)
             kv_filename = os.path.join(file_dir, kv_name + '.kv')
-            print(kv_filename,file_dir)
 
             if os.path.exists(kv_filename):
                 try:  # cahching error with kivy files
                     Builder.unload_file(kv_filename)
                     root = Builder.load_file(kv_filename)
-                    if not root:
-                        kv_filename=str(filename).replace('.py','.kv')
-                        root = Builder.load_file(kv_filename)
-                        return root
+                    
+                    kv_filename=str(filename).replace('.py','.kv')
+                    root = Builder.load_file(kv_filename)
+                    return root
                 except:
+                    
                     traceback.print_exc()
                     msg=MDLabel(text="Your kivy file has a problem",halign='center')
                     self.root.ids.emusc.add_widget(msg)
                     print("Your kivy file has a problem")
 
-                    return 'root'
+                    return None
                 
 
     def get_app_cls_name(self,filename):
@@ -248,7 +313,10 @@ class Emulator(MDApp):
             text = fn.read()
 
         lines = text.splitlines()
-        app_cls = self.get_import_as('from kivy.app import App' or 'from kivymd.app import MDApp', lines)
+        if 'from kivy.app import App' in lines:
+            app_cls = self.get_import_as('from kivy.app import App', lines)
+        else:
+            app_cls= self.get_import_as('from kivymd.app import MDApp', lines)
 
         def check_app_cls(line):
             line = line.strip()
@@ -284,14 +352,16 @@ class Emulator(MDApp):
             return root
 
     def load_py_file(self,filename):
+        
         app_cls_name = self.get_app_cls_name(filename)
         if app_cls_name:
+            print('in')
             root_file = self.import_from_dir(filename)
             app_cls = getattr(reload(root_file), app_cls_name)
             root = app_cls().build()
-
+            print(app_cls)
             return root
-
+        print('out')
         run_root = self.get_root_from_runTouch(filename)
         if run_root:
             return run_root

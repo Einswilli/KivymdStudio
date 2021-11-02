@@ -31,8 +31,8 @@ A kivyMD devellopment studio
 |:-------------------------:|:-------------------------:|:-------------------------:|
 |<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png?raw=true"> 
     <img width="1604" src="Screenshots/14.png?raw=true">
-    
 </a> |
+
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/14.png?raw=true"> 
     <img width="1604" src="Screenshots/14.png?raw=true">
     
@@ -209,18 +209,17 @@ A kivyMD devellopment studio
 
 ## To do make_list
 
-    - File Explorer (TreeView)
+    - File Explorer (TreeView) (done)
     - Auto Suggestion in CodeEditor
     - Syntax Highlight in CodeEditor
     - General Project Search 
     - Custom Terminal
-    - Emmulator
+    - Emmulator (done)
 
 ## Bugs
 
     - Syntax Highlight doesn't work well
     - Indentations d'oesn't work well
-    - TreeView doesn't work well
     - Editor doesn't format well when opening file
 
 
