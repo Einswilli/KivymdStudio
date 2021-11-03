@@ -314,7 +314,7 @@ class Studio(QObject):
             conn.close()
             with open(path[7:],'r') as f:
                 code=f.read()
-                self.richcolor(code)
+                #self.richcolor(code)
             return self.colorify(code)#self.richcolor(code)# cod
         except :
             return f'Error when trying to open the file: {path}\n\r may be the file extention is not supported '
