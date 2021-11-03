@@ -20,6 +20,10 @@ from kivy.uix.label import Label
 from kivy.uix.behaviors import ToggleButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.label import MDLabel
+from kivymd.uix.list import IconLeftWidget, IconRightWidget, OneLineListItem,ThreeLineListItem,OneLineAvatarIconListItem
+from kivymd.uix.list import MDList
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.dialog import MDDialog
 #from kivy.lang import Builder
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock
@@ -27,8 +31,11 @@ import os
 from plyer import filechooser
 from datetime import datetime
 from time import *
+from kivy.config import Config
 
 Window.size=(310,640)
+Window.resizable=False
+Config.set('graphics','resizable',False)
 
 kv="""
 #:import HotReloadViewer kivymd.utils.hot_reload_viewer.HotReloadViewer
@@ -79,6 +86,14 @@ Screen:
                             text:'13h : 19min'
                             pos_hint:{'center_x':.5,'center_y':.8}
 
+                        Custcard:
+                            text:'Apps'
+                            md_bg_color:hex('#00000000')
+                            size_hint:.25,.2
+                            pos_hint:{'center_x':.5,'center_y':.1}
+                            image:'../assets/icons/menu(1).png'
+                            on_press:app.home()
+
             MDFloatLayout:
                 size:self.size
                 MDBoxLayout:
@@ -107,6 +122,7 @@ Screen:
                         Custcard:
                             text:'Settings'
                             image:'../assets/icons/param.png'
+                            on_press:app.settings()
                         Custcard:
                             text:'Github'
                             image:'../assets/icons/git.png'
@@ -185,6 +201,40 @@ class Emulator(MDApp):
 
     def next(self,dt):
         self.root.ids.scm1.current="page"
+
+    def home(self):
+        self.root.ids.car.load_next(mode='next')
+
+    def settings(self, *largs):
+        set_box=MDBoxLayout(
+            orientation= "vertical",
+            spacing= "12dp",
+            size_hint_x= .78,
+            size_hint_y=None,
+            height= "96dp"
+        )
+        c=MDList()
+        i1=OneLineListItem(text="use android screen",)
+        #i1.on_press=self.pla
+        i2=OneLineListItem(text="use iphone screen",)
+        #i2.on_press=self.plg
+        c.add_widget(i1)
+        c.add_widget(i2)
+        set_box.add_widget(c)
+        
+        self.setting=MDDialog(
+            title="Settings",
+            type="custom",
+            content_cls=set_box,
+            size_hint_x=0.7,
+            size_hint_y=None
+            # buttons=[
+            #     button,
+            #     # MDFlatButton(
+            #     # text="Réssayer", text_color=self.theme_cls.primary_color,
+            #         ],
+        )
+        self.setting.open()
 
     def choose_file(self):
         filechooser.open_file(on_selection=self.handle_selection)
