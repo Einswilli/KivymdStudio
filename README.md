@@ -47,8 +47,8 @@ A kivyMD devellopment studio
  <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/18.png?raw=true">
  <img width="1604" src="Screenshots/18.png?raw=true"> 
  </a>|
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/15.png?raw=true">
- <img width="1604" src="Screenshots/15.png?raw=true"> 
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/19.png?raw=true">
+ <img width="1604" src="Screenshots/19.png?raw=true"> 
  </a>|
  <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/17.png?raw=true">
  <img width="1604" src="Screenshots/17.png?raw=true"> 
