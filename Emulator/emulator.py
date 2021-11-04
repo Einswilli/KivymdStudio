@@ -96,36 +96,57 @@ Screen:
 
             MDFloatLayout:
                 size:self.size
+                FitImage:
+                    source:'../assets/images/anim4.gif'
                 MDBoxLayout:
                     orientation:'vertical'
-                    size_hint:.8,.7
+                    size_hint:.85,.85
+                    #size_hint_y:None
                     pos_hint:{'center_x':0.5,'center_y':.5}
                     canvas:
                         Color: 
-                            rgba:hex('#373F3F')
+                            rgba:hex('#373F3F49')
                         RoundedRectangle:
                             size:self.size
                             pos:self.pos
-                            radius:[25,]
+                            radius:[15,]
                     MDGridLayout:
                         pos:self.pos
-                        cols:2
+                        cols:3
                         spacing:'5dp'
                         padding:'5dp'
-                        Custcard:
-                            text:'history'
-                            image:'../assets/icons/list.png'
                         Custcard:
                             text:'run file'
                             image:'../assets/icons/run.png'
                             on_press:app.choose_file()
                         Custcard:
+                            text:'history'
+                            image:'../assets/icons/list.png'
+                        Custcard:
+                            text:'Github'
+                            image:'../assets/icons/git.png'
+                        Custcard:
                             text:'Settings'
                             image:'../assets/icons/param.png'
                             on_press:app.settings()
                         Custcard:
-                            text:'Github'
-                            image:'../assets/icons/git.png'
+                            text:'About'
+                            image:'../assets/icons/py.png'
+                        Custcard:
+                            text:'About'
+                            image:'../assets/icons/py.png'
+                        Custcard:
+                            text:'About'
+                            image:'../assets/icons/py.png'
+                        Custcard:
+                            text:'Instagram'
+                            image:'../assets/icons/instagram'
+                        Custcard:
+                            text:'youtube'
+                            image:'../assets/icons/youtube.png'
+                        Custcard:
+                            text:'support'
+                            image:'../assets/icons/coffee4.png'
                         Custcard:
                             text:'About'
                             image:'../assets/icons/py.png'
@@ -179,6 +200,7 @@ Screen:
         MDLabel:
             halign:'center'
             text:root.text
+            font_size:14
 
 """
 
@@ -248,9 +270,12 @@ class Emulator(MDApp):
         #Window.borderless=True
         #self.root.ids.reloader.
         path=str(selection[0])
-        if path.endswith('.py') or path.endswith('.kv'):
-            #self.emulate_file(path)
+        if path.endswith('.kv') or path.endswith('.py') :
             self.root.ids.reloader.path=path
+
+            # elif  path.endswith('.py'):
+            #     self.emulate_file(path)
+
         else:
             print(f'Unknown file format:{str(path.split("/")[-1]).split(".")[-1]}')
 
@@ -296,15 +321,18 @@ class Emulator(MDApp):
                 print("Your python file has a problem")
 
         if root:
+            self.root.app=self.get_app_cls_name(filename)
+            b=MDBoxLayout()
+            b.add_widget(root)
             if threaded:
                 #####################################################------01
                 #self.emulation_done(root, filename)
-                self.root.ids.emusc.add_widget(root)
+                self.root.ids.emusc.add_widget(b)
                 pass
             else:
                 pass
                 ############# c'est ici ############################# -----02
-                self.root.ids.emusc.add_widget(root)
+                self.root.ids.emusc.add_widget(b)
 
         dirname = os.path.dirname(filename)
         sys.path.pop()

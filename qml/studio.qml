@@ -2331,6 +2331,7 @@ ApplicationWindow {
         id:codebox
         Rectangle{
             color:root.color
+            property alias furl:nfc.link
             CodeEditor{
                 id:nfc
                 compcolor:barclaire
@@ -2339,6 +2340,9 @@ ApplicationWindow {
                 anchors.fill: parent
                 //code:''
                 
+            }
+            Component.onCompleted:{
+                nfc.link=lnk
             }
             Shortcut {
                 sequence: "Ctrl+S"
@@ -2396,6 +2400,7 @@ ApplicationWindow {
             visible=false
             //console.log()
             backend.newfile(fileop.get_filename,fm.folder.toString())
+            lnk=fm.folder.toString()+fileop.get_filename.toString()
             codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
         }
     }
@@ -2436,7 +2441,7 @@ ApplicationWindow {
             var titre=backend.get_filename(fileUrl)
             cde=text
             //console.log(cde)
-            
+            lnk=fileUrl.toString()
             codetab.insertTab(codetab.currentIndex+1, titre,cb)
             //cde=''
             //root.setcode(text)
