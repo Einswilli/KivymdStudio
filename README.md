@@ -210,7 +210,9 @@ A kivyMD devellopment studio
 ## To do make_list
 
     - File Explorer (TreeView) (done)
+    - Project creator
     - Auto Suggestion in CodeEditor
+    - Auto Indentation in OdeEditor
     - Syntax Highlight in CodeEditor
     - General Project Search 
     - Custom Terminal

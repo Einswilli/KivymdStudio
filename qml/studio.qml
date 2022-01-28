@@ -137,6 +137,17 @@ ApplicationWindow {
             opfold.open()
         }
     }
+    Shortcut {
+        sequence: "Ctrl+S"
+        enabled:parent.focus
+        onActivated: {
+            console.log('saving file...')
+            console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
+            cde=codetab.getTab(codetab.currentIndex).item.cd.getText(0,codetab.getTab(codetab.currentIndex).item.cd.length)
+            backend.savefile(codetab.getTab(codetab.currentIndex).item.lk.toString(),backend.get_filename(codetab.getTab(codetab.currentIndex).item.lk),cde)
+            //cde=''
+        }
+    }
     // Shortcut {
     //     sequence: "Ctrl+S"
     //     onActivated: console.log('save file')
@@ -2332,6 +2343,7 @@ ApplicationWindow {
         Rectangle{
             color:root.color
             property alias furl:nfc.link
+            property alias codealias:nfc.code
             CodeEditor{
                 id:nfc
                 compcolor:barclaire
@@ -2344,16 +2356,16 @@ ApplicationWindow {
             Component.onCompleted:{
                 nfc.link=lnk
             }
-            Shortcut {
-                sequence: "Ctrl+S"
-                onActivated: {
-                    console.log('saving file...')
-                    cde=nfc.scode.getText(0,nfc.code.length)
-                    //console.log(cde)
-                    backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
-                    //cde=''
-                }
-            }
+            // Shortcut {
+            //     sequence: "Ctrl+S"
+            //     onActivated: {
+            //         console.log('saving file...')
+            //         cde=nfc.scode.getText(0,nfc.code.length)
+            //         //console.log(cde)
+            //         backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
+            //         //cde=''
+            //     }
+            // }
         }
     }
     Component{
@@ -2363,6 +2375,7 @@ ApplicationWindow {
             width:codetab.width
             height:codetab.height
             property alias cd:ce.scode
+            property alias lk:ce.link
             CodeEditor{
                 id:ce
                 compcolor:barclaire
@@ -2377,16 +2390,6 @@ ApplicationWindow {
                 //console.log(ce.link)
             }
             
-            Shortcut {
-                sequence: "Ctrl+S"
-                enabled:parent.focus
-                onActivated: {
-                    console.log('saving file...')
-                    cde=ce.scode.getText(0,ce.scode.length)
-                    backend.savefile(ce.link.toString(),backend.get_filename(ce.link),codetab.getTab(codetab.currentIndex).item.cd.getText(0,ce.code.length))
-                    //cde=''
-                }
-            }
         }
     }
 
@@ -2400,7 +2403,7 @@ ApplicationWindow {
             visible=false
             //console.log()
             backend.newfile(fileop.get_filename,fm.folder.toString())
-            lnk=fm.folder.toString()+fileop.get_filename.toString()
+            lnk=fm.currfold.toString()+fileop.get_filename.toString()
             codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
         }
     }

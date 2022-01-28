@@ -300,7 +300,7 @@ Item{
                             else if (f.match(/^[ ]/))
                                 return "&nbsp;"
                             else if (f.match(/^[\t]/))
-                                return "<span style='color:#757575E1'>"+U+0009+"<span>"//U+0009
+                                return "<span style='color:#757575E1'>"+U+0009+"<span>";//U+0009
                             else if (f.match(/\r\n/)){
                                 console.log('retour!')
                                 return f//'<br/>'//(U+000A)

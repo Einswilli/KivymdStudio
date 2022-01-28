@@ -85,6 +85,7 @@ Rectangle {
     property int scaledMargin:2
     property alias bscolor:fileBrowser.color
     property string sfile
+    property string currfold:folders.folder
 
     signal fileSelected(string file)
     //signal 
