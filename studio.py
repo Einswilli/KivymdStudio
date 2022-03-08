@@ -6,6 +6,7 @@ import subprocess
 from Terminal import*
 import getpass
 import socket
+import glob,schedule
 #import tree
 #from Emulator.emulator import Emulator
 
@@ -28,6 +29,7 @@ import sqlite3
 from pygments import highlight
 from pygments.lexers.python import PythonLexer
 from pygments.formatters.html import HtmlFormatter
+from pygments.formatters.other import NullFormatter
 from pygments.styles import get_style_by_name
 from rich.console import Console
 from rich.syntax import Syntax
@@ -262,7 +264,7 @@ class Studio(QObject):
 
         #pyperclip.set_clipboard("xclip")
         console = Console(record=True)
-        syntax = Syntax(text, "python",background_color="#1F1F20",indent_guides=True,tab_size=4,theme='native')
+        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='native')
         console.print(syntax)
         r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
 
@@ -291,9 +293,9 @@ class Studio(QObject):
         Returns:
             srt: the highlighted text (in html format)
         """
-        #print(text)
+        #print(str(text).removeprefix('\r'))
         if text=='':return ''
-        return self.colorify(text)
+        return self.richcolor(str(text).removeprefix('\r'))
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -309,9 +311,10 @@ class Studio(QObject):
         curs,conn=self.connect_To_Db()
         
         try:
-            curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
-            conn.commit()
-            conn.close()
+            self.save_to_history(path[7:])
+            # curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
+            # conn.commit()
+            # conn.close()
             with open(path[7:],'r') as f:
                 code=f.read()
                 #self.richcolor(code)
@@ -428,8 +431,8 @@ class Studio(QObject):
         '''Runs shell commands and returns the output'''
 
         executeur=subprocess.Popen(str(cmd),shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-        sortie=str(executeur.stdout.read()+executeur.stderr.read())[2:-3].split('\n')
-        srt='\n\r'.join(sortie)
+        sortie=str(executeur.stdout.read()+executeur.stderr.read())[2:-3]
+        srt=sortie.replace('\n','\n\r')
         return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
 
     def tree_to_dict(self,path_):

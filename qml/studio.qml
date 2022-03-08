@@ -139,7 +139,7 @@ ApplicationWindow {
     }
     Shortcut {
         sequence: "Ctrl+S"
-        enabled:parent.focus
+        //enabled:parent.focus
         onActivated: {
             console.log('saving file...')
             console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
@@ -983,14 +983,16 @@ ApplicationWindow {
             color:parent.color
             anchors.verticalCenter: parent.verticalCenter
 
-            Rectangle{
-                anchors.fill: parent
-                color:parent.color
+            Row{
+                spacing: 10
+                topPadding:12
+                height: parent.height
                 Rectangle{
-                    x:10
+                    //x:10
                     height:parent.height
                     width:70
-                    color:parent.color
+                    color:top_bar.color
+                    anchors.verticalCenter: parent.verticalCenter
                     Text{
                         text:'Files'
                         color:'#3B7EAC'
@@ -1013,9 +1015,10 @@ ApplicationWindow {
                 }
                 
                 Rectangle{
-                    x:90
+                    //x:90
                     height:parent.height
-                    color:parent.color
+                    color:top_bar.color
+                    anchors.verticalCenter: parent.verticalCenter
                     width:70
                     Text{
                         text:'Edition'
@@ -1039,9 +1042,10 @@ ApplicationWindow {
                 }
 
                 Rectangle{
-                    x:170
+                    //x:170
                     height:parent.height
-                    color:parent.color
+                    color:top_bar.color
+                    anchors.verticalCenter: parent.verticalCenter
                     width:70
                     Text{
                         text:'Terminal'
@@ -1064,9 +1068,37 @@ ApplicationWindow {
                     }
                 }
                 Rectangle{
-                    x:250
+                    //x:250
+                    id:plug
                     height:parent.height
-                    color:parent.color
+                    color:top_bar.color
+                    anchors.verticalCenter: parent.verticalCenter
+                    width:70
+                    Text{
+                        text:'Plugins'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        anchors.centerIn: parent
+                    }
+                    MouseArea{
+                        anchors.fill: parent
+                        hoverEnabled:true
+                        onClicked:{
+                            pluginsmen.open()
+                        }
+                        onEntered:{
+                            parent.color=hovercolor
+                        }
+                        onExited:{
+                            parent.color=top_bar.color
+                        }
+                    }
+                }
+                Rectangle{
+                    //x:250
+                    height:parent.height
+                    color:top_bar.color
+                    anchors.verticalCenter: parent.verticalCenter
                     width:70
                     Text{
                         text:'Help'
@@ -1087,6 +1119,62 @@ ApplicationWindow {
                             parent.color=top_bar.color
                         }
                     }
+                }
+            }
+        }
+
+        Menu{
+            id:pluginsmen
+            x:plug.x+5
+            y:top_bar.height
+            // title: string
+            // delegate: Component
+            // contentModel: model
+            width:200
+            //height:250
+            background: Rectangle{
+                color:barclaire
+                border.width:1
+                anchors.fill: parent
+                border.color:bordercolor
+            }
+            MenuItem{
+                Text{
+                    text:'Install Plugin'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked:{
+                    //fileop.visible=true
+                    console.log('uninstall plugin')
+                }
+            }
+            MenuItem{
+                Text{
+                    text:'Plugins List'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked:{
+                    //fileop.visible=true
+                    console.log('list plugins')
+                }
+            }
+            MenuItem{
+                Text{
+                    text:'Uninstall Plugin'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked:{
+                    //fileop.visible=true
+                    console.log('install plugins')
                 }
             }
         }
@@ -1297,6 +1385,7 @@ ApplicationWindow {
             }
             
         }
+        
 
         Rectangle{
             anchors.right:parent.right

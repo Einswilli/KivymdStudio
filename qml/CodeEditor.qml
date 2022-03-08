@@ -56,6 +56,7 @@ Item{
 
     Flickable {
         id: flickb
+        y:25
         //anchors.fill: parent
         width:edit_width//parent.width-20 
         height: edit_height//parent.height-20
@@ -150,7 +151,7 @@ Item{
                         hoverEnabled:true
 
                         onClicked:{
-                            text.color='#FFFFFF'
+                            color='#FFFFFF'
                         }
                     }
                 }
@@ -242,79 +243,84 @@ Item{
                     var tx=getText(0, length).toString()
                     //console.log(l)
                     //for(var i in text.split('\n'))
-                    // var t=backend.highlight(tx)
-                    // text=t
+                    var t=backend
+
+
+
+
+                    
+                    text=t
                     //console.log(tx)
                     
-                    let markUp = tx.replace(
-                        /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,
-                        function(f) {
-                            //console.log("f: ", JSON.stringify(f));
-                            if (f.match(/(?<=class )[a-zA-Z0-9_]+/mgi)) {
-                                return "<span style='color:#00EBCB'>" + f + "</span>";
-                            } 
-                            else if (f.match(/#/)) {
-                                return "<span style='color:#0F572D'>" + f + "</span>";
-                            } else if (f.match(/[A-Za-z]\w+|__\w+__/))
-                                var reg = f.match(/^__\w+__/)
-                                var re = f.match(/[A-Za-z_]\w+|__\w+__/)
-                            if (root.verify(yellows, re)) {
-                                return "<span style='color:#E2D958'>" + f + "</span>";
-                            } else if (root.verify(violets, re)) {
-                                return "<span style='color:#9607A3'><b>" + f + "<b/></span>";
-                            } else if (root.verify(bleus, re)) {
-                                return "<span style='color:#19478B'><b>" + f + "<b/></span>";
-                            } else if (root.verify(greens, re)) {
-                                return "<span style='color:#00C0A6'><b>" + f + "<b/></span>";
-                            }else if (f.match(/\b(?:init|__str__|repr|__dict__|hash|annotations|delatrtr|__class__|dir|doc|eq|format|getattribute|init_subclass|module|reduce|ne|new|reduce_ex|sizeof|setattr|slots)\b/)) {
-                                return "<span style='color:#EB7200'><b>" + f + "<b/></span>";
-                            }else if (f.match(/(?<=def )\w+/))
-                                return "<span style='color:#E2D958'>" + f + "</span>";
-                            else if (f.match(/\b0(?:b(?:_?[01])+|o(?:_?[0-7])+|x(?:_?[a-f0-9])+)\b|(?:\b\d+(?:_\d+)*(?:\.(?:\d+(?:_\d+)*)?)?|\B\.\d+(?:_\d+)*)(?:e[+-]?\d+(?:_\d+)*)?j?(?!\w)/i))//^[0-9]+$/))
-                                return "<span style='color:#8BE2CF'>" + f + "</span>";
-                            else if (f.match(/[(),]/))
-                                return "<span style='color:#729DDD'>" + f + "</span>";
-                            else if (f.match(/[{}]/))
-                                return "<span style='color:#8652B8'>" + f + "</span>";
-                            else if (f.match(/[[]/))
-                                return "<span style='color:#D2DD72'>" + f + "</span>";
-                            else if (f.match(/[\]]/))
-                                return "<span style='color:#D2DD72'>" + f + "</span>";
+                    // let markUp = tx.replace(
+                    //     /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,
+                    //     function(f) {
+                    //         //console.log("f: ", JSON.stringify(f));
+                    //         if (f.match(/(?<=class )[a-zA-Z0-9_]+/mgi)) {
+                    //             return "<span style='color:#00EBCB'>" + f + "</span>";
+                    //         } 
+                    //         else if (f.match(/#/)) {
+                    //             return "<span style='color:#0F572D'>" + f + "</span>";
+                    //         } else if (f.match(/[A-Za-z]\w+|__\w+__/))
+                    //             var reg = f.match(/^__\w+__/)
+                    //             var re = f.match(/[A-Za-z_]\w+|__\w+__/)
+                    //         if (root.verify(yellows, re)) {
+                    //             return "<span style='color:#E2D958'>" + f + "</span>";
+                    //         } else if (root.verify(violets, re)) {
+                    //             return "<span style='color:#9607A3'><b>" + f + "<b/></span>";
+                    //         } else if (root.verify(bleus, re)) {
+                    //             return "<span style='color:#19478B'><b>" + f + "<b/></span>";
+                    //         } else if (root.verify(greens, re)) {
+                    //             return "<span style='color:#00C0A6'><b>" + f + "<b/></span>";
+                    //         }else if (f.match(/\b(?:init|__str__|repr|__dict__|hash|annotations|delatrtr|__class__|dir|doc|eq|format|getattribute|init_subclass|module|reduce|ne|new|reduce_ex|sizeof|setattr|slots)\b/)) {
+                    //             return "<span style='color:#EB7200'><b>" + f + "<b/></span>";
+                    //         }else if (f.match(/(?<=def )\w+/))
+                    //             return "<span style='color:#E2D958'>" + f + "</span>";
+                    //         else if (f.match(/\b0(?:b(?:_?[01])+|o(?:_?[0-7])+|x(?:_?[a-f0-9])+)\b|(?:\b\d+(?:_\d+)*(?:\.(?:\d+(?:_\d+)*)?)?|\B\.\d+(?:_\d+)*)(?:e[+-]?\d+(?:_\d+)*)?j?(?!\w)/i))//^[0-9]+$/))
+                    //             return "<span style='color:#8BE2CF'>" + f + "</span>";
+                    //         else if (f.match(/[(),]/))
+                    //             return "<span style='color:#729DDD'>" + f + "</span>";
+                    //         else if (f.match(/[{}]/))
+                    //             return "<span style='color:#8652B8'>" + f + "</span>";
+                    //         else if (f.match(/[[]/))
+                    //             return "<span style='color:#D2DD72'>" + f + "</span>";
+                    //         else if (f.match(/[\]]/))
+                    //             return "<span style='color:#D2DD72'>" + f + "</span>";
 
-                            else if (f.match(/[-+%=]=?|!=|:=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/))
-                                return "<span style='color:#C2988B'>" + f + "</span>";
-                            else if(f.match(/(?<=def )[a-zA-Z0-9_]+/)){
-                                return "<span style='color:#E2D958'>" + f + "</span>";
-                            }
-                            // if(f.match(/(?:__init__)/)){
-                            //     return "<span style='color:#009FCF'>" + f + "</span>";
-                            // }
-                            else if(f.match(/\b[A-Z](?:[A-Z_]|\dx?)*\b/)){
+                    //         else if (f.match(/[-+%=]=?|!=|:=|\*\*?=?|\/\/?=?|<[<=>]?|>[=>]?|[&|^~]/))
+                    //             return "<span style='color:#C2988B'>" + f + "</span>";
+                    //         else if(f.match(/(?<=def )[a-zA-Z0-9_]+/)){
+                    //             return "<span style='color:#E2D958'>" + f + "</span>";
+                    //         }
+                    //         // if(f.match(/(?:__init__)/)){
+                    //         //     return "<span style='color:#009FCF'>" + f + "</span>";
+                    //         // }
+                    //         else if(f.match(/\b[A-Z](?:[A-Z_]|\dx?)*\b/)){
 
-                                return "<span style='color:#009FCF'>" + f + "</span>";
-                            }
+                    //             return "<span style='color:#009FCF'>" + f + "</span>";
+                    //         }
                             
-                            else if (f.match(/(^[\t ]*)@\w+(?:\.\w+)*/im))
-                                return "<span style='color:#00EBCB'>" + f + "</span>";
+                    //         else if (f.match(/(^[\t ]*)@\w+(?:\.\w+)*/im))
+                    //             return "<span style='color:#00EBCB'>" + f + "</span>";
 
-                            else if (f.match(/^[ ]/))
-                                return "&nbsp;"
-                            else if (f.match(/^[\t]/))
-                                return "<span style='color:#757575E1'>"+U+0009+"<span>";//U+0009
-                            else if (f.match(/\r\n/)){
-                                console.log('retour!')
-                                return f//'<br/>'//(U+000A)
-                            }else if (f.match(/^[']/))
-                                return "<span style='color:#C46F37'>" + f + "</span>";
-                            else if (f.match(/([fF][rR]|[rR][fF]|[fF])?"""(.)*"""|([fF][rR]|[rR][fF]|[fF])?"""(.)*'''|([uU]|[rR])?"(.)*"/))
-                                return "<span style='color:#9B6039'>" + f + "</span>";
-                            // else if (f.match(/["]/))
-                            //     return "<span style='color:#9B6039'>" + f + "</span>";
-                            else
-                                return "<span style='color:#9CB9C2'>" + f + "</span>";
-                        }
-                    );
-                    text = markUp;
+                    //         else if (f.match(/^[ ]/))
+                    //             return "&nbsp;"
+                    //         else if (f.match(/^[\t]/))
+                    //             return "&Tab;";//"<span style='color:#757575E1'>"+U+0009+"<span>";//U+0009
+                    //         else if (f.match(/\r\n/)){
+                    //             console.log('retour!')
+                    //             return f//'<br/>'//(U+000A)
+                    //         }else if (f.match(/^[']/))
+                    //             return "<span style='color:#C46F37'>" + f + "</span>";
+                    //         else if (f.match(/([fF][rR]|[rR][fF]|[fF])?"""(.)*"""|([fF][rR]|[rR][fF]|[fF])?"""(.)*'''|([uU]|[rR])?"(.)*"/))
+                    //             return "<span style='color:#9B6039'>" + f + "</span>";
+                    //         // else if (f.match(/["]/))
+                    //         //     return "<span style='color:#9B6039'>" + f + "</span>";
+                    //         else
+                    //             return "<span style='color:#9CB9C2'>" + f + "</span>";
+                    //     }
+                    // );
+                    // text = markUp;
                     cursorPosition = p;
                     processing = false;
                 }
@@ -326,19 +332,25 @@ Item{
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: root.lineHeight
-            width: editor.width+100
+            width: editor.width+1000
             border.width:1
             border.color:bordercolor
+            Rectangle{
+                anchors.left:parent.left
+                width:20
+                height:parent.height
+                color:'#609EAD96'
+            }
         }
         Rectangle{
-            
+            y:0
             color: "#1E1E1F"//'transparent'//'#609EAD96'
             height: root.lineHeight/-5
             width: flickb.width
             visible: false
             Text{
                 id:chemin
-                font.pixelSize:12
+                font.pixelSize:11
                 text:'le lien du fichier...'
                 color:'white'
             }

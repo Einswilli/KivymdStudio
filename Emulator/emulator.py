@@ -43,16 +43,32 @@ kv="""
 
 Screen:
     name:'home'
-    padding:'3pd'
+    padding:'3dp'
     FitImage:
         source:'../assets/images/iph6.png'
+
     MDBoxLayout:
         id:hbox
         orientation:'vertical'
-        size_hint:.895,0.732
+        size_hint:.895,0.792
         md_bg_color:0,0,0,0
         #padding:'8dp'
         pos_hint:{'center_x':.5,'center_y':.51}
+
+        MDBoxLayout:
+            orientation:'vertical'
+            size_hint:1,.04
+            md_bg_color:hex('#000000')
+            MDGridLayout:
+                rows:1
+                Widget:
+                Lab:
+                    id:lab2
+                    font_size:9
+                    halign:'center'
+                    text:'13h : 19min'
+                    pos_hint:{'center_x':.5,'center_y':.5}
+                Widget:
 
         Carousel:
             id:car
@@ -219,7 +235,7 @@ class Emulator(MDApp):
     def mytime(self,*args):
         heure=strftime("%H : %M : %S")
         self.root.ids.lab.text=str(heure)
-        #self.root.ids.a_h.text=heure
+        self.root.ids.lab2.text=heure
 
     def next(self,dt):
         self.root.ids.scm1.current="page"

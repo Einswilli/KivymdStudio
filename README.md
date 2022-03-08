@@ -203,6 +203,10 @@ A kivyMD devellopment studio
 
 
 
+## NOTE
+
+In this update i wanted to give the possibility to contributors to be able to create plugins and install them directly in Kivymd Studio...
+
 
 
 
@@ -211,9 +215,9 @@ A kivyMD devellopment studio
 
     - File Explorer (TreeView) (done)
     - Project creator
-    - Auto Suggestion in CodeEditor
-    - Auto Indentation in OdeEditor
-    - Syntax Highlight in CodeEditor
+    - Auto Suggestion in CodeEditor(plugin)
+    - Auto Indentation in OdeEditor(plugin)
+    - Syntax Highlight in CodeEditor(plugin)
     - General Project Search 
     - Custom Terminal
     - Emmulator (done)
@@ -223,7 +227,8 @@ A kivyMD devellopment studio
     - Syntax Highlight doesn't work well
     - Indentations d'oesn't work well
     - Editor doesn't format well when opening file
+    - Emulator can't load Python file correctly yet
 
 
 <p align="center">Made with ❤️ By #Einswilli</p>
-<p align="center" style="font-size: 8px">v1.0</p>
+<p align="center" style="font-size: 8px">v1.1</p>

@@ -82,7 +82,7 @@ Rectangle {
     property bool shown: loader.sourceComponent
     property int itemHeight:30
     property int itemWidth:30
-    property int scaledMargin:2
+    property int scaledMargin:7
     property alias bscolor:fileBrowser.color
     property string sfile
     property string currfold:folders.folder
@@ -257,6 +257,12 @@ Rectangle {
                             wrapper.ListView.view.currentIndex = index;
                         }
                         onClicked: { if (folders == wrapper.ListView.view.model) launch() }
+                        onEntered:{
+                            wrapper.color='#1D313D9C';
+                        }
+                        onExited:{
+                            wrapper.color='transparent'
+                        }
                     }
 
                     states: [
@@ -298,7 +304,7 @@ Rectangle {
                     },
                     State {
                         name: "exitLeft"
-                        PropertyChanges { target: view1; x: -root.width }
+                        PropertyChanges { target: view1; x: -root.width-100 }
                     },
                     State {
                         name: "exitRight"
@@ -346,7 +352,7 @@ Rectangle {
                     },
                     State {
                         name: "exitLeft"
-                        PropertyChanges { target: view2; x: -root.width }
+                        PropertyChanges { target: view2; x: -root.width-100 }
                     },
                     State {
                         name: "exitRight"
