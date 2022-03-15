@@ -240,17 +240,12 @@ Item{
                     processing = true;
                     let p = cursorPosition;
                     let l=text.length
-                    var tx=getText(0, length).toString()
-                    //console.log(l)
-                    //for(var i in text.split('\n'))
-                    var t=backend
-
-
-
-
-                    
-                    text=t
+                    var tx=getText(0, length)//.toString()
                     //console.log(tx)
+                    var t=backend.highlight(tx)
+
+                    //console.log(tx)
+                    text=t
                     
                     // let markUp = tx.replace(
                     //     /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,

@@ -26,9 +26,9 @@ ApplicationWindow {
         id:obj
         objectName: 'backend'
 
-        function listfolder(value){
+        function reparse(value){
             var dic=value
-            return JSON.parse(dic)
+            return JSON.parse(JSON.stringify(dic))
         }
     }
 
@@ -51,8 +51,12 @@ ApplicationWindow {
         //backend.chargeTree(tree)
         root.width=parseInt(backend.getScreen().split(',')[0])
         root.height=parseInt(backend.getScreen().split(',')[1])
-        //minal.show()
-        //console.log(root.height,root.width)
+        loading.msgt='loading plugins...'
+        loading.visible=true
+        timer.interval=5000
+        timer.running=true
+        var l = obj.reparse(backend.loadPlugins())
+        console.log(l)
     }
 
     function verify(lst,word ){
@@ -155,7 +159,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "Ctrl+Shift+S"
         onActivated: {
-            console.log('save file as')
+            console.log('save file as...')
         }
     }
     
@@ -164,312 +168,251 @@ ApplicationWindow {
         id:leftbar
         width:60
         height:parent.height
-        color:'#292828'
+        color:barclaire
         anchors.left: parent.left
 
         Rectangle{
-            width:50
-            height:50
-            radius:12
-            y:30
-            color:parent.color
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            Image{
-                width:25
-                height:25
-                source:'../assets/icons/loupe.png'
-                anchors.centerIn: parent
-            }
-            Rectangle{
-                id:shov
-                height:parent.height
-                width:3
-                color:'white'
-                anchors.left:parent.left
-                visible:false
-            }
-
-            MouseArea{
-                anchors.fill: parent
-                hoverEnabled:true
-                onEntered:{
-                    parent.color=hovercolor
-                }
-                onExited:{
-                    parent.color=barclaire
-                }
-                onClicked:{
-                    if (leftbox.width==0){
-                        expbox.visible=true
-                        exptxt.text='SEARCH'
-                        thov.visible=false
-                        shov.visible=true
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=true
-                        tree.visible=false
-                        lb_on.start()
-                    }
-                    else if(leftbox.width>0 && searchbox.visible==true){
-                        expbox.visible=false
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_off.start()
-                    }
-                    else{
-                        exptxt.text='SEARCH'
-                        thov.visible=false
-                        shov.visible=true
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=true
-                        tree.visible=false
-                    }
-                }
-            }
+            id:xhov
+            height:parent.height
+            width:3
+            color:'white'
+            anchors.left:parent.left
+            visible:false
         }
-        Rectangle{
-            width:50
-            height:50
-            radius:12
-            y:90
-            color:parent.color
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            Image{
-                width:25
-                height:25
-                source:'../assets/icons/fichier.png'
-                anchors.centerIn: parent
-            }
-
+        Column{
+            id:leftcol
+            anchors.fill:parent
+            spacing:15
             Rectangle{
-                id:thov
-                height:parent.height
-                width:3
-                color:'white'
-                anchors.left:parent.left
-                visible:false
-            }
+                width:50
+                height:50
+                radius:12
+                //y:30
+                color:parent.parent.color
+                anchors.horizontalCenter: parent.horizontalCenter
 
-            MouseArea{
-                anchors.fill: parent
-                hoverEnabled:true
-                onEntered:{
-                    parent.color=hovercolor
+                Image{
+                    width:25
+                    height:25
+                    source:'../assets/icons/loupe.png'
+                    anchors.centerIn: parent
                 }
-                onExited:{
-                    parent.color=barclaire
-                }
-                onClicked:{
-                    if (leftbox.width==0){
-                        expbox.visible=true
-                        exptxt.text='EXPLORER'
-                        thov.visible=true
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=true
-                        lb_on.start()
-                    }
-                    else if(leftbox.width>0 && tree.visible==true){
-                        expbox.visible=false
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_off.start()
-                    }
-                    else{
-                        exptxt.text='EXPLORER'
-                        thov.visible=true
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=true
-                    }
-                }
-            }
-            
-        }
-        Rectangle{
-            width:50
-            height:50
-            radius:12
-            y:150
-            color:parent.color
-            anchors.horizontalCenter: parent.horizontalCenter
 
-            Image{
-                width:25
-                height:25
-                source:'../assets/icons/menu(1).png'
-                anchors.centerIn: parent
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onEntered:{
+                        parent.color=hovercolor
+                    }
+                    onExited:{
+                        parent.color=barclaire
+                    }
+                    onClicked:{
+                        xhov.parent=parent;
+                        xhov.visible=true;
+                        if (leftbox.width==0){
+                            expbox.visible=true
+                            exptxt.text='SEARCH'
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=true
+                            tree.visible=false
+                            lb_on.start()
+                        }
+                        else if(leftbox.width>0 && searchbox.visible==true){
+                            expbox.visible=false
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_off.start()
+                        }
+                        else{
+                            exptxt.text='SEARCH'
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=true
+                            tree.visible=false
+                        }
+                    }
+                }
             }
             Rectangle{
-                id:xhov
-                height:parent.height
-                width:3
-                color:'white'
-                anchors.left:parent.left
-                visible:false
-            }
+                width:50
+                height:50
+                radius:12
+                y:90
+                color:parent.parent.color
+                anchors.horizontalCenter: parent.horizontalCenter
 
-            MouseArea{
-                anchors.fill: parent
-                hoverEnabled:true
-                onEntered:{
-                    parent.color=hovercolor
+                Image{
+                    width:25
+                    height:25
+                    source:'../assets/icons/fichier.png'
+                    anchors.centerIn: parent
                 }
-                onExited:{
-                    parent.color=barclaire
-                }
-                onClicked:{
-                    if (leftbox.width==0){
-                        expbox.visible=true
-                        exptxt.text='EXTENTIONS'
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=true
-                        xte.visible=true
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_on.start()
-                    }
-                    else if(leftbox.width>0 && xte.visible==true){
-                        expbox.visible=false
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_off.start()
-                    }
-                    else{
-                        exptxt.text='EXTENTIONS'
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=true
-                        xte.visible=true
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                    }
-                }
-            }
-            
-        }
-        Rectangle{
-            width:50
-            height:50
-            radius:12
-            y:210
-            color:parent.color
-            anchors.horizontalCenter: parent.horizontalCenter
 
-            Image{
-                width:25
-                height:25
-                source:'../assets/icons/github(1).png'
-                anchors.centerIn: parent
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onEntered:{
+                        parent.color=hovercolor
+                    }
+                    onExited:{
+                        parent.color=barclaire
+                    }
+                    onClicked:{
+                        xhov.parent=parent;
+                        xhov.visible=true;
+                        if (leftbox.width==0){
+                            expbox.visible=true
+                            exptxt.text='EXPLORER'
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=true
+                            lb_on.start()
+                        }
+                        else if(leftbox.width>0 && tree.visible==true){
+                            expbox.visible=false
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_off.start()
+                        }
+                        else{
+                            exptxt.text='EXPLORER'
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=true
+                        }
+                    }
+                }
+                
             }
             Rectangle{
-                id:ghov
-                height:parent.height
-                width:3
-                color:'white'
-                anchors.left:parent.left
-                visible:false
-            }
+                width:50
+                height:50
+                radius:12
+                y:150
+                color:parent.parent.color
+                anchors.horizontalCenter: parent.horizontalCenter
 
-            MouseArea{
-                anchors.fill: parent
-                hoverEnabled:true
-                onEntered:{
-                    parent.color=hovercolor
+                Image{
+                    width:25
+                    height:25
+                    source:'../assets/icons/menu(1).png'
+                    anchors.centerIn: parent
                 }
-                onExited:{
-                    parent.color=barclaire
+
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onEntered:{
+                        parent.color=hovercolor
+                    }
+                    onExited:{
+                        parent.color=barclaire
+                    }
+                    onClicked:{
+                        xhov.parent=parent;
+                        xhov.visible=true;
+                        if (leftbox.width==0){
+                            expbox.visible=true
+                            exptxt.text='EXTENTIONS'
+                            xte.visible=true
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_on.start()
+                        }
+                        else if(leftbox.width>0 && xte.visible==true){
+                            expbox.visible=false
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_off.start()
+                        }
+                        else{
+                            exptxt.text='EXTENTIONS'
+                            xte.visible=true
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                        }
+                    }
                 }
-                onClicked:{
-                    if (leftbox.width==0){
-                        expbox.visible=true
-                        exptxt.text='GITHUB'
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=true
-                        git.visible=true
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_on.start()
+                
+            }
+            Rectangle{
+                width:50
+                height:50
+                radius:12
+                y:210
+                color:parent.parent.color
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Image{
+                    width:25
+                    height:25
+                    source:'../assets/icons/github(1).png'
+                    anchors.centerIn: parent
+                }
+
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onEntered:{
+                        parent.color=hovercolor
                     }
-                    else if(leftbox.width>0 && git.visible==true){
-                        expbox.visible=false
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=false
-                        git.visible=false
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
-                        lb_off.start()
+                    onExited:{
+                        parent.color=barclaire
                     }
-                    else{
-                        exptxt.text='GITHUB'
-                        thov.visible=false
-                        shov.visible=false
-                        xhov.visible=false
-                        xte.visible=false
-                        ghov.visible=true
-                        git.visible=true
-                        tree.visible=false
-                        searchbox.visible=false
-                        tree.visible=false
+                    onClicked:{
+                        xhov.parent=parent;
+                        xhov.visible=true;
+                        if (leftbox.width==0){
+                            expbox.visible=true
+                            exptxt.text='GITHUB'
+                            xte.visible=false
+                            git.visible=true
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_on.start()
+                        }
+                        else if(leftbox.width>0 && git.visible==true){
+                            expbox.visible=false
+                            xte.visible=false
+                            git.visible=false
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                            lb_off.start()
+                        }
+                        else{
+                            exptxt.text='GITHUB'
+                            xte.visible=false
+                            git.visible=true
+                            tree.visible=false
+                            searchbox.visible=false
+                            tree.visible=false
+                        }
                     }
                 }
             }
-            
         }
         Rectangle{
             width:50
@@ -1148,7 +1091,8 @@ ApplicationWindow {
                 }
                 onClicked:{
                     //fileop.visible=true
-                    console.log('uninstall plugin')
+                    console.log('install plugin')
+                    plugdialog.open()
                 }
             }
             MenuItem{
@@ -1581,7 +1525,7 @@ ApplicationWindow {
                 tab: Rectangle {
                     color: styleData.selected ? barfonce :barclaire
                     border.color:  barclaire
-                    implicitWidth: Math.max(text.width + 15, 120)
+                    implicitWidth: Math.max(text.width + 30, 140)
                     implicitHeight: 20
                     width:120
                     height:40
@@ -1686,67 +1630,98 @@ ApplicationWindow {
                     }
                     Rectangle{
                         y:weltext.height+weltext.y+10
-                        height:parent.height/4
-                        width:parent.width-120
+                        height:(parent.height/4)+15
+                        width:parent.width//-120
                         color:parent.color
-                        DeviceBox{
-                            id:android
-                            src:'../assets/images/android.png'
-                            name:'Android'
-                            text_color:weltext.color
-                            rect_height:linux.rect_height
-                            rect_width:linux.rect_width
-                            anchors.left:parent.left
-                            anchors.margins: 80
-                            y:linux.y
-                            back:parent.color
-                        }
-                        DeviceBox{
-                            id:ios
-                            src:'../assets/images/apple.png'
-                            name:'IOs X'
-                            text_color:weltext.color
-                            rect_height:linux.rect_height
-                            rect_width:linux.rect_width
-                            anchors.left:parent.left
-                            anchors.margins: android.rect_width+120
-                            back:parent.color
-                            y:linux.y
-                        }
-                        DeviceBox{
-                            id:win10
-                            src:'../assets/images/win10.png'
-                            name:'Windows'
-                            text_color:weltext.color
-                            rect_height:linux.rect_height
-                            rect_width:linux.rect_width
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            back:parent.color
-                            y:linux.y
-                        }
-                        DeviceBox{
-                            id:macos
-                            src:'../assets/images/mac.png'
-                            name:'Mac Os'
-                            text_color:weltext.color
-                            rect_height:linux.rect_height
-                            rect_width:linux.rect_width
-                            anchors.right:parent.right
-                            anchors.margins: linux.rect_width+120
-                            back:parent.color
-                            y:linux.y
-                        }
-                        DeviceBox{
-                            id:linux
-                            src:'../assets/images/linux.png'
-                            name:'Linux'
-                            text_color:weltext.color
-                            rect_height:parent.height-10
-                            rect_width:(parent.width/5)-30
-                            anchors.right:parent.right
-                            anchors.margins: 80
-                            back:parent.color
-                            y:5//weltext.height+weltext.y+10
+
+                        Row{
+                            anchors.fill:parent
+                            anchors.margins:15
+                            spacing:30
+                            Rectangle{
+                                height:parent.height-10
+                                width:(parent.width/5)-30
+                                color:parent.parent.color
+                                DeviceBox{
+                                    id:android
+                                    src:'../assets/images/android.png'
+                                    name:'Android'
+                                    text_color:weltext.color
+                                    rect_height:parent.height
+                                    rect_width:parent.width
+                                    // anchors.left:parent.left
+                                    // anchors.margins: 80
+                                    //y:linux.y
+                                    back:parent.color
+                                }
+                            }
+                            Rectangle{
+                                height:parent.height-10
+                                width:(parent.width/5)-30
+                                color:parent.parent.color
+                                DeviceBox{
+                                    id:ios
+                                    src:'../assets/images/apple.png'
+                                    name:'IOs X'
+                                    text_color:weltext.color
+                                    rect_height:parent.height
+                                    rect_width:parent.width
+                                    // anchors.left:parent.left
+                                    // anchors.margins: android.rect_width+120
+                                    back:parent.color
+                                    //y:linux.y
+                                }
+                            }
+                            Rectangle{
+                                height:parent.height-10
+                                width:(parent.width/5)-30
+                                color:parent.parent.color
+                                DeviceBox{
+                                    id:win10
+                                    src:'../assets/images/win10.png'
+                                    name:'Windows'
+                                    text_color:weltext.color
+                                    rect_height:parent.height
+                                    rect_width:parent.width
+                                    //anchors.horizontalCenter: parent.horizontalCenter
+                                    back:parent.color
+                                    //y:linux.y
+                                }
+                            }
+                            Rectangle{
+                                height:parent.height-10
+                                width:(parent.width/5)-30
+                                color:parent.parent.color
+                                DeviceBox{
+                                    id:macos
+                                    src:'../assets/images/mac.png'
+                                    name:'Mac Os'
+                                    text_color:weltext.color
+                                    rect_height:parent.height
+                                    rect_width:parent.width
+                                    // anchors.right:parent.right
+                                    // anchors.margins: linux.rect_width+120
+                                    back:parent.color
+                                    //y:linux.y
+                                }
+                            }
+                            Rectangle{
+                                height:parent.height-10
+                                width:(parent.width/5)-30
+                                color:parent.parent.color
+                                DeviceBox{
+                                    id:linux
+                                    src:'../assets/images/linux.png'
+                                    name:'Linux'
+                                    text_color:weltext.color
+                                    rect_height:parent.height
+                                    rect_width:parent.width
+                                    // anchors.right:parent.right
+                                    // anchors.margins: 80
+                                    back:parent.color
+                                    //y:5//weltext.height+weltext.y+10
+                                }
+                            }
                         }
                     }
                     
@@ -1792,10 +1767,10 @@ ApplicationWindow {
                                 Component{
                                     id:lcomp
                                     Rectangle{
-                                        width:parent.width-4
+                                        width:rlist.width-4
                                         height:30
                                         color:'transparent'
-                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        //anchors.horizontalCenter: parent.horizontalCenter
                                         
                                         Text{
                                             id:rtx
@@ -1851,8 +1826,10 @@ ApplicationWindow {
                                 ScrollView{
                                     anchors.fill: parent
                                     ListView{
+                                        id:rlist
                                         delegate:lcomp
                                         model:recmod
+                                        clip:true
                                     }
                                     
                                 }
@@ -2561,9 +2538,80 @@ ApplicationWindow {
             //tmod.clear()
             fm.folder=text.toString()//.substr(6,text.length-6)
             fm.show()
-            //tmod.append(obj.listfolder(backend.openfolder(text)))
-            //ftree.addchild(obj.listfolder(backend.openfolder(text)))//appendRows(backend.openfolder(text))
         }
     }
 
+    FileDialog{
+        id:plugdialog
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: true
+        selectMultiple: true
+        //selectedNameFilter: string
+        //shortcuts: Object
+        sidebarVisible: true
+        title: 'Choose Plugin folder to install'
+        //visible: bool
+        onAccepted:{
+            var text=fileUrl
+            //console.log(text.toString())//.substr(6,text.length-6))
+            loading.visible=true
+            timer.running=true
+            var r=backend.installPlugin(text);
+        }
+    }
+    Timer{
+        id: timer
+        running: false
+        repeat: false
+        interval:3000
+
+        onTriggered: loading.visible=false;
+    }
+
+    Rectangle{
+        id:loading
+        height:110
+        width:320
+        border.width:1
+        border.color:bordercolor
+        color:barclaire
+        anchors.centerIn:parent
+        visible:false
+        property string msgt:'please wait until the installation'
+        Row{
+            anchors.fill:parent
+            anchors.margins:10
+            spacing:15
+            Rectangle{
+                color:parent.parent.color
+                height:parent.height
+                width:(parent.parent.width/4)-15
+                anchors.verticalCenter: parent.verticalCenter
+                AnimatedImage{
+                    anchors.fill:parent
+                    source:'../assets/images/load.gif'
+                }
+            }
+            Rectangle{
+                color:parent.parent.color
+                height:parent.height
+                width:((parent.width*3)/4)-15
+                anchors.verticalCenter: parent.verticalCenter
+                
+                Text{
+                    id:insmsg
+                    text:loading.msgt
+                    color:'white'
+                    font.pixelSize:11
+                    anchors.centerIn:parent
+                }
+            }
+        }
+    }
 }

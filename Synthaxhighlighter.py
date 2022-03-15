@@ -43,27 +43,63 @@ class Highlighter(object):
             'canvas','rgb','rgba','Rectangle','RoundedRectangle','color'
         ]
 
-        for l in str(text).splitlines():
-            if l.startswith('#'):
-                str(text).replace(l,"<span style='color:#0F572D'>" + l + "</span>")
-            elif '#' in l:
-                idx=l.index('#')
-                str(text).replace(l[idx:],"<span style='color:#0F572D'>" + l[idx] + "</span>")
-            
+        t=''
+        for i in str(text):
+            if i=='\n\r':
+                t+=i
+            elif i=='\t':
+                t+=i
+            elif i=='#' or i.startswith('#'):
+                idx=i.index('#')
+                s=''
+                while text[idx]!='\n' or text[idx]!='\n\r':
+                    s+=text[idx]
+                    idx+=1
+                t+="<span style='color:#0F572D'>" + s + "</span>"
+            elif i in greens:
+                t+="<span style='color:#00C0A6'><b>" + i + "</b></span>"
+            elif i in bleus:
+                t+="<span style='color:#19478B'><b>" + i + "</b></span>"
+            elif i in yellows:
+                t+="<span style='color:#E2D958'>" + i + "</span>"
+            elif i in violets:
+                t+="<span style='color:#9607A3'><b>" + i + "</b></span>"
+            elif i in oranges:
+                t+="<span style='color:#EB7200'><b>" + i + "</b></span>"
+            elif i in kv:
+                t+="<span style='color:#89D116'><b>" + i + "</b></span>"
             else:
-                for w in l:
-                    if w in greens:
-                        l.replace(w,"<span style='color:#00C0A6'><b>" + w + "</b></span>")
-                    elif w in bleus:
-                        l.replace(w,"<span style='color:#19478B'><b>" + w + "</b></span>")
-                    elif w in yellows:
-                        l.replace(w,"<span style='color:#E2D958'>" + w + "</span>")
-                    elif w in violets:
-                        l.replace(w,"<span style='color:#9607A3'><b>" + w + "</b></span>")
-                    elif w in oranges:
-                        l.replace(w,"<span style='color:#EB7200'><b>" + w + "</b></span>")
-                    elif w in kv:
-                        l.replace(w,"<span style='color:#89D116'><b>" + w + "</b></span>")
-                    elif w.startswith(r'MD[A-Z][a-zA-Z0-9]'):
-                        l.replace(w,"<span style='color:#00C0A6'><b>" + w + "</b></span>")
-                l.replace(r"([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])",) 
+                t+="<span style='color:#AED2D3'>" + i + "</span>"
+
+        # t=''
+        # for l in str(text).splitlines():
+        #     #print(l)
+        #     if l.startswith('#'):
+        #         t+="<span style='color:#0F572D'>" + l + "</span>"
+        #     elif '#' in l:
+        #         idx=l.index('#')
+        #         t+="<span style='color:#0F572D'>" + l[idx:] + "</span>"
+            
+        #     else:
+        #         for w in l.split():
+
+        #             if w in greens:
+        #                 t+="<span style='color:#00C0A6'><b>" + w + "</b></span>"
+        #             elif w in bleus:
+        #                 t+="<span style='color:#19478B'><b>" + w + "</b></span>"
+        #             elif w in yellows:
+        #                 t+="<span style='color:#E2D958'>" + w + "</span>"
+        #             elif w in violets:
+        #                 t+="<span style='color:#9607A3'><b>" + w + "</b></span>"
+        #             elif w in oranges:
+        #                 t+="<span style='color:#EB7200'><b>" + w + "</b></span>"
+        #             elif w in kv:
+        #                 t+="<span style='color:#89D116'><b>" + w + "</b></span>"
+        #             else:
+        #                 t+="<span style='color:#AED2D3'>" + w + "</span>"
+                    #t+=str(text).replace(l,l)
+        self.text=t
+        return self.text
+        #     elif w.startswith(r'MD[A-Z][a-zA-Z0-9]'):
+        #         l.replace(w,"<span style='color:#00C0A6'><b>" + w + "</b></span>")
+        # l.replace(r"([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])",) 

@@ -24,21 +24,27 @@ Item{
         border.color:bordercolor
         border.width:1
 
-        Image{
-            id:img
-            width:parent.width-10
-            height:parent.width-50
-            y:4
-            anchors.horizontalCenter: parent.horizontalCenter
-            source:src
-        }
+        Column{
+            anchors.fill:parent
+            anchors.margins:10
+            spacing:10
 
-        Text{
-            text:name
-            color:text_color
-            font.pixelSize:14
-            y:img.height+15
-            anchors.horizontalCenter: parent.horizontalCenter
+            Image{
+                id:img
+                width:parent.width-10
+                height:parent.height-30
+                y:4
+                anchors.horizontalCenter: parent.horizontalCenter
+                source:src
+            }
+
+            Text{
+                text:name
+                color:text_color
+                font.pixelSize:14
+                y:img.height+15
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
 
     }

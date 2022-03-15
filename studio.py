@@ -1,12 +1,14 @@
 # This Python file uses the following encoding: utf-8
 import os
 from pathlib import Path
+import shutil
 import sys
 import subprocess
 from Terminal import*
 import getpass
 import socket
 import glob,schedule
+import Synthaxhighlighter
 #import tree
 #from Emulator.emulator import Emulator
 
@@ -249,7 +251,7 @@ class Studio(QObject):
         #QSyntaxHighlighter()
         style = get_style_by_name('monokai')
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        return str(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
+        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style))
 
     def richcolor(self,text):
 
@@ -264,9 +266,10 @@ class Studio(QObject):
 
         #pyperclip.set_clipboard("xclip")
         console = Console(record=True)
-        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='native')
+        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='monokai')
         console.print(syntax)
-        r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
+        r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True,clear=True)
+        #print(r)
 
         return str(r)
 
@@ -294,8 +297,9 @@ class Studio(QObject):
             srt: the highlighted text (in html format)
         """
         #print(str(text).removeprefix('\r'))
+        #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.richcolor(str(text).removeprefix('\r'))
+        return self.richcolor(self.colorify(str(text)))
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -374,7 +378,7 @@ class Studio(QObject):
             curs.execute('SELECT * FROM history')
             lst=[{'fname':i[1]} for i in curs.fetchall()]
         except:pass
-        
+        #self.loadPlugins()
         return Json.dumps(lst, indent=4)
 
     #@Slot(str)
@@ -388,7 +392,7 @@ class Studio(QObject):
         curs,conn=self.connect_To_Db()
         try:
             try:
-                curs.execute(f"SELECT * from history WHERE fnama ={path_}")
+                curs.execute(f"SELECT * from history WHERE link ={path_}")
             except:
                 curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
                 conn.commit()
@@ -448,6 +452,53 @@ class Studio(QObject):
         curs=connection.cursor()
         return curs,connection
 
+    @Slot(result='QVariant')
+    def loadPlugins(self):
+        """
+        Simple plugin loader.
+
+        Returns:
+            list: the plugins list(type,icon,display_view,template_path)
+        """
+        #program directory
+        cd=os.path.dirname(os.path.abspath(__file__))
+        #plugins directory
+        pd= os.fspath(Path(__file__).resolve().parent / "plugins/python")
+        #Getting Plugins list
+        pluglist=glob.glob(os.path.join(pd,'*Plugin'))
+        l=[]
+
+        for plugin in pluglist:
+            plug=glob.glob(plugin)[0]#,r'^[a-zA-Z0-9_]+Plugin.py$')
+            #print(plug)
+            for p in glob.glob(os.path.join(plug,'*Plugin.py')):
+                module=p.split("/")[-1].split(".")[0]
+
+                if module=='__init__':
+                    continue
+                #print(f'importing module {module}')
+                #print(p.split("/")[-2].split(".")[0])
+                try:
+                    import importlib
+                    s=importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{module}')
+                    #exec(f'from plugins.python.{p.split("/")[-2].split(".")[0]}.{module} import *')
+                    l.append(s.CONFIG)
+                    importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
+                except Exception as e:
+                    print(e)
+                #module=os.path.splitext()
+        #print(l)
+        return Json.dumps(l,indent=4)
+
+    @Slot(str,result='QVariant')
+    def installPlugin(self,link):
+
+        origin=r''+link[7:]
+        target=r''+os.fspath(Path(__file__).resolve().parent / "plugins/python")
+
+        shutil.copytree(origin,os.path.join(target,f'{origin.split("/")[-1]}'))
+        return Json.dumps({'msg':'SUCCESS:'},indent=4)
+
     def run(self):
         
         app = QGuiApplication(sys.argv)
@@ -462,7 +513,6 @@ class Studio(QObject):
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():
             sys.exit(-1)
-        
         sys.exit(app.exec_())
 
 Studio().run()
