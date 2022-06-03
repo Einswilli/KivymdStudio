@@ -28,10 +28,11 @@ from kivymd.uix.dialog import MDDialog
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock
 import os
-from plyer import filechooser
+from plyer import filechooser,battery
 from datetime import datetime
 from time import *
 from kivy.config import Config
+import simplejson as Json
 
 Window.size=(310,640)
 Window.resizable=False
@@ -61,14 +62,57 @@ Screen:
             md_bg_color:hex('#000000')
             MDGridLayout:
                 rows:1
+                MDGridLayout:
+                    rows:1
+                    MDGridLayout:
+                        cols:1
+                        Widget:
+                        Lab:
+                            id:lab2
+                            font_size:11
+                            halign:'center'
+                            text:'13h : 19min'
+                            pos_hint:{'center_x':.5,'center_y':.5}
+                        Widget:
+                    MDGridLayout:
+                        rows:1
+                        Image:
+                            source:'icons/envelope.png'
+                        Image:
+                            source:'icons/wifi.png'
+                        Widget:
+                    #Widget:
                 Widget:
-                Lab:
-                    id:lab2
-                    font_size:9
-                    halign:'center'
-                    text:'13h : 19min'
-                    pos_hint:{'center_x':.5,'center_y':.5}
-                Widget:
+                MDBoxLayout:
+                    orientation:'vertical'
+                    md_bg_color:hex('#000000')
+                    MDGridLayout:
+                        rows:1
+                        size:self.size
+                        md_bg_color:hex('#000000')
+                        MDBoxLayout:
+                            orientation:'vertical'
+                            MDGridLayout:
+                                rows:1
+                                Image:
+                                    source:'icons/transfer.png'
+                                Image:
+                                    source:'icons/reseau.png'
+                        Image:
+                            id:batimg
+                            source:''
+                            pos_hint:{'center_x':.5,'center_y':.5}
+                        MDGridLayout:
+                            cols:1
+                            Widget:
+                            Lab:
+                                id:battext
+                                text:'0%'
+                                font_size:11
+                                halign:'center'
+                                pos_hint:{'center_x':.5,'center_y':.5}
+                            Widget:
+                        
 
         Carousel:
             id:car
@@ -79,14 +123,18 @@ Screen:
                     id:scm1
                     Screen:
                         name:"boot"
-                        FitImage:
-                            source:'../assets/images/emh.png'
-                        Image:
-                            source:'../assets/images/anim7.gif'
+                        # FitImage:
+                        #     source:'../assets/images/emh.png'
+                        MDBoxLayout:
+                            orientation:'vertical'
                             size:self.size
-                            allow_strech:True
-                            anim_delay:1
-                            anim_reset:1
+                            md_bg_color:hex('#00000')
+                            Image:
+                                source:'../assets/images/anim7.gif'
+                                size:self.size
+                                allow_strech:True
+                                anim_delay:1
+                                anim_reset:1
                     Screen:
                         name:"page"
                         size:self.size
@@ -116,7 +164,7 @@ Screen:
                     source:'../assets/images/anim4.gif'
                 MDBoxLayout:
                     orientation:'vertical'
-                    size_hint:.85,.85
+                    size_hint:.85,.80
                     #size_hint_y:None
                     pos_hint:{'center_x':0.5,'center_y':.5}
                     canvas:
@@ -181,6 +229,7 @@ Screen:
                         MDBoxLayout:
                             orientation:'vertical'
                             size:self.size
+                            md_bg_color:hex('#000000')
                             HotReloadViewer:
                                 id:reloader
                                 size:hbox.size
@@ -199,7 +248,7 @@ Screen:
 
 <Custcard@MDCard>
     orientation:'vertical'
-    md_bg_color:hex('#363D3F')
+    md_bg_color:hex('#363D3F2D')
     padding:'5dp'
     spacing:'5dp'
     radius:dp(10)
@@ -231,11 +280,25 @@ class Emulator(MDApp):
     def on_start(self):
         Clock.schedule_once(self.next,18)
         Clock.schedule_interval(self.mytime,1)
+        Clock.schedule_interval(self.loadbattery,1)
+
+    def loadbattery(self,*args):
+        from random import randint
+        bat=randint(0,100)#battery.status['percentage'] or 9
+        #print(battery.status['isCharging'])
+        self.root.ids.battext.text=f'{bat}%'
+        if int(bat)<10:
+            self.root.ids.batimg.source='icons/battery-low.png'
+        elif int(bat)in range(20,95):
+            self.root.ids.batimg.source='icons/battery-mid.png'
+        elif int(bat)>95:
+            self.root.ids.batimg.source='icons/battery.png'
+        #elif 
 
     def mytime(self,*args):
         heure=strftime("%H : %M : %S")
         self.root.ids.lab.text=str(heure)
-        self.root.ids.lab2.text=heure
+        self.root.ids.lab2.text=heure[:-4]
 
     def next(self,dt):
         self.root.ids.scm1.current="page"
@@ -476,6 +539,4 @@ class Emulator(MDApp):
             return import_word
         else:
             return
-
-emu=Emulator()
-emu.run()
+Emulator().run()
