@@ -6,8 +6,8 @@ CONFIG={
     'type':'',
     'description':'plugin de frido',
     'version':'1.1',
-    'icon':'../assets/icons/frido.png',
-    'template':'../qmls/frido.qml',
+    'icon':'fridoPlugin/Dot.png',
+    'template':'frido.qml',
     'backend':'fri.py',
     'display_view':'leftbar'
 }

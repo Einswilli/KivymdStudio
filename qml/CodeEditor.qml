@@ -64,7 +64,7 @@ Item{
         contentWidth: editor.paintedWidth
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
-        maximumFlickVelocity : 500
+        maximumFlickVelocity : 700
         clip: true
 
         function ensureVisible(r)
@@ -244,8 +244,8 @@ Item{
                     //console.log(tx)
                     var t=backend.highlight(tx)
 
-                    //console.log(tx)
-                    text=t
+                    //console.log(t)"<link rel='stylesheet' href='../Js/style.css>"
+                    text=t;
                     
                     // let markUp = tx.replace(
                     //     /([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[A-Z][A-Za-z_]*|[a-z][A-Za-z_]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,

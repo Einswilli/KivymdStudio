@@ -280,20 +280,23 @@ class Emulator(MDApp):
     def on_start(self):
         Clock.schedule_once(self.next,18)
         Clock.schedule_interval(self.mytime,1)
-        Clock.schedule_interval(self.loadbattery,1)
+        #self.loadbattery()
+        Clock.schedule_interval(self.loadbattery,5)
 
     def loadbattery(self,*args):
         from random import randint
-        bat=randint(0,100)#battery.status['percentage'] or 9
+        bat=battery.status['percentage'] or randint(0,100)#
         #print(battery.status['isCharging'])
         self.root.ids.battext.text=f'{bat}%'
-        if int(bat)<10:
+        if battery.status['isCharging']:
+            self.root.ids.batimg.source='icons/battery-charging.png'
+        elif int(bat)<10:
             self.root.ids.batimg.source='icons/battery-low.png'
         elif int(bat)in range(20,95):
             self.root.ids.batimg.source='icons/battery-mid.png'
         elif int(bat)>95:
             self.root.ids.batimg.source='icons/battery.png'
-        #elif 
+        
 
     def mytime(self,*args):
         heure=strftime("%H : %M : %S")
@@ -318,9 +321,11 @@ class Emulator(MDApp):
         i1=OneLineListItem(text="use android screen",)
         #i1.on_press=self.pla
         i2=OneLineListItem(text="use iphone screen",)
+        i3=OneLineListItem(text="Set Project assets dir")
         #i2.on_press=self.plg
         c.add_widget(i1)
         c.add_widget(i2)
+        c.add_widget(i3)
         set_box.add_widget(c)
         
         self.setting=MDDialog(

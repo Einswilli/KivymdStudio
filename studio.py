@@ -9,6 +9,7 @@ import getpass
 import socket
 import glob,schedule
 import Synthaxhighlighter
+#import execjs
 #import tree
 #from Emulator.emulator import Emulator
 
@@ -20,7 +21,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PySide2.QtQml import qmlRegisterType
+from PySide2.QtQml import qmlRegisterType                                            
 import fcntl, locale, pty, struct, sys, termios
 
 import simplejson as Json
@@ -217,7 +218,7 @@ class Studio(QObject):
     @Slot(result='QString')
     def getScreen(self):
 
-        """this function is used to get the screen geometry like with an the height
+        """this function is used to get the screen geometry like width and the height
 
         Returns:
             str: a str format of the screen geometry
@@ -234,7 +235,7 @@ class Studio(QObject):
             #print(width,height)
             self.screeninfo.emit([width,height])
             return f'{width},{height}'
-        except:pass
+        except:return'1200,800'
 
     #@Slot(str,result='QString')
     def colorify(self,text):
@@ -251,7 +252,7 @@ class Studio(QObject):
         #QSyntaxHighlighter()
         style = get_style_by_name('monokai')
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style))
+        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
 
     def richcolor(self,text):
 
@@ -265,13 +266,13 @@ class Studio(QObject):
         """
 
         #pyperclip.set_clipboard("xclip")
+        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4)#,theme='monokai')
         console = Console(record=True)
-        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='monokai')
         console.print(syntax)
-        r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True,clear=True)
+        r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
         #print(r)
 
-        return str(r)
+        return r
 
     @Slot(str,str)
     def newfile(self,filename,fpath):
@@ -283,7 +284,12 @@ class Studio(QObject):
         """
         link=os.path.join(str(fpath)[7:],str(filename))
         #print(fpath)
-        os.system(f'touch {link}')
+        try:
+            with open(link,'x')as f:
+                f.write('')
+        except Exception as e:
+            print(e)
+        #os.system(f'touch {link}')
         #print('cool!')
 
     @Slot(str,result='QString')
@@ -299,7 +305,7 @@ class Studio(QObject):
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.richcolor(self.colorify(str(text)))
+        return self.colorify(text.replace('\r',''))#self.richcolor(text)#
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -324,7 +330,7 @@ class Studio(QObject):
                 #self.richcolor(code)
             return self.colorify(code)#self.richcolor(code)# cod
         except :
-            return f'Error when trying to open the file: {path}\n\r may be the file extention is not supported '
+            return f'Error when trying to open the file: {path}\r\n may be the file extention is not supported '
 
     @Slot(str,result='QString')
     def get_filename(self,path):
@@ -347,7 +353,8 @@ class Studio(QObject):
             foldername str  : the new folder name
             path_ str       : the directory path
         """
-        os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
+        os.mkdir(os.path.join(str(path_)[7:],foldername))
+        #os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
         #os.makedirs(foldername)
         #pass
 
@@ -365,7 +372,7 @@ class Studio(QObject):
         if str(p).endswith(fname):
             idx=str(p).index(fname)
             p=p[7:idx]
-        print(p,fname,contenu)
+        #print(p,fname,contenu)
         with open(os.path.join(p,fname),'w') as f:
             f.write(contenu)
             f.close()
@@ -392,8 +399,12 @@ class Studio(QObject):
         curs,conn=self.connect_To_Db()
         try:
             try:
-                curs.execute(f"SELECT * from history WHERE link ={path_}")
-            except:
+                #print(path_)
+                curs.execute(f"SELECT * from history WHERE link ='{path_}'")
+                if curs.fetchone() is not None:
+                    pass
+            except Exception as e:
+                #print(e,'frido')
                 curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
                 conn.commit()
                 conn.close()
@@ -407,7 +418,7 @@ class Studio(QObject):
         Returns:
             a JSON encoded list of the folder
         """
-        print(path_)
+        #print(path_)
         paths = DisplayablePath.make_tree(Path(path_[6:]))
         ls=[{'filename':str(path.displayable())} for path in paths]
         
@@ -418,8 +429,8 @@ class Studio(QObject):
     def emulator(self):
         """ This function will be used to start the kivy emulator"""
         #Emulator().run()
+        #Emulator().run()
         pass
-        
 
     @Slot(result='QString')
     def terminal(self):
@@ -467,7 +478,7 @@ class Studio(QObject):
         #Getting Plugins list
         pluglist=glob.glob(os.path.join(pd,'*Plugin'))
         l=[]
-
+        
         for plugin in pluglist:
             plug=glob.glob(plugin)[0]#,r'^[a-zA-Z0-9_]+Plugin.py$')
             #print(plug)
@@ -482,12 +493,14 @@ class Studio(QObject):
                     import importlib
                     s=importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{module}')
                     #exec(f'from plugins.python.{p.split("/")[-2].split(".")[0]}.{module} import *')
+                    with open(os.path.join(pd,os.path.join(f'{p.split("/")[-2].split(".")[0]}',f"{s.CONFIG['template']}"))) as f:
+                        s.CONFIG['template']=f.read()
                     l.append(s.CONFIG)
                     importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
                 except Exception as e:
                     print(e)
                 #module=os.path.splitext()
-        #print(l)
+
         return Json.dumps(l,indent=4)
 
     @Slot(str,result='QVariant')
@@ -497,6 +510,7 @@ class Studio(QObject):
         target=r''+os.fspath(Path(__file__).resolve().parent / "plugins/python")
 
         shutil.copytree(origin,os.path.join(target,f'{origin.split("/")[-1]}'))
+        
         return Json.dumps({'msg':'SUCCESS:'},indent=4)
 
     def run(self):

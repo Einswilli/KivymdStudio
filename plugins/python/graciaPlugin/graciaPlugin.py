@@ -6,8 +6,8 @@ CONFIG={
     'type':'',
     'description':'plugin degracia',
     'version':'1.0',
-    'icon':'../assets/icons/gracia.png',
-    'template':'../qmls/grachou.qml',
+    'icon':'graciaPlugin/Dot.png',
+    'template':'gracia.qml',
     'backend':'gra.py',
     'display_view':'leftbar'
 }

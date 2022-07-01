@@ -55,8 +55,16 @@ ApplicationWindow {
         loading.visible=true
         timer.interval=5000
         timer.running=true
-        var l = obj.reparse(backend.loadPlugins())
-        console.log(l)
+        
+        //console.log(l)
+        // for(let i of JSON.parse(l)){
+        //     console.log(i.name)
+        //     loader.sourceComponent = lbarcomp
+        //     loader.item.parent = leftcol
+        //     loader.item.anchors.horizontalCenter=leftcol.horizontalCenter
+        //     loader.item.icon='../plugins/python/'+i.icon
+        // }
+        //console.log(l)
     }
 
     function verify(lst,word ){
@@ -93,6 +101,7 @@ ApplicationWindow {
     function high_l(value){
         return value.toHtmlObject
     }
+    
 
     property color appcolor:"#1F1F20"
     property color barclaire:'#292828'
@@ -116,28 +125,28 @@ ApplicationWindow {
     Shortcut {
         sequence: "Ctrl+N"
         onActivated: {
-            console.log('new file')
+            //console.log('new file')
             fileop.visible=true
         }
     }
     Shortcut {
         sequence: "Ctrl+O"
         onActivated: {
-            console.log('open file')
+            //console.log('open file')
             opfile.open()
         }
     }
     Shortcut {
         sequence: "Ctrl+K"
         onActivated:{ 
-            console.log(' folder new')
+            //console.log(' folder new')
             foldn.visible=true
         }
     }
     Shortcut {
         sequence: "Alt+Ctrl+K"
         onActivated: {
-            console.log('open folder')
+            //console.log('open folder')
             opfold.open()
         }
     }
@@ -145,7 +154,7 @@ ApplicationWindow {
         sequence: "Ctrl+S"
         //enabled:parent.focus
         onActivated: {
-            console.log('saving file...')
+            //console.log('saving file...')
             console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
             cde=codetab.getTab(codetab.currentIndex).item.cd.getText(0,codetab.getTab(codetab.currentIndex).item.cd.length)
             backend.savefile(codetab.getTab(codetab.currentIndex).item.lk.toString(),backend.get_filename(codetab.getTab(codetab.currentIndex).item.lk),cde)
@@ -170,6 +179,15 @@ ApplicationWindow {
         height:parent.height
         color:barclaire
         anchors.left: parent.left
+        property var pluglist:[xte,git,tree,searchbox]
+        function leftNavigation(s){
+            for (let a in pluglist){
+                pluglist[a].visible=false;
+                pluglist[a].enabled=false;
+            }
+            s.visible=true;
+            s.enabled=true;
+        }
 
         Rectangle{
             id:xhov
@@ -179,240 +197,310 @@ ApplicationWindow {
             anchors.left:parent.left
             visible:false
         }
-        Column{
-            id:leftcol
+        Component{
+            id:lbarcomp
+            Rectangle{
+                height:50
+                width:50
+                radius:12
+                color:barclaire
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Image{
+                    width:25
+                    height:25
+                    source:icon
+                    anchors.centerIn: parent
+                }
+                MouseArea{
+                    anchors.fill: parent
+                    hoverEnabled:true
+                    onEntered:{
+                        parent.color=hovercolor
+                    }
+                    onExited:{
+                        parent.color=barclaire
+                    }
+                    onClicked:{
+                        xhov.visible=true
+                        xhov.parent=parent
+                        //console.log(ui)
+                        if (leftbox.width==0){
+                            exptxt.text=name
+                            lb_on.start();
+                            expbox.visible=true
+                            leftbar.leftNavigation(ui);
+                        }
+                        else if(leftbox.width>0 && ui.visible==true){
+                            expbox.visible=false
+                            ui.visible=false
+                            lb_off.start()
+                        }
+                        else{
+                            exptxt.text=name
+                            leftbar.leftNavigation(ui);
+                        }
+                    }
+                }
+            }
+        }
+        ListModel{
+            id:lbarmod
+        }
+        Component.onCompleted:{
+            lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
+            lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
+            lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/menu(1).png',ui:xte})
+            lbarmod.append({name:'GITHUB',icon:'../assets/icons/github(1).png',ui:git})
+            var l = obj.reparse(backend.loadPlugins())
+            for(let i of JSON.parse(l)){
+                var c=Qt.createComponent('../plugins/python/'+i.template)
+                //var c=cc.createObject(Rectangle,{height:200,width:100})
+                pluglist.push(c)
+                lbarmod.append({name:i.name,icon:'../plugins/python/'+i.icon,ui:c})
+            }
+            //lbarmod.append(JSON.parse(l));
+        }
+        ScrollView{
+            id:scleftcol
             anchors.fill:parent
-            spacing:15
-            Rectangle{
-                width:50
-                height:50
-                radius:12
-                //y:30
-                color:parent.parent.color
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                Image{
-                    width:25
-                    height:25
-                    source:'../assets/icons/loupe.png'
-                    anchors.centerIn: parent
-                }
-
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onEntered:{
-                        parent.color=hovercolor
-                    }
-                    onExited:{
-                        parent.color=barclaire
-                    }
-                    onClicked:{
-                        xhov.parent=parent;
-                        xhov.visible=true;
-                        if (leftbox.width==0){
-                            expbox.visible=true
-                            exptxt.text='SEARCH'
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=true
-                            tree.visible=false
-                            lb_on.start()
-                        }
-                        else if(leftbox.width>0 && searchbox.visible==true){
-                            expbox.visible=false
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_off.start()
-                        }
-                        else{
-                            exptxt.text='SEARCH'
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=true
-                            tree.visible=false
-                        }
-                    }
-                }
+            ListView{
+                spacing:10
+                anchors.fill:parent
+                clip:true
+                delegate:lbarcomp
+                model:lbarmod
             }
-            Rectangle{
-                width:50
-                height:50
-                radius:12
-                y:90
-                color:parent.parent.color
-                anchors.horizontalCenter: parent.horizontalCenter
+            // Rectangle{
+            //     width:50
+            //     height:50
+            //     radius:12
+            //     //y:30
+            //     color:parent.parent.color
+            //     anchors.horizontalCenter: parent.horizontalCenter
 
-                Image{
-                    width:25
-                    height:25
-                    source:'../assets/icons/fichier.png'
-                    anchors.centerIn: parent
-                }
+            //     Image{
+            //         width:25
+            //         height:25
+            //         source:'../assets/icons/loupe.png'
+            //         anchors.centerIn: parent
+            //     }
 
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onEntered:{
-                        parent.color=hovercolor
-                    }
-                    onExited:{
-                        parent.color=barclaire
-                    }
-                    onClicked:{
-                        xhov.parent=parent;
-                        xhov.visible=true;
-                        if (leftbox.width==0){
-                            expbox.visible=true
-                            exptxt.text='EXPLORER'
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=true
-                            lb_on.start()
-                        }
-                        else if(leftbox.width>0 && tree.visible==true){
-                            expbox.visible=false
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_off.start()
-                        }
-                        else{
-                            exptxt.text='EXPLORER'
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=true
-                        }
-                    }
-                }
+            //     MouseArea{
+            //         anchors.fill: parent
+            //         hoverEnabled:true
+            //         onEntered:{
+            //             parent.color=hovercolor
+            //         }
+            //         onExited:{
+            //             parent.color=barclaire
+            //         }
+            //         onClicked:{
+            //             xhov.parent=parent;
+            //             xhov.visible=true;
+            //             if (leftbox.width==0){
+            //                 expbox.visible=true
+            //                 exptxt.text='SEARCH'
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=true
+            //                 tree.visible=false
+            //                 lb_on.start()
+            //             }
+            //             else if(leftbox.width>0 && searchbox.visible==true){
+            //                 expbox.visible=false
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_off.start()
+            //             }
+            //             else{
+            //                 exptxt.text='SEARCH'
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=true
+            //                 tree.visible=false
+            //             }
+            //         }
+            //     }
+            // }
+            // Rectangle{
+            //     width:50
+            //     height:50
+            //     radius:12
+            //     y:90
+            //     color:parent.parent.color
+            //     anchors.horizontalCenter: parent.horizontalCenter
+
+            //     Image{
+            //         width:25
+            //         height:25
+            //         source:'../assets/icons/fichier.png'
+            //         anchors.centerIn: parent
+            //     }
+
+            //     MouseArea{
+            //         anchors.fill: parent
+            //         hoverEnabled:true
+            //         onEntered:{
+            //             parent.color=hovercolor
+            //         }
+            //         onExited:{
+            //             parent.color=barclaire
+            //         }
+            //         onClicked:{
+            //             xhov.parent=parent;
+            //             xhov.visible=true;
+            //             if (leftbox.width==0){
+            //                 expbox.visible=true
+            //                 exptxt.text='EXPLORER'
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=true
+            //                 lb_on.start()
+            //             }
+            //             else if(leftbox.width>0 && tree.visible==true){
+            //                 expbox.visible=false
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_off.start()
+            //             }
+            //             else{
+            //                 exptxt.text='EXPLORER'
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=true
+            //             }
+            //         }
+            //     }
                 
-            }
-            Rectangle{
-                width:50
-                height:50
-                radius:12
-                y:150
-                color:parent.parent.color
-                anchors.horizontalCenter: parent.horizontalCenter
+            // }
+            // Rectangle{
+            //     width:50
+            //     height:50
+            //     radius:12
+            //     y:150
+            //     color:parent.parent.color
+            //     anchors.horizontalCenter: parent.horizontalCenter
 
-                Image{
-                    width:25
-                    height:25
-                    source:'../assets/icons/menu(1).png'
-                    anchors.centerIn: parent
-                }
+            //     Image{
+            //         width:25
+            //         height:25
+            //         source:'../assets/icons/menu(1).png'
+            //         anchors.centerIn: parent
+            //     }
 
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onEntered:{
-                        parent.color=hovercolor
-                    }
-                    onExited:{
-                        parent.color=barclaire
-                    }
-                    onClicked:{
-                        xhov.parent=parent;
-                        xhov.visible=true;
-                        if (leftbox.width==0){
-                            expbox.visible=true
-                            exptxt.text='EXTENTIONS'
-                            xte.visible=true
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_on.start()
-                        }
-                        else if(leftbox.width>0 && xte.visible==true){
-                            expbox.visible=false
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_off.start()
-                        }
-                        else{
-                            exptxt.text='EXTENTIONS'
-                            xte.visible=true
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                        }
-                    }
-                }
+            //     MouseArea{
+            //         anchors.fill: parent
+            //         hoverEnabled:true
+            //         onEntered:{
+            //             parent.color=hovercolor
+            //         }
+            //         onExited:{
+            //             parent.color=barclaire
+            //         }
+            //         onClicked:{
+            //             xhov.parent=parent;
+            //             xhov.visible=true;
+            //             if (leftbox.width==0){
+            //                 expbox.visible=true
+            //                 exptxt.text='EXTENTIONS'
+            //                 xte.visible=true
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_on.start()
+            //             }
+            //             else if(leftbox.width>0 && xte.visible==true){
+            //                 expbox.visible=false
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_off.start()
+            //             }
+            //             else{
+            //                 exptxt.text='EXTENTIONS'
+            //                 xte.visible=true
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //             }
+            //         }
+            //     }
                 
-            }
-            Rectangle{
-                width:50
-                height:50
-                radius:12
-                y:210
-                color:parent.parent.color
-                anchors.horizontalCenter: parent.horizontalCenter
+            // }
+            // Rectangle{
+            //     width:50
+            //     height:50
+            //     radius:12
+            //     y:210
+            //     color:parent.parent.color
+            //     anchors.horizontalCenter: parent.horizontalCenter
 
-                Image{
-                    width:25
-                    height:25
-                    source:'../assets/icons/github(1).png'
-                    anchors.centerIn: parent
-                }
+            //     Image{
+            //         width:25
+            //         height:25
+            //         source:'../assets/icons/github(1).png'
+            //         anchors.centerIn: parent
+            //     }
 
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onEntered:{
-                        parent.color=hovercolor
-                    }
-                    onExited:{
-                        parent.color=barclaire
-                    }
-                    onClicked:{
-                        xhov.parent=parent;
-                        xhov.visible=true;
-                        if (leftbox.width==0){
-                            expbox.visible=true
-                            exptxt.text='GITHUB'
-                            xte.visible=false
-                            git.visible=true
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_on.start()
-                        }
-                        else if(leftbox.width>0 && git.visible==true){
-                            expbox.visible=false
-                            xte.visible=false
-                            git.visible=false
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                            lb_off.start()
-                        }
-                        else{
-                            exptxt.text='GITHUB'
-                            xte.visible=false
-                            git.visible=true
-                            tree.visible=false
-                            searchbox.visible=false
-                            tree.visible=false
-                        }
-                    }
-                }
-            }
+            //     MouseArea{
+            //         anchors.fill: parent
+            //         hoverEnabled:true
+            //         onEntered:{
+            //             parent.color=hovercolor
+            //         }
+            //         onExited:{
+            //             parent.color=barclaire
+            //         }
+            //         onClicked:{
+            //             xhov.parent=parent;
+            //             xhov.visible=true;
+            //             if (leftbox.width==0){
+            //                 expbox.visible=true
+            //                 exptxt.text='GITHUB'
+            //                 xte.visible=false
+            //                 git.visible=true
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_on.start()
+            //             }
+            //             else if(leftbox.width>0 && git.visible==true){
+            //                 expbox.visible=false
+            //                 xte.visible=false
+            //                 git.visible=false
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //                 lb_off.start()
+            //             }
+            //             else{
+            //                 exptxt.text='GITHUB'
+            //                 xte.visible=false
+            //                 git.visible=true
+            //                 tree.visible=false
+            //                 searchbox.visible=false
+            //                 tree.visible=false
+            //             }
+            //         }
+            //     }
+            // }
         }
         Rectangle{
             width:50
@@ -1360,10 +1448,10 @@ ApplicationWindow {
                 height:parent.height
                 width:emimg.width+4
                 radius:6
-                border.color:bordercolor
+                //border.color:bordercolor
                 anchors.right:parent.right
                 anchors.margins: 50+list.width
-                border.width:1
+                //border.width:1
 
                 // Text{
                 //     text:'Emulator'
@@ -1384,7 +1472,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        //parent.color=hovercolor
                     }
                     onExited:{
                         parent.color=top_bar.color
@@ -1394,8 +1482,9 @@ ApplicationWindow {
                             emu_off.start()
                             emmubox.visible=false
                             emustate='off'
+                            //backend.emulator()
                         }else{
-                            backend.emulator()
+                            //backend.emulator()
                             emu_on.start()
                             emmubox.visible=true
                             emustate='on'
@@ -1543,7 +1632,7 @@ ApplicationWindow {
 
                     Component.onCompleted:{
                         var ext=styleData.title.substr(-3,3)
-                        console.log(ext)
+                        //console.log(ext)
                         if (ext=='.kv'){
                             fileimage.source='../assets/images/kivy.png'
                         }
@@ -1810,7 +1899,7 @@ ApplicationWindow {
                                                     }else{
                                                         codetab.insertTab(codetab.currentIndex+1,tl,cb)
                                                     }
-                                                    console.log()
+                                                    //console.log()
                                                     backend.openfile(rtx.text)
                                                 }
                                             }
@@ -2534,7 +2623,7 @@ ApplicationWindow {
         //visible: bool
         onAccepted:{
             var text=opfold.fileUrl
-            console.log(text.toString())//.substr(6,text.length-6))
+            //console.log(text.toString())//.substr(6,text.length-6))
             //tmod.clear()
             fm.folder=text.toString()//.substr(6,text.length-6)
             fm.show()
