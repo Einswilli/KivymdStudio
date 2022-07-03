@@ -27,32 +27,30 @@ A kivyMD devellopment studio
     - `python studio.py` <-- start the script
 
 ## Screenshots
-| | | |
-|:-------------------------:|:-------------------------:|:-------------------------:|
-|<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/1.png?raw=true"> 
-    <img width="1604" src="Screenshots/14.png?raw=true">
-</a> |
-
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/14.png?raw=true"> 
     <img width="1604" src="Screenshots/14.png?raw=true">
-    
-</a> | 
+</a> 
+
 <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/13.png?raw=true"> 
-    <img width="1604" src="Screenshots/13.png?raw=true"> 
+    <img width="1604" src="Screenshots/13.png?raw=true">
     
-</a> |
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/3.png?raw=true">
- <img width="1604" src="Screenshots/3.png?raw=true"> 
- </a>|
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/18.png?raw=true">
- <img width="1604" src="Screenshots/18.png?raw=true"> 
- </a>|
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/19.png?raw=true">
- <img width="1604" src="Screenshots/19.png?raw=true"> 
- </a>|
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/17.png?raw=true">
- <img width="1604" src="Screenshots/17.png?raw=true"> 
- </a>|
+</a> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/18.png?raw=true"> 
+    <img width="1604" src="Screenshots/18.png?raw=true"> 
+    
+</a> 
+<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/20.png?raw=true">
+ <img width="1604" src="Screenshots/20.png?raw=true"> 
+ </a>
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/22.png?raw=true">
+ <img width="1604" src="Screenshots/22.png?raw=true"> 
+ </a>
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/24.png?raw=true">
+ <img width="1604" src="Screenshots/24.png?raw=true"> 
+ </a>
+ <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/21.png?raw=true">
+ <img width="1604" src="Screenshots/21.png?raw=true"> 
+ </a>
 
  ## Quick Start
 
