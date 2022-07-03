@@ -9,6 +9,7 @@ import getpass
 import socket
 import glob,schedule
 import Synthaxhighlighter
+import platform
 #import execjs
 #import tree
 #from Emulator.emulator import Emulator
