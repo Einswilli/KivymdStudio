@@ -1,3 +1,4 @@
+from pathlib import Path
 from kivymd.app import MDApp
 from kivy.core.window import Window
 from kivy.lang.builder import Builder
@@ -33,6 +34,7 @@ from datetime import datetime
 from time import *
 from kivy.config import Config
 import simplejson as Json
+import shutil
 
 Window.size=(310,640)
 Window.resizable=False
@@ -315,13 +317,14 @@ class Emulator(MDApp):
             spacing= "12dp",
             size_hint_x= .78,
             size_hint_y=None,
-            height= "96dp"
+            height= "126dp"
         )
         c=MDList()
         i1=OneLineListItem(text="use android screen",)
         #i1.on_press=self.pla
         i2=OneLineListItem(text="use iphone screen",)
         i3=OneLineListItem(text="Set Project assets dir")
+        i3.on_press=self.set_asset
         #i2.on_press=self.plg
         c.add_widget(i1)
         c.add_widget(i2)
@@ -341,7 +344,16 @@ class Emulator(MDApp):
             #         ],
         )
         self.setting.open()
-
+        
+    def set_asset(self):
+        filechooser.open_file(on_selection=self.handle_folder_selection)
+        
+    def handle_folder_selection(self,folder):
+        print(folder)
+        if os.path.exists(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}")):
+            os.rmdir(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}"))
+        shutil.copytree('/'.join(folder[0].split('/')[:-1]),os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}"))
+        
     def choose_file(self):
         filechooser.open_file(on_selection=self.handle_selection)
 

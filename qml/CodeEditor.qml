@@ -22,11 +22,22 @@ Item{
         function onFolderOpen(value){
             return JSON.stringify(value)
         }
+    }
 
+    Shortcut {
+        sequence: "Ctrl+Z"
+        onActivated: {
+            editor.undo();
+        }
+    }
+    Shortcut {
+        sequence: "Ctrl+Y"
+        onActivated: {
+            editor.redo();
+        }
     }
 
     property alias scode:editor
-
     readonly property real lineHeight: (editor.implicitHeight - 2 * editor.textMargin) / editor.lineCount
     readonly property alias lineCount: editor.lineCount
     //property alias gettext:editor.getText(0,editor.length)
@@ -351,6 +362,10 @@ Item{
             }
         }
         ScrollBar.vertical: ScrollBar {
+            width:15
+            active: flickb.moving || !flickb.moving
+        }
+        ScrollBar.horizontal: ScrollBar {
             width:15
             active: flickb.moving || !flickb.moving
         }

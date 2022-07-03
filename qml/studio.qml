@@ -254,10 +254,16 @@ ApplicationWindow {
             lbarmod.append({name:'GITHUB',icon:'../assets/icons/github(1).png',ui:git})
             var l = obj.reparse(backend.loadPlugins())
             for(let i of JSON.parse(l)){
-                var c=Qt.createComponent('../plugins/python/'+i.template)
-                //var c=cc.createObject(Rectangle,{height:200,width:100})
-                pluglist.push(c)
-                lbarmod.append({name:i.name,icon:'../plugins/python/'+i.icon,ui:c})
+                var cc=Qt.createComponent('../'+i.template)
+                if(cc.status==Component.ready){
+                    console.log(i.template)
+                    var c=cc.createObject(Rectangle,{height:200,width:100})
+                    pluglist.push(c)
+                    lbarmod.append({name:i.name,icon:'../plugins/python/'+i.icon,ui:c})
+                }else{
+                    console.log(cc.errorString())
+                }
+                //console.log(c)
             }
             //lbarmod.append(JSON.parse(l));
         }

@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil
 import sys
 import subprocess
-from Terminal import*
+#from Terminal import*
 import getpass
 import socket
 import glob,schedule
@@ -22,7 +22,7 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PySide2.QtQml import qmlRegisterType                                            
-import fcntl, locale, pty, struct, sys, termios
+import locale, sys
 
 import simplejson as Json
 from plyer import notification
@@ -125,78 +125,6 @@ class DisplayablePath(object):
             parent = parent.parent
 
         return ''.join(reversed(parts))
-
-
-#@QmlElement
-class FolderTree(QObject):
-    #pass
-    def __init__(self):
-        QObject.__init__(self)
-        self.pty_m=None
-        self.codec = locale.getpreferredencoding()
-        #ter=QTextEdit()
-        # ter.run()
-
-    #@Property()
-    #def initial(self):
-
-    #@Slot()
-    def cb_echo(self, pty_m):
-        """Display output that arrives from the PTY"""
-        # Read pending data or assume the child exited if we can't
-        # (Not technically the proper way to detect child exit, but it works)
-        try:
-            # Use 'replace' as a not-ideal-but-better-than-nothing way to deal
-            # with bytes that aren't valid in the chosen encoding.
-            child_output = os.read(pty_m, 1024).decode(
-                self.codec, 'replace')
-            return child_output
-        except OSError:
-            # Ask the event loop to exit and then return to it
-            #QApplication.instance().quit()
-            return ''
-
-    @Slot(str,result='QString')
-    def spawn(self, argv):
-        """Launch a child process in the terminal"""
-        # Clean up after any previous spawn() runs
-        # TODO: Need to reap zombie children
-        # XXX: Kill existing children if spawn is called a second time?
-        # if self.pty_m:
-        #     self.pty_m=None
-
-        # Create a new PTY with both ends open
-        self.pty_m, pty_s = pty.openpty()
-
-        # Reset this, since it's PTY-specific
-        self.backspace_budget = 0
-
-        # Stop the PTY from echoing back what we type on this end
-        term_attrs = termios.tcgetattr(pty_s)
-        term_attrs[3] &= ~termios.ECHO
-        termios.tcsetattr(pty_s, termios.TCSANOW, term_attrs)
-
-        child_env = os.environ.copy()
-        child_env['TERM'] = 'tty'
-
-        # Launch the subprocess
-        # FIXME: Keep a reference so we can reap zombie processes
-        subprocess.Popen(argv,  # nosec
-            stdin=pty_s, stdout=pty_s, stderr=pty_s,
-            env=child_env,
-            preexec_fn=os.setsid)
-
-        # Close the child side of the PTY so that we can detect when to exit
-        os.close(pty_s)
-
-        # Hook up an event handler for data waiting on the PTY
-        # (Because I didn't feel like looking into whether QProcess can be
-        #  integrated with PTYs as a subprocess.Popen alternative)
-        # self.notifier = QSocketNotifier(
-        #     self.pty_m, QSocketNotifier.Read, self)
-        # self.notifier.activated.connect(self.cb_echo)
-        return self.cb_echo(self.pty_m)
-    
 
 DEFAULT_TTY_CMD = ['/bin/bash']
 DEFAULT_COLS = 80
@@ -305,7 +233,7 @@ class Studio(QObject):
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.colorify(text.replace('\r',''))#self.richcolor(text)#
+        return self.colorify('\n'.join(str(text).split('\r')))#self.richcolor(text)#
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -493,8 +421,10 @@ class Studio(QObject):
                     import importlib
                     s=importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{module}')
                     #exec(f'from plugins.python.{p.split("/")[-2].split(".")[0]}.{module} import *')
-                    with open(os.path.join(pd,os.path.join(f'{p.split("/")[-2].split(".")[0]}',f"{s.CONFIG['template']}"))) as f:
-                        s.CONFIG['template']=f.read()
+                    #print(s.CONFIG)
+                    # with open(os.path.join(pd,os.path.join(f'{p.split("/")[-2].split(".")[0]}',f"{s.CONFIG['template']}"))) as f:
+                    s.CONFIG.update({'template':f'plugins/python/{p.split("/")[-2].split(".")[0]}/{s.CONFIG["template"]}'})
+                        #print(s.CONFIG)
                     l.append(s.CONFIG)
                     importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
                 except Exception as e:
@@ -520,9 +450,9 @@ class Studio(QObject):
         engine = QQmlApplicationEngine()
         #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()
-        ft=FolderTree()
+        #ft=FolderTree()
         engine.rootContext().setContextProperty('backend',studio)
-        engine.rootContext().setContextProperty('Terminal',ft)
+        #engine.rootContext().setContextProperty('Terminal',ft)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():
