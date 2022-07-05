@@ -346,13 +346,13 @@ class Emulator(MDApp):
         self.setting.open()
         
     def set_asset(self):
-        filechooser.open_file(on_selection=self.handle_folder_selection)
+        filechooser.choose_dir(on_selection=self.handle_folder_selection)
         
     def handle_folder_selection(self,folder):
         print(folder)
-        if os.path.exists(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}")):
-            os.rmdir(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}"))
-        shutil.copytree('/'.join(folder[0].split('/')[:-1]),os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-2]}"))
+        if os.path.exists(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}")):
+            shutil.rmtree(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}"))
+        shutil.copytree(folder[0],os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}"))
         
     def choose_file(self):
         filechooser.open_file(on_selection=self.handle_selection)
