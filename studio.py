@@ -165,6 +165,15 @@ class Studio(QObject):
             self.screeninfo.emit([width,height])
             return f'{width},{height}'
         except:return'1200,800'
+        
+    @Slot(str,result='QString')
+    def get_prev_indent_lvl(self,text):
+        l=str(text).replace('\u2029','\n').split('\n')
+        prev_line=l[-2]
+        tmp=prev_line.lstrip(' \t')
+        c=len(prev_line[:len(prev_line)-len(tmp)])+1 if prev_line.strip().endswith(':') else len(prev_line[:len(prev_line)-len(tmp)])
+        #prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
+        return str(c)#prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
 
     #@Slot(str,result='QString')
     def colorify(self,text):
@@ -195,7 +204,7 @@ class Studio(QObject):
         """
 
         #pyperclip.set_clipboard("xclip")
-        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4)#,theme='monokai')
+        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='monokai',indent_guides=True)
         console = Console(record=True)
         console.print(syntax)
         r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
@@ -234,7 +243,7 @@ class Studio(QObject):
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.colorify('\n'.join(str(text).split('\r')))#self.richcolor(text)#
+        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t'))#self.richcolor(text)#
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -254,11 +263,13 @@ class Studio(QObject):
             # curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
             # conn.commit()
             # conn.close()
-            with open(path[7:],'r') as f:
+            p=path[7:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
+            with open(p,'r') as f:
                 code=f.read()
                 #self.richcolor(code)
             return self.colorify(code)#self.richcolor(code)# cod
-        except :
+        except Exception as e:
+            print(e)
             return f'Error when trying to open the file: {path}\r\n may be the file extention is not supported '
 
     @Slot(str,result='QString')
@@ -271,7 +282,9 @@ class Studio(QObject):
         Returns:
             str: the file name
         """
-        filename=str(path).split('/')[-1]
+        if 'windows' in platform.system().lower():
+            filename=str(path).split('\\')[-1]
+        else:filename=str(path).split('/')[-1]
         return filename
 
     @Slot(str,str,result='QVariant')
@@ -303,7 +316,7 @@ class Studio(QObject):
             p=p[7:idx]
         #print(p,fname,contenu)
         with open(os.path.join(p,fname),'w') as f:
-            f.write(contenu)
+            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t'))
             f.close()
 
     @Slot(result='QVariant')
