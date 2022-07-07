@@ -88,7 +88,7 @@ Rectangle {
     property string currfold:folders.folder
 
     signal fileSelected(string file)
-    //signal 
+    signal folderSwiped(string path)
 
     function selectFile(file) {
         if (file !== "") {
@@ -456,6 +456,7 @@ Rectangle {
                 view.state = "current";
                 view.focus = true;
                 folders.folder = path;
+                folderSwiped(path)
             }
 
             function up() {
@@ -475,6 +476,7 @@ Rectangle {
                 view.state = "current";
                 view.focus = true;
                 folders.folder = path;
+                folderSwiped(path)
             }
 
             function keyPressed(key) {

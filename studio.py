@@ -32,6 +32,8 @@ import sys,os,requests,tempfile
 import sqlite3
 from pygments import highlight
 from pygments.lexers.python import PythonLexer
+from pygments.lexers import load_lexer_from_file
+from pygments.lexers.special import TextLexer
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.other import NullFormatter
 from pygments.styles import get_style_by_name
@@ -190,7 +192,15 @@ class Studio(QObject):
         #QSyntaxHighlighter()
         style = get_style_by_name('monokai')
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        return highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
+        return highlight(text,self.detect_lang(text),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
+    
+    def detect_lang(self,code):
+        import re
+        defs=code.count('def ')
+        classes=code.count('class ')
+        if defs>1 or classes>1:
+            return PythonLexer()
+        return load_lexer_from_file('kivyLexer.py','KivyLexer')
 
     def richcolor(self,text):
 
@@ -270,7 +280,7 @@ class Studio(QObject):
             return self.colorify(code)#self.richcolor(code)# cod
         except Exception as e:
             print(e)
-            return f'Error when trying to open the file: {path}\r\n may be the file extention is not supported '
+            return f'Error when trying to open the file: {path}\n may be the file extention is not supported '
 
     @Slot(str,result='QString')
     def get_filename(self,path):
@@ -326,8 +336,9 @@ class Studio(QObject):
         try:
             curs.execute('SELECT * FROM history')
             lst=[{'fname':i[1]} for i in curs.fetchall()]
-        except:pass
+        except Exception as e:print(e)
         #self.loadPlugins()
+        conn.close()
         return Json.dumps(lst, indent=4)
 
     #@Slot(str)
@@ -344,9 +355,10 @@ class Studio(QObject):
                 #print(path_)
                 curs.execute(f"SELECT * from history WHERE link ='{path_}'")
                 if curs.fetchone() is not None:
-                    pass
+                    pass #file already exists in history!
+                else: exec('1+a') # Must get an error and raise exception
             except Exception as e:
-                #print(e,'frido')
+                # then Cool save ut to history
                 curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
                 conn.commit()
                 conn.close()

@@ -271,7 +271,7 @@ Item{
                     id: text
                     width: implicitWidth
                     height: root.lineHeight
-                    color: editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
+                    color: editor.getText(0,editor.cursorPosition).split('\u2029').length+1==parseInt(text)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
                     font: editor.font
                     text: index + 1
                     anchors.right:parent.right

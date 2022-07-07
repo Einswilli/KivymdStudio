@@ -20,7 +20,7 @@ ApplicationWindow {
     height: 700
     visible: true
     color: "#1F1F20"
-    title: qsTr("Kivymd-STudio")
+    title: qsTr("Kivymd-Studio")
 
     QtObject{
         id:obj
@@ -95,7 +95,7 @@ ApplicationWindow {
             return Logic.hljs.highlight(text, { language: "python" });
 
         } catch (error) {
-            console.log(error)
+            //console.log(error)
         }
     }
     function high_l(value){
@@ -113,6 +113,7 @@ ApplicationWindow {
     property string cde
     property string lnk
     property string imsource
+    property string currentFolder
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -155,7 +156,7 @@ ApplicationWindow {
         //enabled:parent.focus
         onActivated: {
             //console.log('saving file...')
-            console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
+            //console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
             cde=codetab.getTab(codetab.currentIndex).item.cd.getText(0,codetab.getTab(codetab.currentIndex).item.cd.length)
             backend.savefile(codetab.getTab(codetab.currentIndex).item.lk.toString(),backend.get_filename(codetab.getTab(codetab.currentIndex).item.lk),cde)
             //cde=''
@@ -704,6 +705,10 @@ ApplicationWindow {
                     }
                     //codetab.getTab(codetab.currentIndex+1).visible=true
                 }
+                onFolderSwiped:{
+                    root.currentFolder=path;
+                    console.log(root.currentFolder)
+                }
             }
             Component{
                 id:imcomp
@@ -1185,7 +1190,7 @@ ApplicationWindow {
                 }
                 onClicked:{
                     //fileop.visible=true
-                    console.log('install plugin')
+                    //console.log('install plugin')
                     plugdialog.open()
                 }
             }
@@ -1199,7 +1204,7 @@ ApplicationWindow {
                 }
                 onClicked:{
                     //fileop.visible=true
-                    console.log('list plugins')
+                    //console.log('list plugins')
                 }
             }
             MenuItem{
@@ -1212,7 +1217,7 @@ ApplicationWindow {
                 }
                 onClicked:{
                     //fileop.visible=true
-                    console.log('install plugins')
+                    //console.log('install plugins')
                 }
             }
         }
@@ -2562,9 +2567,11 @@ ApplicationWindow {
         border_color:bordercolor
         Keys.onReturnPressed:{
             visible=false
-            //console.log()
-            backend.newfile(fileop.get_filename,fm.folder.toString())
-            lnk=fm.currfold.toString()+fileop.get_filename.toString()
+            if(root.currentFolder==''){
+                root.currentFolder=fm.folder
+            }
+            backend.newfile(fileop.get_filename,root.currentFolder.toString())
+            lnk=root.currentFolder.toString()+fileop.get_filename.toString()
             codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
         }
     }
@@ -2579,7 +2586,7 @@ ApplicationWindow {
         Keys.onReturnPressed:{
             visible=false
             //console.log()
-            backend.newfolder(foldn.get_filename,fm.folder.toString())
+            backend.newfolder(foldn.get_filename,root.currentFolder.toString())
             //codetab.addTab(fileop.get_filename,cb)
         }
     }
@@ -2604,10 +2611,8 @@ ApplicationWindow {
             var text=backend.openfile(fileUrl)
             var titre=backend.get_filename(fileUrl)
             cde=text
-            //console.log(cde)
             lnk=fileUrl.toString()
             codetab.insertTab(codetab.currentIndex+1, titre,cb)
-            //cde=''
             //root.setcode(text)
         }
     }
@@ -2686,7 +2691,7 @@ ApplicationWindow {
             Rectangle{
                 color:parent.parent.color
                 height:parent.height
-                width:(parent.parent.width/4)-15
+                width:height//(parent.parent.width/4)-15
                 anchors.verticalCenter: parent.verticalCenter
                 AnimatedImage{
                     anchors.fill:parent
@@ -2696,7 +2701,7 @@ ApplicationWindow {
             Rectangle{
                 color:parent.parent.color
                 height:parent.height
-                width:((parent.width*3)/4)-15
+                width:parent.width-height-15//((parent.width*3)/4)-15
                 anchors.verticalCenter: parent.verticalCenter
                 
                 Text{
