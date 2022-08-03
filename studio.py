@@ -1,6 +1,8 @@
 # This Python file uses the following encoding: utf-8
+import logging
 import os
 from pathlib import Path
+import pathlib
 import shutil
 import sys
 import subprocess
@@ -8,6 +10,7 @@ import subprocess
 import getpass
 import socket
 import glob,schedule
+from time import time
 import Synthaxhighlighter
 import platform
 #import execjs
@@ -21,7 +24,7 @@ from PySide2.QtQml import QQmlApplicationEngine,QQmlContext
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
-from PyQt5 import QtCore, QtGui, QtWidgets
+#from PyQt5 import QtCore, QtGui, QtWidgets
 from PySide2.QtQml import qmlRegisterType                                            
 import locale, sys
 
@@ -49,6 +52,8 @@ from PyQt5.QtGui import QFont, QColor
 from functools import partial
 from pathlib import Path
 from PySide6.QtQuickControls2 import QQuickStyle
+from watchdog.observers import Observer
+from watchdog.events import LoggingEventHandler
 
 QML_IMPORT_NAME = "io.qt.textproperties"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -136,6 +141,12 @@ DEFAULT_ROWS = 25
 # The character to use as a reference point when converting between pixel and
 # character cell dimensions in the presence of a non-fixed-width font
 REFERENCE_CHAR = 'W'
+
+class changeHandler(LoggingEventHandler):
+        
+    def on_modified(self, event,callback):
+        callback()
+
 class Studio(QObject):
 
     def __init__(self):
@@ -145,6 +156,7 @@ class Studio(QObject):
     colorhighlight=Signal(str)
     screeninfo=Signal(dict)
     terminalReady=Signal(str)
+    #logevent=Signal(dict,name='logEvent')
     
     @Slot(result='QString')
     def getScreen(self):
@@ -170,7 +182,7 @@ class Studio(QObject):
         
     @Slot(str,result='QString')
     def get_prev_indent_lvl(self,text):
-        l=str(text).replace('\u2029','\n').split('\n')
+        l=str(text).replace('\u2029','\n').replace('â€©','\n').split('\n')
         prev_line=l[-2]
         tmp=prev_line.lstrip(' \t')
         c=len(prev_line[:len(prev_line)-len(tmp)])+1 if prev_line.strip().endswith(':') else len(prev_line[:len(prev_line)-len(tmp)])
@@ -230,7 +242,8 @@ class Studio(QObject):
             filename str: the file name
             fpath str: the file path
         """
-        link=os.path.join(str(fpath)[7:],str(filename))
+        p=str(fpath)[8:] if 'windows' in platform.system().lower() else str(fpath)[7:]
+        link=os.path.join(p,str(filename))
         #print(fpath)
         try:
             with open(link,'x')as f:
@@ -253,7 +266,7 @@ class Studio(QObject):
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t'))#self.richcolor(text)#
+        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))#self.richcolor(text)#
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -273,7 +286,7 @@ class Studio(QObject):
             # curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
             # conn.commit()
             # conn.close()
-            p=path[7:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
+            p=path[8:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
             with open(p,'r') as f:
                 code=f.read()
                 #self.richcolor(code)
@@ -292,9 +305,10 @@ class Studio(QObject):
         Returns:
             str: the file name
         """
-        if 'windows' in platform.system().lower():
-            filename=str(path).split('\\')[-1]
-        else:filename=str(path).split('/')[-1]
+        # if 'windows' in platform.system().lower():
+        #     filename=str(path).split('\\')[-1]
+        # else:
+        filename=str(path).split('/')[-1]
         return filename
 
     @Slot(str,str,result='QVariant')
@@ -305,7 +319,8 @@ class Studio(QObject):
             foldername str  : the new folder name
             path_ str       : the directory path
         """
-        os.mkdir(os.path.join(str(path_)[7:],foldername))
+        p=str(path_)[8:] if 'windows' in platform.system().lower() else str(path_)[7:]
+        os.mkdir(os.path.join(p,foldername))
         #os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
         #os.makedirs(foldername)
         #pass
@@ -323,10 +338,10 @@ class Studio(QObject):
 
         if str(p).endswith(fname):
             idx=str(p).index(fname)
-            p=p[7:idx]
+            p=p[8:idx] if 'windows' in platform.system().lower() else p[7:idx]
         #print(p,fname,contenu)
         with open(os.path.join(p,fname),'w') as f:
-            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t'))
+            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))
             f.close()
 
     @Slot(result='QVariant')
@@ -379,12 +394,56 @@ class Studio(QObject):
         
         return Json.dumps(ls , indent=4)
 
+    def get_log_file(self):
+        m=str(datetime.date.today().month)
+        d=str(datetime.date.today().day)
+        i=0
+        if len(m)==1:
+            m=f'0{m}'
+        if len(d)==1:
+            d=f'0{d}'
+        pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i+1}.txt'
+        while os.path.exists(pth):
+            i+=1
+            pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i+1}.txt'
+        return f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i}.txt'
+        
     @Slot()
     def emulator(self):
         """ This function will be used to start the kivy emulator"""
         #Emulator().run()
         #Emulator().run()
-        pass
+        e=subprocess.Popen([sys.executable,'Emulator/emulator.py'])
+        #print(self.get_log_file())
+        # schedule.every(1).seconds.do(self.emulationLog)
+        #print(os.listdir(f'{pathlib.Path.home()}/.kivy/logs/'))
+        # p=self.get_log_file()
+        # ev_h=changeHandler()
+        # ev_h.on_modified(callback=self.emulatoinLog)
+        # o=Observer()
+        # o.schedule(ev_h,p)
+        # o.start()
+        # try:
+        #     import time
+        #     while True:
+        #         time.sleep(1)
+        # except:
+        #     o.stop()
+        # o.join()
+
+    @Slot(result='QVariant')
+    def emulationLog(self):
+        #pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{str(datetime.date.today().month)}-{str(datetime.date.today().day)}_{i}.txt'
+        with open(self.get_log_file(),'r')as log:
+            m=log.readlines()
+        if m!=[]:
+            l=[{
+                'msg':ms
+            } for ms in m]
+            #print(l)
+            #self.logevent.emit(l)
+            return Json.dumps(l,indent=4)
+            # os.system('python Emulator/emulator.py &')
 
     @Slot(result='QString')
     def terminal(self):
@@ -470,7 +529,7 @@ class Studio(QObject):
         return Json.dumps({'msg':'SUCCESS:'},indent=4)
 
     def run(self):
-        
+
         app = QGuiApplication(sys.argv)
         QQuickStyle.setStyle("Material")
         engine = QQmlApplicationEngine()

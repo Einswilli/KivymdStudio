@@ -241,6 +241,7 @@ Item{
                 width:20
                 height:parent.height
                 color:'#609EAD96'
+                visible:false
             }
         }
         Rectangle{
@@ -271,7 +272,7 @@ Item{
                     id: text
                     width: implicitWidth
                     height: root.lineHeight
-                    color: editor.getText(0,editor.cursorPosition).split('\u2029').length+1==parseInt(text)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
+                    color: editor.getText(0,editor.cursorPosition).split('\u2029').length==parseInt(text)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
                     font: editor.font
                     text: index + 1
                     anchors.right:parent.right
@@ -292,7 +293,7 @@ Item{
             active: flickb.moving || !flickb.moving
         }
         ScrollBar.horizontal: ScrollBar {
-            width:15
+            height:15
             active: flickb.moving || !flickb.moving
         }
     }

@@ -124,6 +124,25 @@ FocusScope {
     function rmTab(index){
         removeTab(index)
     }
+    function contains(title){
+        for(let i =0;i<root.count;i++){
+            if(getTab(i).title!=title){
+                continue
+            }else{
+                return true
+            }
+        }
+        return false
+    }
+    function indexOf(title){
+        for(let i =0;i<root.count;i++){
+            if(getTab(i).title!=title){
+                continue
+            }else{
+                return i
+            }
+        }
+    }
 
     /*! Moves a tab \a from index \a to another. */
     function moveTab(from, to) {

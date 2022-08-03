@@ -43,7 +43,7 @@ ApplicationWindow {
         function onFolderOpen(value){
             return JSON.stringify(value)
         }
-
+        
     }
 
     Component.onCompleted: {
@@ -65,6 +65,10 @@ ApplicationWindow {
         //     loader.item.icon='../plugins/python/'+i.icon
         // }
         //console.log(l)
+    }
+
+    function onLogEvent(value){
+        console.log(balue)
     }
 
     function verify(lst,word ){
@@ -114,6 +118,7 @@ ApplicationWindow {
     property string lnk
     property string imsource
     property string currentFolder
+    signal emuLog(var msg)
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -697,11 +702,22 @@ ApplicationWindow {
                     cde=tx
                     lnk=file.toString()
                     var tl=backend.get_filename(file)
-                    if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
-                        imsource=file
-                        codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
+                    if(codetab.contains(tl)==true){
+                        let idx=codetab.indexOf(tl)
+                        if(codetab.currentIndex>idx){
+                            codetab.currentIndex-=codetab.currentIndex-idx
+                        }else if(codetab.currentIndex<idx){
+                            codetab.currentIndex+=idx-codetab.currentIndex
+                        }else{
+                            //nothings!
+                        }
                     }else{
-                        codetab.insertTab(codetab.currentIndex+1,tl,cb)
+                        if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
+                            imsource=file
+                            codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
+                        }else{
+                            codetab.insertTab(codetab.currentIndex+1,tl,cb)
+                        }
                     }
                     //codetab.getTab(codetab.currentIndex+1).visible=true
                 }
@@ -2398,7 +2414,8 @@ ApplicationWindow {
                         parent.color=barclaire
                     }
                     onClicked:{
-
+                        backend.emulator()
+                        emloger.running=true
                     }
                 }
             }
@@ -2500,6 +2517,100 @@ ApplicationWindow {
                 width:parent.width
                 height:parent.height
                 source:'../assets/images/em.png'
+                visible:false
+            }
+            Column{
+                anchors.fill:parent
+                anchors.margins:5
+                spacing:10
+                Rectangle{
+                    color:parent.parent.color
+                    height: 40
+                    width: parent.width
+                    Text{
+                        text:'Events Log'
+                        color:'#FFFFFF'
+                        font.pixelSize:16
+                        anchors.centerIn:parent
+                    }
+                }
+                Rectangle{
+                    height: parent.height-50
+                    width:parent.width
+                    color:appcolor
+
+                    Timer{
+                        id:emloger
+                        running:false
+                        interval:5000
+                        repeat:true
+                        onTriggered:{
+                            logmod.clear()
+                            logmod.append(JSON.parse(obj.reparse(backend.emulationLog())))
+                            loglist.positionViewAtEnd()
+                        }
+                    }
+                    
+                    //Component.onCompleted: backend.logEvent.connect(root.onLogEvent())
+
+                    Component{
+                        id:logdeg
+                        Rectangle{
+                            height: mlg.height+20
+                            width: loglist.width
+                            color:moyen
+                            border.width:1
+                            border.color:bordercolor
+                            Row{
+                                anchors.fill:parent
+                                spacing: 10
+                                anchors.margins:2
+                                Rectangle{
+                                    height: parent.height-20
+                                    width: height
+                                    color:parent.parent.color
+                                    anchors.verticalCenter:parent.verticalCenter
+                                    Image{
+                                        anchors.fill:parent
+                                        source:''
+                                    }
+                                }
+                                Rectangle{
+                                    height: parent.height
+                                    width: parent.width-50
+                                    color:moyen
+                                    anchors.verticalCenter:parent.verticalCenter
+                                    Text{
+                                        id:mlg
+                                        text: msg
+                                        color:'#CCCCCC'
+                                        font.pixelSize:10
+                                        wrapMode: Text.WordWrap
+                                        width:parent.width
+                                        height: parent.height
+                                        lineHeight: 15
+                                        anchors.verticalCenter:parent.verticalCenter
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ListModel{
+                        id:logmod
+                    }
+
+                    ScrollView{
+                        anchors.fill:parent
+                        ListView{
+                            id:loglist
+                            anchors.fill:parent
+                            spacing:5
+                            clip:true
+                            model:logmod
+                            delegate: logdeg
+                        }
+                    }
+                }
             }
         }
     }
