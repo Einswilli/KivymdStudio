@@ -258,10 +258,10 @@ Rectangle {
                         }
                         onClicked: { if (folders == wrapper.ListView.view.model) launch() }
                         onEntered:{
-                            wrapper.color='#1D313D9C';
+                            parent.color='#1D313D9C';
                         }
                         onExited:{
-                            wrapper.color='transparent'
+                            parent.color='transparent'
                         }
                     }
 

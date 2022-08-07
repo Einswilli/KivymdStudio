@@ -157,6 +157,20 @@ ApplicationWindow {
         }
     }
     Shortcut {
+        sequence: "Ctrl+Z"
+        onActivated: {
+            console.log('undo')
+            codetab.getTab(codetab.currentIndex).item.cd.undo()
+        }
+    }
+    Shortcut {
+        sequence: "Ctrl+Y"
+        onActivated: {
+            console.log('redo')
+            codetab.getTab(codetab.currentIndex).item.cd.redo()
+        }
+    }
+    Shortcut {
         sequence: "Ctrl+S"
         //enabled:parent.focus
         onActivated: {

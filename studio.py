@@ -26,7 +26,7 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 #from PyQt5 import QtCore, QtGui, QtWidgets
 from PySide2.QtQml import qmlRegisterType                                            
-import locale, sys
+import locale, sys,utils
 
 import simplejson as Json
 from plyer import notification
@@ -200,9 +200,13 @@ class Studio(QObject):
         Returns:
             srt: the highlighted text (in html format)
         """
-
+        directives=[l for l in text.split('\n') if str(l).startswith('import') and len(l.split(' '))>=2 or str(l).startswith('from')and len(l.split(' '))>3]
+        
+        mods=[' '.join(d.split(' ',1)[-1].split(',')).split(' ') if d.startswith('import') else ' '.join(d[d.index('import')+6:].split(',',1)).split(' ') for d in directives ]
+        mods.extend([d.split(' ')[1] for d in directives if d.startswith('from')])
+        utils.add_directives(mods)
         #QSyntaxHighlighter()
-        style = get_style_by_name('monokai')
+        style = get_style_by_name(utils.get_active_theme())
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
         return highlight(text,self.detect_lang(text),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
     
@@ -282,11 +286,11 @@ class Studio(QObject):
         curs,conn=self.connect_To_Db()
         
         try:
-            self.save_to_history(path[7:])
-            # curs.execute("INSERT INTO history VALUES(null,?)",(path[7:],))
-            # conn.commit()
-            # conn.close()
-            p=path[8:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
+            if not path.startswith('file://'):
+                self.save_to_history(path)
+                p=path[1:].replace('/','\\') if 'windows' in platform.system().lower() else path
+            else:
+                p=path[8:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
             with open(p,'r') as f:
                 code=f.read()
                 #self.richcolor(code)
@@ -463,6 +467,10 @@ class Studio(QObject):
         srt=sortie.replace('\n','\n\r')
         return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
 
+    @Slot(str,result='QVariant')
+    def filter(self,name):
+        return Json.dumps(utils.filter(name),indent=4)
+
     def tree_to_dict(self,path_):
         '''' transforming the directory tree in dictionnary '''
 
@@ -487,7 +495,7 @@ class Studio(QObject):
         #program directory
         cd=os.path.dirname(os.path.abspath(__file__))
         #plugins directory
-        pd= os.fspath(Path(__file__).resolve().parent / "plugins/python")
+        pd= utils.PATHS['PLUGINS_PATH']#os.fspath(Path(__file__).resolve().parent / "plugins/python")
         #Getting Plugins list
         pluglist=glob.glob(os.path.join(pd,'*Plugin'))
         l=[]
@@ -504,14 +512,14 @@ class Studio(QObject):
                 #print(p.split("/")[-2].split(".")[0])
                 try:
                     import importlib
-                    s=importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{module}')
+                    s=importlib.import_module(f'{pd.replace("/",".")[1:]}.{p.split("/")[-2].split(".")[0]}.{module}')
                     #exec(f'from plugins.python.{p.split("/")[-2].split(".")[0]}.{module} import *')
                     #print(s.CONFIG)
                     # with open(os.path.join(pd,os.path.join(f'{p.split("/")[-2].split(".")[0]}',f"{s.CONFIG['template']}"))) as f:
-                    s.CONFIG.update({'template':f'plugins/python/{p.split("/")[-2].split(".")[0]}/{s.CONFIG["template"]}'})
-                        #print(s.CONFIG)
+                    s.CONFIG.update({'template':f'{pd}/{p.split("/")[-2].split(".")[0]}/{s.CONFIG["template"]}'})
+                    print(s.CONFIG)
                     l.append(s.CONFIG)
-                    importlib.import_module(f'plugins.python.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
+                    importlib.import_module(f'{pd.replace("/",".")[1:]}.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
                 except Exception as e:
                     print(e)
                 #module=os.path.splitext()
@@ -522,7 +530,7 @@ class Studio(QObject):
     def installPlugin(self,link):
 
         origin=r''+link[7:]
-        target=r''+os.fspath(Path(__file__).resolve().parent / "plugins/python")
+        target=utils.PATHS['PLUGINS_PATH']#r''+os.fspath(Path(__file__).resolve().parent / "plugins/python")
 
         shutil.copytree(origin,os.path.join(target,f'{origin.split("/")[-1]}'))
         

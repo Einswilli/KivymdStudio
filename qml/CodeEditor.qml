@@ -124,6 +124,28 @@ Item{
         // }
         
 
+        Suggestions {
+            id: suggestions
+        }
+
+        // SuggestionsPreview {
+        //     // just to show you what you can type in
+        //     //model: suggestions
+        // }
+
+        SuggestionBox {
+            id: suggestionsBox
+            //model: suggestions
+            width: 200
+            y: editor.cursorRectangle.y+15
+            x: editor.cursorRectangle.left
+            //filter: ''
+            // property: "name"
+            visible:false
+            onItemSelected:{
+                editor.insert(editor.cursorPosition,item.name.substr(editor.getCurrentWord().length,item.name.length-editor.getCurrentWord().length))//text.substr(item.name.length))//.replace(editor.text.substr(cursor,cursorPosition)
+            }
+        }
         
         
         TextEdit{
@@ -144,28 +166,43 @@ Item{
             topPadding:2
             wrapMode: Text.WordWrap
             enabled:true
+            signal filterChanged()
             //selectedTextColor :'#060707'
             
             //baselineOffset :35
-            Shortcut {
-                sequence: "Ctrl+Z"
-                onActivated: {
-                    editor.undo();
-                }
-            }
-            Shortcut {
-                sequence: "Ctrl+Y"
-                onActivated: {
-                    editor.redo();
-                }
-            }
+            // Shortcut {
+            //     sequence: "Ctrl+Z"
+            //     onActivated: {
+            //         editor.undo();
+            //     }
+            // }
+            // Shortcut {
+            //     sequence: "Ctrl+Y"
+            //     onActivated: {
+            //         editor.redo();
+            //     }
+            // }
             
             // Keys.onEnterPressed:{
                 
             // }
+            function getCurrentWord(){
+                var t=getText(0,cursorPosition)//.split(' ')
+                var j=0
+                var chars=[' ',',','\u2029','.','\u21E5']
+                for(let i=t.length;i>0;i--){
+                    if(root.verify(t.substr(i,1),chars)){//==' '||t.substr(i,1)=='\u2029'||t.substr(i,1)=='.'||t.substr(i,1)==','){
+                        j=i
+                        break
+                    }
+                }
+                // console.log('t.substr(j+1,j-1)')
+                return t.substr(j+1,j-1)
+            }
 
             onCursorRectangleChanged:{
                 flickb.ensureVisible(cursorRectangle)
+                suggestionsBox.ifilter=getCurrentWord()
                 //flickb.ensureVisible(lines)
             }
             // onCursorPositionChanged: {
@@ -180,6 +217,7 @@ Item{
             // }
             
             onTextChanged: {
+                filterChanged()
                 // AUTO BRACKET CLOSER
                 // if(root.verify(getText(0,length).substr(cursorPosition-1,1),['\'','"','(','[','{'])==true){
                 //     var comp_char=''
@@ -197,7 +235,12 @@ Item{
                 //     //console.log(comp_char)
                 //     insert(cursorPosition,comp_char)
                 // }
-                
+                if(getText(0,cursorPosition).substr(cursorPosition-1,1)==' '||getText(0,cursorPosition).substr(cursorPosition-1,1)=='\u2029'||getText(0,cursorPosition).substr(cursorPosition-1,1)=='\u21E5'){
+                    suggestionsBox.visible=false
+                }else{
+                    suggestionsBox.visible=true
+                    // suggestionsBox.ifilter=getCurrentWord()
+                }
                 if(getText(0,length).substr(cursorPosition-1,1)=='\u2029'){
                     //console.log(getText(0,length).substr(cursorPosition-5,5))//[cursorPosition])//
                     var str=''
@@ -297,5 +340,4 @@ Item{
             active: flickb.moving || !flickb.moving
         }
     }
-    
 }
