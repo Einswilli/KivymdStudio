@@ -553,10 +553,9 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    
                 }
             }
-            
         }
         Rectangle{
             width:50
@@ -583,10 +582,67 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-
+                    paramMenu.open()
                 }
             }
-            
+            Menu{
+                id:paramMenu
+                height: 250
+                width: 200
+                x:parent.width
+                y:parent.parent.height-height-50
+                background: Rectangle{
+                    color:barclaire
+                    anchors.fill:parent
+                    border.color:bordercolor
+                    border.width: 1
+                }
+                MenuItem{
+                    Text{
+                        text:'Highlight Theme'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Highlight Theme'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Highlight Theme'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Highlight Theme'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                MenuItem{
+                    Text{
+                        text:'Highlight Theme'
+                        color:'#3B7EAC'
+                        font.pixelSize:15
+                        x:15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
         }
     }
     NumberAnimation{
@@ -1419,6 +1475,18 @@ ApplicationWindow {
             }
             MenuItem{
                 Text{
+                    text:'New folder'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked: {
+                    foldn.visible=true
+                }
+            }
+            MenuItem{
+                Text{
                     text:'Open folder'
                     color:'#3B7EAC'
                     font.pixelSize:15
@@ -1431,11 +1499,26 @@ ApplicationWindow {
             }
             MenuItem{
                 Text{
-                    text:'New folder'
+                    text:'New Project'
                     color:'#3B7EAC'
                     font.pixelSize:15
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked: {
+                    newproj.open()
+                }
+            }
+            MenuItem{
+                Text{
+                    text:'Open Project'
+                    color:'#3B7EAC'
+                    font.pixelSize:15
+                    x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked: {
+                    //newproj.open()
                 }
             }
             MenuItem{
@@ -1445,6 +1528,10 @@ ApplicationWindow {
                     font.pixelSize:15
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
+                }
+                onClicked: {
+                    cde=codetab.getTab(codetab.currentIndex).item.cd.getText(0,codetab.getTab(codetab.currentIndex).item.cd.length)
+                    backend.savefile(codetab.getTab(codetab.currentIndex).item.lk.toString(),backend.get_filename(codetab.getTab(codetab.currentIndex).item.lk),cde)
                 }
             }
             MenuItem{
@@ -2570,7 +2657,7 @@ ApplicationWindow {
                     Component{
                         id:logdeg
                         Rectangle{
-                            height: mlg.height+20
+                            height: childrenRect.height+20//mlg.height+20
                             width: loglist.width
                             color:moyen
                             border.width:1
@@ -2590,7 +2677,7 @@ ApplicationWindow {
                                     }
                                 }
                                 Rectangle{
-                                    height: parent.height
+                                    height: childrenRect.height
                                     width: parent.width-50
                                     color:moyen
                                     anchors.verticalCenter:parent.verticalCenter
@@ -2638,8 +2725,8 @@ ApplicationWindow {
             CodeEditor{
                 id:nfc
                 compcolor:barclaire
-                edit_height:parent.height-20
-                edit_width:parent.width-20
+                edit_height:parent.height
+                edit_width:parent.width
                 anchors.fill: parent
                 //code:''
                 
@@ -2670,8 +2757,8 @@ ApplicationWindow {
             CodeEditor{
                 id:ce
                 compcolor:barclaire
-                edit_height:parent.height-20
-                edit_width:parent.width-20
+                edit_height:parent.height
+                edit_width:parent.width
                 anchors.fill: parent
                 //code:text
             }
@@ -2838,5 +2925,19 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    Dialog{
+        id:newproj
+        height: 450
+        width: 700
+        title: 'new project'
+        contentItem:NewProject{
+            anchors.fill:parent
+            onCanceled:{
+                newproj.close()
+            }
+        }
+        standardButtons: StandardButton.Cancel| StandardButton.Ok
     }
 }

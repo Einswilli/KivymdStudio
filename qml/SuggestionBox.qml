@@ -31,6 +31,10 @@ Rectangle {
     property Item delegate
     // property alias suggestionsModel: filterItem.model
     property string ifilter: ''//filterItem.filter
+    property string modeIndicator:''
+    property string code:''
+    property int line
+    property int pos
     // property alias property: filterItem.property
     signal itemSelected(variant item)
 
@@ -49,10 +53,14 @@ Rectangle {
         // onSourceModelChanged: invalidateFilter()
         function onIfilterChanged(){
             lmod.clear()
-            lmod.append(JSON.parse(backend.filter(ifilter)))
+            lmod.append(JSON.parse(backend.filter(ifilter,modeIndicator,code,line,pos)))
+            if (lmod.length==0){
+                var d={'name':'No Suggestions','text':'','doc':''}
+                lmod.append(d)
+            }
         }
     }
-    Component.onCompleted: lmod.append(JSON.parse(backend.filter(' ')))
+    Component.onCompleted: lmod.append(JSON.parse(backend.filter(' ',' ',' ',0,0)))
 
 
     // --- defaults
@@ -128,6 +136,13 @@ Rectangle {
                             width: parent.width - 6
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
+                        Image{
+                            height: parent.height
+                            width:height
+                            source: '../assets/icons/File.svg'
+                            anchors.right:parent.right
+                            anchors.margins:5
+                        }
 
                         MouseArea {
                             anchors.fill: parent
@@ -139,8 +154,10 @@ Rectangle {
                                 parent.color='#292828'
                             }
                             onClicked: {
-                                container.itemSelected(delegateItem.suggestion)
-                                container.visible=false
+                                if(delegateItem.suggestion.text!=''){
+                                    container.itemSelected(delegateItem.suggestion)
+                                    container.visible=false
+                                }
                             }
                         }
                     }

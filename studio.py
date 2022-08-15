@@ -182,11 +182,14 @@ class Studio(QObject):
         
     @Slot(str,result='QString')
     def get_prev_indent_lvl(self,text):
-        l=str(text).replace('\u2029','\n').replace('â€©','\n').split('\n')
+        l=str(text).replace('\u2029','\n').replace('â€©','\n').replace('\u21E5','\t').split('\n')
         prev_line=l[-2]
         tmp=prev_line.lstrip(' \t')
+        p=len(prev_line.lstrip(' '))
         c=len(prev_line[:len(prev_line)-len(tmp)])+1 if prev_line.strip().endswith(':') else len(prev_line[:len(prev_line)-len(tmp)])
         #prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
+        if p>=2*c:
+            c=p/c
         return str(c)#prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
 
     #@Slot(str,result='QString')
@@ -200,11 +203,11 @@ class Studio(QObject):
         Returns:
             srt: the highlighted text (in html format)
         """
-        directives=[l for l in text.split('\n') if str(l).startswith('import') and len(l.split(' '))>=2 or str(l).startswith('from')and len(l.split(' '))>3]
+        # directives=[l for l in text.split('\n') if str(l).startswith('import') and len(l.split(' '))>=2 or str(l).startswith('from')and len(l.split(' '))>3]
         
-        mods=[' '.join(d.split(' ',1)[-1].split(',')).split(' ') if d.startswith('import') else ' '.join(d[d.index('import')+6:].split(',',1)).split(' ') for d in directives ]
-        mods.extend([d.split(' ')[1] for d in directives if d.startswith('from')])
-        utils.add_directives(mods)
+        # mods=[' '.join(d.split(' ',1)[-1].split(',')).split(' ') if d.startswith('import') else ' '.join(d[d.index('import')+6:].split(',',1)).split(' ') for d in directives ]
+        # mods.extend([d.split(' ')[1] for d in directives if d.startswith('from')])
+        # utils.add_directives(mods)
         #QSyntaxHighlighter()
         style = get_style_by_name(utils.get_active_theme())
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
@@ -467,9 +470,13 @@ class Studio(QObject):
         srt=sortie.replace('\n','\n\r')
         return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
 
-    @Slot(str,result='QVariant')
-    def filter(self,name):
-        return Json.dumps(utils.filter(name),indent=4)
+    @Slot(str,str,str,int,int,result='QVariant')
+    def filter(self,name,mode,code,line,pos):
+        return Json.dumps(utils.filter(name,mode,code,line,pos),indent=4)
+
+    @Slot(result='QString')
+    def get_default_proj_dir(self):
+        return utils.get_studio_projects()
 
     def tree_to_dict(self,path_):
         '''' transforming the directory tree in dictionnary '''

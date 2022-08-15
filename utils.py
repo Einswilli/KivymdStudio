@@ -8,7 +8,8 @@ PATHS={
     'LOGS_PATH':f'{pathlib.Path.home()}/.KvStudio/logs/',
     'CONFIG_PATH':f'{pathlib.Path.home()}/.KvStudio/configs/',
     'CONFIG_FILE':f'{pathlib.Path.home()}/.KvStudio/configs/studio.conf',
-    'THEME_CONFIG':f'{pathlib.Path.home()}/.KvStudio/configs/theme.json'
+    'THEME_CONFIG':f'{pathlib.Path.home()}/.KvStudio/configs/theme.json',
+    'STUDIO_PROJECTS_PATH':f'{pathlib.Path.home()}/KvStudio_Projects/'
 }
 
 THEMES=[
@@ -113,8 +114,39 @@ words=[
     '__ne__','__new__','__reduce_ex__','__sizeof__','setattr__','__slots__'
 ]
 
-def filter(name):
-    return[{'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>')}for w in sorted(words) if w.startswith(name)] if name!='' else []
+def filter(name,mode,code,line,pos):
+    if mode in (' ',',','@'):
+        return[{'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),'text':w,'doc':''}for w in sorted(words) if w.startswith(name)] if name!='' else []
+    elif mode =='.':
+        from jedi.api import Script
+        import inspect
+
+        try:
+            s=Script(source=code.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))
+            results = []
+            col=len(str(code)[:pos].splitlines()[-1])
+            line=len(str(code)[:pos].splitlines())
+            # s.
+            for c in s.complete(line,col):
+                d={}
+                doc=''
+                d['name']=c.name.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>')
+                d['text']=c.name
+                if c.type in ['function', 'class', 'instance']:
+                    doc = c.docstring().replace("(self,", "(")
+                d['doc']=doc
+                # if doc.startswith("{}(".format(c.name)):
+                #     continue
+                results.append(d)
+            if results==[]:
+                prev_name=code[:pos].splitlines()[-1].split('.')[-2].split(' ')[-1]
+                results=[{'name':e[0].replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),'text':e[0],'doc':''} for e in inspect.getmembers(prev_name) if e[0].startswith(name) if name!='']
+                #print(prev_name,results)
+            return results
+        except Exception as e:
+            print(e)
+            return []
+
 
 def add_directives(d):
     for i in d:
@@ -146,3 +178,6 @@ def activate_theme(name):
             else:
                 theme['active']=False
             t.append(theme)
+
+def get_studio_projects():
+    return PATHS['STUDIO_PROJECTS_PATH']

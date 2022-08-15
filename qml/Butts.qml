@@ -10,10 +10,12 @@ Item{
     property color back_color
     property string butt_text: 'ctrl'
     property color text_color
+    property int hg:0
+    property int wh:0
 
     Rectangle{
-        width:text.width+15
-        height:text.height+10
+        width:wh==0?text.width+15:wh
+        height:hg==0?text.height+10:hg
         color:back_color
         radius:12
         border.width:1

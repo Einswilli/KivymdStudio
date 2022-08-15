@@ -71,9 +71,8 @@ Item{
                 contentX = r.x;
             else if (contentX+width <= r.x+r.width)
                 contentX = r.x+r.width-width;
-            if (contentY >= r.y)
-                contentY += r.y//-120;
-            
+            // if (contentY >= r.y)
+            //     contentY = r.y//-(120;
             else if (contentY+height <= r.y+r.height)
                 contentY = r.y+r.height-height;
         }
@@ -124,26 +123,27 @@ Item{
         // }
         
 
-        Suggestions {
-            id: suggestions
-        }
-
-        // SuggestionsPreview {
-        //     // just to show you what you can type in
-        //     //model: suggestions
-        // }
-
         SuggestionBox {
             id: suggestionsBox
             //model: suggestions
             width: 200
             y: editor.cursorRectangle.y+15
             x: editor.cursorRectangle.left
-            //filter: ''
-            // property: "name"
             visible:false
             onItemSelected:{
-                editor.insert(editor.cursorPosition,item.name.substr(editor.getCurrentWord().length,item.name.length-editor.getCurrentWord().length))//text.substr(item.name.length))//.replace(editor.text.substr(cursor,cursorPosition)
+                var i=item.text
+                editor.selectWord()
+                var l=editor.selectedText.length
+                editor.cut()
+                editor.cursorPosition=editor.cursorPosition
+                if(i=='if'){
+                    editor.insert(editor.cursorPosition,'if condition : ')
+                    editor.cursorPosition-=3
+                    editor.selectWord()
+                }else{
+                    editor.insert(editor.cursorPosition,i+' ')
+                }
+                //editor.insert(editor.cursorPosition,item.text.substr(editor.getCurrentWord().length,item.text.length-editor.getCurrentWord().length))//text.substr(item.name.length))//.replace(editor.text.substr(cursor,cursorPosition)
             }
         }
         
@@ -156,70 +156,59 @@ Item{
             color:'white'
             mouseSelectionMode:TextEdit.SelectCharacters
             font.pixelSize:14
-            font.family:'monospace'
+            font.family:'arial'//'monospace'
             selectByMouse: true
             selectionColor: '#254655C5'//'#1C98E0'
             tabStopDistance: 40
             textFormat: TextEdit.RichText
             property bool processing:false
             leftPadding :col.width//35
-            topPadding:2
+            //topPadding:2
             wrapMode: Text.WordWrap
             enabled:true
-            signal filterChanged()
+            property int currentLine: getText(0, cursorPosition).split('\u2029').length
             //selectedTextColor :'#060707'
+            Shortcut {
+                sequence: "Ctrl+H"
+                onActivated: {
+                    suggestionsBox.visible=true;
+                }
+            }
             
-            //baselineOffset :35
-            // Shortcut {
-            //     sequence: "Ctrl+Z"
-            //     onActivated: {
-            //         editor.undo();
-            //     }
-            // }
-            // Shortcut {
-            //     sequence: "Ctrl+Y"
-            //     onActivated: {
-            //         editor.redo();
-            //     }
-            // }
-            
-            // Keys.onEnterPressed:{
-                
-            // }
             function getCurrentWord(){
                 var t=getText(0,cursorPosition)//.split(' ')
                 var j=0
-                var chars=[' ',',','\u2029','.','\u21E5']
+                var chars=[' ',',','\u2029','.','\u21E5','(',')','{','}','[',']','"',"'",'@',':','!','&','|','~','\t','\n']
                 for(let i=t.length;i>0;i--){
-                    if(root.verify(t.substr(i,1),chars)){//==' '||t.substr(i,1)=='\u2029'||t.substr(i,1)=='.'||t.substr(i,1)==','){
+                    if(root.verify(t.substr(i,1),chars)){
                         j=i
                         break
                     }
                 }
-                // console.log('t.substr(j+1,j-1)')
+                suggestionsBox.line=editor.currentLine
+                suggestionsBox.pos=editor.cursorPosition
+                suggestionsBox.code=getText(0,length)
+                suggestionsBox.modeIndicator=t.substr(j,1)
                 return t.substr(j+1,j-1)
             }
 
             onCursorRectangleChanged:{
                 flickb.ensureVisible(cursorRectangle)
                 suggestionsBox.ifilter=getCurrentWord()
-                //flickb.ensureVisible(lines)
             }
-            // onCursorPositionChanged: {
-            //     if(cursorRectangle.y < 10 - editor.y){//Cursor went off the front
-            //         editor.y = 10 - Math.max(0, cursorRectangle.y);
-            //     }else if(cursorRectangle.y > parent.height - 20 - editor.y){//Cursor went off the end
-            //         editor.y = 10 - Math.max(0, cursorRectangle.y - (parent.height - 20) + cursorRectangle.height);
-            //     }
-            // }
-            //Keys.onEnterPressed:{
-                
-            // }
+
+            function cursvisible() {
+                if(cursorRectangle.y <editor.y){//Cursor went off the front
+                    editor.y =  Math.max(0, cursorRectangle.y);
+                }else if(cursorRectangle.y > parent.height - 20 - editor.y){//Cursor went off the end
+                    editor.y =  Math.max(0, cursorRectangle.y - (parent.height - 20) + cursorRectangle.height);
+                }
+            }
             
             onTextChanged: {
-                filterChanged()
+                
                 // AUTO BRACKET CLOSER
-                // if(root.verify(getText(0,length).substr(cursorPosition-1,1),['\'','"','(','[','{'])==true){
+                // if(root.verify(getText(0,length).substr(cursorPosition-1,1),['\'','"','(','[','{'])){
                 //     var comp_char=''
                 //     if(getText(0,length).substr(cursorPosition-1,1)=="'"){
                 //         comp_char="'"
@@ -239,11 +228,10 @@ Item{
                     suggestionsBox.visible=false
                 }else{
                     suggestionsBox.visible=true
-                    // suggestionsBox.ifilter=getCurrentWord()
                 }
                 if(getText(0,length).substr(cursorPosition-1,1)=='\u2029'){
-                    //console.log(getText(0,length).substr(cursorPosition-5,5))//[cursorPosition])//
                     var str=''
+                    console.log(getText(0,cursorPosition));
                     var tt=backend.get_prev_indent_lvl(getText(0,cursorPosition))
                     var lvl=parseInt(tt)
                     console.log(lvl)
@@ -260,7 +248,6 @@ Item{
                     let p = cursorPosition;
                     let l=text.length
                     var tx=getText(0, length)//.toString()
-                    //console.log(tx)
                     var t=backend.highlight(tx)
 
                     //console.log(t)"<link rel='stylesheet' href='../Js/style.css>"
@@ -273,10 +260,11 @@ Item{
             }
         }
         Rectangle{
+            x:58
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: editor.cursorRectangle.height//root.lineHeight
-            width: editor.width+1000
+            width: editor.width+200
             border.width:1
             border.color:bordercolor
             Rectangle{
@@ -296,36 +284,42 @@ Item{
             Text{
                 id:chemin
                 font.pixelSize:11
-                text:'le lien du fichier...'
+                text:'the path to the file...'
                 color:'white'
             }
         }
-        Column {
-            id:col
-            // start position of line numbers depends on text margin
-            y: editor.textMargin
-            width: 60//parent.width
+        Rectangle{
+            height: childrenRect.height
+            width: childrenRect.width
+            color:'#1F1F20'
+            Column {
+                id:col
+                // start position of line numbers depends on text margin
+                y: 0//editor.textMargin
+                width: 60//parent.width
 
 
-            // add line numbers based on line count and height
-            Repeater {
-                id:rep
-                model: editor.lineCount
-                delegate: Text {
-                    id: text
-                    width: implicitWidth
-                    height: root.lineHeight
-                    color: editor.getText(0,editor.cursorPosition).split('\u2029').length==parseInt(text)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
-                    font: editor.font
-                    text: index + 1
-                    anchors.right:parent.right
-                    anchors.margins: 15
-                    MouseArea{
-                        anchors.fill: parent
-                        hoverEnabled:true
+                // add line numbers based on line count and height
+                Repeater {
+                    id:rep
+                    model: editor.lineCount
+                    delegate: Text {
+                        id: text
+                        width: implicitWidth
+                        height: root.lineHeight
+                        color: editor.getText(0, editor.cursorPosition).split('\u2029').length==parseInt(index+1)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
+                        font: editor.font
+                        text: index + 1
+                        anchors.right:parent.right
+                        anchors.margins: 15
+                        MouseArea{
+                            anchors.fill: parent
+                            hoverEnabled:true
 
-                        onClicked:{
-                            parent.color='#26B83F'
+                            onClicked:{
+                                parent.color='#26B83F'
+                                console.log(editor.getText(0, editor.cursorPosition).split('\u2029').length,parent.text)
+                            }
                         }
                     }
                 }

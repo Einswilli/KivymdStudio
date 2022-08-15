@@ -25,7 +25,11 @@ var greens = [
     'dict', 'str', 'int', 'float', 'bool', 'list', 'type', 'bytearray', 'bytes', 'complex',
     'set', 'tuple', 'function', 'frozenset', 'range', 'fichier-bin', 'fichier-txt'
 ]
-
+t.replace(/([A-Z][A-Za-z]*|[a-z][A-Za-z]*|[0-9]+|[ \t\n]|['][^']*[']|[^A-Za-z0-9\t\n ])/g,
+                    function(f){
+                        if(f.match(/&#39;#[a-zA-Z0-9]*&#39;/))
+                            return '<span style="background-color:"'+f.replace('&#39;','')+'>'+f+'</span>'
+                    })
 
 if (!processing) {
     processing = true;

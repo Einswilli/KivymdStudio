@@ -15,6 +15,7 @@ class FolderTree(QTreeWidget):
         self.setColumnCount(1)
         self.setHeaderHidden(True)
         self.children=[]
+		
 
     def addchildren(self,child):
 
@@ -35,4 +36,4 @@ class FolderTree(QTreeWidget):
 #tree=FolderTree()
 #tree.addchildren(data)
 #tree.show()
-#sys.exit(app.exec())
+#sys.exit(app.exec())            
