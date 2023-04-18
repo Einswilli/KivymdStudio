@@ -12,6 +12,108 @@ PATHS={
     'STUDIO_PROJECTS_PATH':f'{pathlib.Path.home()}/KvStudio_Projects/'
 }
 
+TEMPLATES={
+    'Empty':'',
+    'Backdrop':"""
+ScreenManager:
+    id:screen_manager
+    Screen:
+        MDBackdrop:
+            title: "Backdrop Activity"
+            header_text: "Menu:"
+
+            MDBackdropBackLayer:
+
+                MDBoxLayout:
+                    orientation:'vertical'
+                    md_bg_color:hex('#f3f4f6')
+
+            MDBackdropFrontLayer:
+
+                MDBoxLayout:
+                    orientation:'vertical'
+                    md_bg_color:hex('#2e2b2b')
+""",
+    'Tabs':"""
+<Tab@MDFloatLayout+MDTabsBase>:
+	text:''																															
+	MDLabel:
+		text: "TabTwo Content"
+		halign: "center"
+
+ScreenManager:
+    id:screen_manager
+    Screen:
+        MDBoxLayout:
+            orientation: "vertical"
+
+            MDToolbar:
+                title: "Bottom-Nav"
+                right_action_items: [["dots-vertical", lambda x: x]]
+
+            MDBottomNavigation:
+
+                Tab:
+					text: "TabOne"
+					content_text:'TabOne'
+				Tab:
+					text: "TabTwo"
+					content_text:'TabTwo'
+				Tab:
+					text: "TabTree"
+					content_text:'TabTree'
+""",
+    'NavigationDrawer':"""
+ScreenManager:
+	id:screen_manager
+	Screen:
+		MDBoxLayout:
+			orientation: "vertical"
+
+			MDToolbar:
+				title: "Nav-Drawer"
+				left_action_items: [["menu", lambda x: nav_drawer.set_state()]]
+				right_action_items: [["dots-vertical", lambda x: x]]
+
+			Widget:
+
+		MDNavigationDrawer:
+			id:nav_drawer
+			MDBoxLayout:
+				orientation:'vertical'
+				md_bg_color:hex('#f3f4f6')
+""",
+    'BottomNavigation':"""
+ScreenManager:
+    id:scree_manager
+    Screen:
+        MDBoxLayout:
+            orientation: "vertical"
+
+            MDToolbar:
+                title: "Bottom-Navigation"
+                right_action_items: [["dots-vertical", lambda x: x]]
+
+            MDBottomNavigation:
+
+                MDBottomNavigationItem:
+                    name: "one"
+                    text: "One"
+                    icon: "numeric-1"
+
+                MDBottomNavigationItem:
+                    name: "two"
+                    text: "Two"
+                    icon: "numeric-2"
+
+                MDBottomNavigationItem:
+                    name: "three"
+                    text: "Three"
+                    icon: "numeric-3"
+"""
+
+}
+
 THEMES=[
     {
         'name':"monokai",
@@ -115,7 +217,7 @@ words=[
 ]
 
 def filter(name,mode,code,line,pos):
-    if mode in (' ',',','@'):
+    if mode in (' ',',','@','\t','\u21E5','\u2029'):
         return[{'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),'text':w,'doc':''}for w in sorted(words) if w.startswith(name)] if name!='' else []
     elif mode =='.':
         from jedi.api import Script

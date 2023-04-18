@@ -31,6 +31,10 @@ ApplicationWindow {
             return JSON.parse(JSON.stringify(dic))
         }
     }
+    function openProject(value){
+        fm.folder=value
+        fm.show()
+    }
 
     Connections{
         enabled: true
@@ -1457,6 +1461,14 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/File-plus.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 onClicked:{
                     fileop.visible=true
                 }
@@ -1467,6 +1479,14 @@ ApplicationWindow {
                     color:'#3B7EAC'
                     font.pixelSize:15
                     x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/File.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 onClicked:{
@@ -1481,6 +1501,14 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/Folder-plus.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 onClicked: {
                     foldn.visible=true
                 }
@@ -1491,6 +1519,14 @@ ApplicationWindow {
                     color:'#3B7EAC'
                     font.pixelSize:15
                     x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/Folder.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 onClicked:{
@@ -1505,6 +1541,14 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/Compilation.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 onClicked: {
                     newproj.open()
                 }
@@ -1517,6 +1561,14 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/Compilation.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 onClicked: {
                     //newproj.open()
                 }
@@ -1527,6 +1579,14 @@ ApplicationWindow {
                     color:'#3B7EAC'
                     font.pixelSize:15
                     x:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/File-done.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 onClicked: {
@@ -1542,6 +1602,14 @@ ApplicationWindow {
                     x:15
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/DownloadedFile.svg'
+                    anchors.right:parent.right
+                    anchors.margins:15
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
             
         }
@@ -1551,23 +1619,118 @@ ApplicationWindow {
             anchors.right:parent.right
             anchors.margins: 15
             height:parent.height-10
-            width:parent.width/3
+            width:parent.width/2
             y:5
             color:parent.color
             Rectangle{
-                id:runer
-                width:22
                 height:parent.height
-                radius:6
-                //border.color:bordercolor
-                //border.width:1
+                width:(parent.width*2)/3
                 color:parent.color
-                Image{
-                    id:runimg
-                    width:15
-                    height:15
-                    source:'../assets/icons/run.png'
-                    anchors.centerIn: parent
+                Row{
+                    anchors.fill:parent
+                    spacing:15
+                    Rectangle{
+                        id:runer
+                        width:height
+                        height:parent.height
+                        radius:6
+                        color:parent.parent.color
+                        Image{
+                            id:runimg
+                            width:20
+                            height:20
+                            source:'../assets/icons/run-file.svg'
+                            anchors.centerIn: parent
+                        }
+                        MouseArea{
+                            anchors.fill:parent
+                            hoverEnabled: true
+                            onEntered: {
+                                parent.scale=1.2
+                            }
+                            onExited: {
+                                parent.scale=1
+                            }
+                            onClicked: {
+                                
+                            }
+                        }
+                    }
+                    Rectangle{
+                        width:height
+                        height:parent.height
+                        radius:6
+                        color:parent.parent.color
+                        Image{
+                            width:20
+                            height:20
+                            source:'../assets/icons/run-tests.svg'
+                            anchors.centerIn: parent
+                        }
+                        MouseArea{
+                            anchors.fill:parent
+                            hoverEnabled: true
+                            onEntered: {
+                                parent.scale=1.2
+                            }
+                            onExited: {
+                                parent.scale=1
+                            }
+                            onClicked: {
+                                
+                            }
+                        }
+                    }
+                    Rectangle{
+                        width:height
+                        height:parent.height
+                        radius:6
+                        color:parent.parent.color
+                        Image{
+                            width:20
+                            height:20
+                            source:'../assets/icons/stop.svg'
+                            anchors.centerIn: parent
+                        }
+                        MouseArea{
+                            anchors.fill:parent
+                            hoverEnabled: true
+                            onEntered: {
+                                parent.scale=1.2
+                            }
+                            onExited: {
+                                parent.scale=1
+                            }
+                            onClicked: {
+                                
+                            }
+                        }
+                    }
+                    Rectangle{
+                        width:height
+                        height:parent.height
+                        radius:6
+                        color:parent.parent.color
+                        Image{
+                            width:20
+                            height:20
+                            source:'../assets/icons/status-unknown.svg'
+                            anchors.centerIn: parent
+                        }
+                        MouseArea{
+                            anchors.fill:parent
+                            hoverEnabled: true
+                            onEntered: {
+                                parent.scale=1.2
+                            }
+                            onExited: {
+                                parent.scale=1
+                            }
+                            onClicked: {
+                                
+                            }
+                        }
+                    }
                 }
             }
             Rectangle{
@@ -1576,10 +1739,8 @@ ApplicationWindow {
                 height:parent.height
                 width:emimg.width+4
                 radius:6
-                //border.color:bordercolor
                 anchors.right:parent.right
                 anchors.margins: 50+list.width
-                //border.width:1
 
                 // Text{
                 //     text:'Emulator'
@@ -1624,7 +1785,7 @@ ApplicationWindow {
 
             Rectangle{
                 id:list
-                width:30
+                width:24
                 height:parent.height-2
                 anchors.right:parent.right
                 radius:4
@@ -2936,6 +3097,10 @@ ApplicationWindow {
             anchors.fill:parent
             onCanceled:{
                 newproj.close()
+            }
+            onCreated:{
+                
+                root.openProject('file://'+path)
             }
         }
         standardButtons: StandardButton.Cancel| StandardButton.Ok

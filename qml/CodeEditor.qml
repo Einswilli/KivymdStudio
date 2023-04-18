@@ -10,7 +10,6 @@ import '../Js/prism.js' as Logic
 Item{
 
     id:root
-
     Connections{
         enabled: true
         ignoreUnknownSignals: false
@@ -51,6 +50,20 @@ Item{
     property color compcolor
     property alias code:editor.text
     property alias link:chemin.text
+    property variant mip
+    
+    Component.onCompleted: {
+        // mip=editor.children
+        // var copy=[]
+        // for(let i=0;i<mip.length;i++){
+        //     copy[i]=mip[i]
+        // }
+        // var chil=copy
+        // map.children=copy
+        // // mip.parent=map
+        // // mip.anchors.fill=map
+    }
+    
 
     Flickable {
         id: flickb
@@ -151,6 +164,7 @@ Item{
         TextEdit{
             id:editor
             focus:true
+            clip:true
             width: flickb.width
             height: (lineCount*25)+flickb.height//flickb.height
             color:'white'
@@ -166,11 +180,13 @@ Item{
             //topPadding:2
             wrapMode: Text.WordWrap
             enabled:true
+            layer.mipmap:true
             property int currentLine: getText(0, cursorPosition).split('\u2029').length
             //selectedTextColor :'#060707'
             Shortcut {
                 sequence: "Ctrl+H"
                 onActivated: {
+                    suggestionsBox.ifilter=editor.getCurrentWord()
                     suggestionsBox.visible=true;
                 }
             }
@@ -204,6 +220,10 @@ Item{
                     editor.y =  Math.max(0, cursorRectangle.y - (parent.height - 20) + cursorRectangle.height);
                 }
             }
+
+            onLinkHovered: {
+                console.log(link)
+            }
             
             onTextChanged: {
                 
@@ -231,7 +251,7 @@ Item{
                 }
                 if(getText(0,length).substr(cursorPosition-1,1)=='\u2029'){
                     var str=''
-                    console.log(getText(0,cursorPosition));
+                    //console.log(getText(0,cursorPosition));
                     var tt=backend.get_prev_indent_lvl(getText(0,cursorPosition))
                     var lvl=parseInt(tt)
                     console.log(lvl)
@@ -242,6 +262,7 @@ Item{
                     insert(cursorPosition,str)
                     //cursorPosition+=lvl
                 }
+                // console.log(backend.check_code(link))
                 
                 if (!processing) {
                     processing = true;
@@ -249,13 +270,12 @@ Item{
                     let l=text.length
                     var tx=getText(0, length)//.toString()
                     var t=backend.highlight(tx)
-
-                    //console.log(t)"<link rel='stylesheet' href='../Js/style.css>"
                     text=t;
                     
                     
                     cursorPosition = p;
                     processing = false;
+                    minimap.text=t
                 }
             }
         }
@@ -264,9 +284,9 @@ Item{
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: editor.cursorRectangle.height//root.lineHeight
-            width: editor.width+200
+            width: editor.width//+200
             border.width:1
-            border.color:bordercolor
+            border.color:'#2E2F30'//bordercolor
             Rectangle{
                 anchors.left:parent.left
                 width:20
@@ -318,20 +338,163 @@ Item{
 
                             onClicked:{
                                 parent.color='#26B83F'
-                                console.log(editor.getText(0, editor.cursorPosition).split('\u2029').length,parent.text)
+                                //console.log(editor.getText(0, editor.cursorPosition).split('\u2029').length,parent.text)
                             }
                         }
                     }
                 }
             }
         }
+        
         ScrollBar.vertical: ScrollBar {
-            width:15
+            id:sv
+            width:110
+            size:root.height/flickb.contentHeight
             active: flickb.moving || !flickb.moving
+            hoverEnabled: true
+            // onPositionChanged: {
+            //     inner.position=position
+            // }
+            contentItem: Rectangle{
+                height: root.height/flickb.contentHeight
+                width: 110
+                color:'#609EAD98'
+            }
+            background: Rectangle{
+                id:map
+                color: appcolor
+                height: sv.height
+                width: 110
+                border.color:'#2E2F30'
+                border.width:1
+                anchors.right:parent.right
+                
+                    
+                TextEdit{
+                    id:minimap
+                    y:(-inner.position)*(height/3)
+                    focus:false
+                    clip:true
+                    //text:editor.text
+                    width: parent.width//flickb.width
+                    height: editor.height/5//(lineCount*25)+flickb.height//flickb.height
+                    color:'white'
+                    mouseSelectionMode:TextEdit.SelectCharacters
+                    font.pixelSize:2
+                    font.family:'arial'//'monospace'
+                    selectByMouse: false
+                    selectionColor: '#254655C5'//'#1C98E0'
+                    tabStopDistance: 5
+                    textFormat: TextEdit.RichText
+                    property bool processing:false
+                    leftPadding :col.width/10//35
+                    //topPadding:2
+                    wrapMode: Text.WordWrap
+                    enabled:false
+                    layer.mipmap:true
+                    readOnly: true
+                }
+                ScrollBar{
+                    id:inner
+                    active:sv.active
+                    orientation: Qt.Vertical
+                    //policy:ScrollBar.AlwaysOff
+                    position: sv.position
+                    // size:parent.height/minimap.height
+                }
+            }
         }
         ScrollBar.horizontal: ScrollBar {
             height:15
             active: flickb.moving || !flickb.moving
         }
     }
+    MouseArea {
+        height: 40
+        width: height
+        anchors.right:parent.right
+        anchors.top:parent.top
+        anchors.rightMargin:20
+        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
+        onEntered: {
+            opts.visible= true
+        }
+        onExited: {
+            //opts.visible=false
+        }
+        onWheel: {}
+        onClicked: {
+            opts.visible=false
+        }
+    }
+    Rectangle{
+        id:opts
+        width: 100
+        height: 40
+        clip:true
+        visible:false
+        anchors.right:parent.right
+        anchors.top:parent.top
+        anchors.margins:20
+        border.color:'#2E2F30'
+        border.width:1
+        color:appcolor
+        Row{
+            anchors.fill:parent
+            anchors.margins:2
+            spacing:10
+            Rectangle{
+                width:height
+                height:parent.height
+                radius:6
+                color:parent.parent.color
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/status-error.svg'
+                    anchors.centerIn: parent
+                    MouseArea{
+                        anchors.fill:parent
+                        hoverEnabled: true
+                        onEntered: {
+                            parent.scale=1.2
+                        }
+                        onExited: {
+                            parent.scale=1
+                        }
+                        onClicked: {
+                            
+                        }
+                    }
+                }
+            }
+            Rectangle{
+                width:height
+                height:parent.height
+                radius:6
+                color:parent.parent.color
+                Image{
+                    width:20
+                    height:20
+                    source:'../assets/icons/war.png'//status-ok.svg'
+                    anchors.centerIn: parent
+                    MouseArea{
+                        anchors.fill:parent
+                        hoverEnabled: true
+                        onEntered: {
+                            parent.scale=1.2
+                        }
+                        onExited: {
+                            parent.scale=1
+                        }
+                        onClicked: {
+                            
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
 }

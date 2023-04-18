@@ -12,6 +12,7 @@ Item{
 
     property color bordercolor:'#f3f4f6'
     signal canceled()
+    signal created(string path)
 
     function get_type(){
         if(typekv.checked){
@@ -531,7 +532,7 @@ Item{
                         isactive:false
                     }
                     ListElement{
-                        name:'Bottom Navigation'
+                        name:'BottomNavigation'
                         template:'../assets/templates/bn.png'
                         isactive:false
                     }
@@ -634,8 +635,11 @@ Item{
                                             parent.color='#2E2F30'
                                         }
                                         onClicked: {
+                                            bi.running=true
                                             var tm=addcomp.checked?templatebox.tem:''
-                                            console.log(namefield.text,pathfield.text,templatebox.tem,addcomp.checked,addlis.checked,addenv.checked,addgit.checked,root.get_type())
+                                            root.created(backend.newProject(namefield.text,pathfield.text,templatebox.tem,addcomp.checked,addlis.checked,addenv.checked,addgit.checked,root.get_type()))
+                                            bi.running=false
+                                            root.canceled()
                                         }
                                     }
                                 }
@@ -645,6 +649,13 @@ Item{
                 }
             }
         }
+    }
+    BusyIndicator{
+        id:bi
+        height:100
+        width:100
+        anchors.centerIn:parent
+        running:false
     }
     FileDialog{
         id:projdialog

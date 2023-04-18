@@ -112,6 +112,7 @@ Rectangle {
     property alias bscolor:fileBrowser.color
     property string sfile
     property string currfold:folders.folder
+    property string projectPath
     property var icons: [
         { name: 'html', fileExtensions: ['html', 'htm', 'xhtml', 'html_vm', 'asp'] },
         { name: 'pug', fileExtensions: ['jade', 'pug'] },
@@ -999,6 +1000,7 @@ Rectangle {
         loader.item.parent = fileBrowser
         loader.item.anchors.fill = fileBrowser
         loader.item.folder = fileBrowser.folder
+        fileBrowser.projectPath=fileBrowser.folder
     }
 
     Component {
@@ -1110,6 +1112,7 @@ Rectangle {
                     MouseArea {
                         id: mouseRegion
                         anchors.fill: parent
+                        hoverEnabled: true
                         onPressed: {
                             root.showFocusHighlight = false;
                             wrapper.ListView.view.currentIndex = index;
@@ -1117,9 +1120,60 @@ Rectangle {
                         onClicked: { if (folders == wrapper.ListView.view.model) launch() }
                         onEntered:{
                             parent.color='#1D313D9C';
+                            opts.visible=true
                         }
                         onExited:{
                             parent.color='transparent'
+                            opts.visible=false
+                        }
+                    }
+
+                    Row{
+                        id:opts
+                        height: parent.height
+                        width: 60
+                        anchors.right:parent.right
+                        spacing:10
+                        visible:false
+                        Image{
+                            height: 25
+                            width: 25
+                            source: !folders.isFolder(index)?'../assets/icons/File.svg':'../assets/icons/Compilation.svg'
+                            anchors.verticalCenter:parent.verticalCenter
+                            MouseArea{
+                                anchors.fill:parent
+                                //hoverEnabled: true
+                                onClicked: {
+                                    console.log(filePath)
+                                }
+                                onEntered: {
+                                    // mouseRegion.hoverEnabled=false
+                                    // parent.scale=1,2
+                                }
+                                onExited: {
+                                    // mouseRegion.hoverEnabled=false
+                                    // parent.scale=1
+                                }
+                            }
+                        }
+                        Image{
+                            height: 25
+                            width: 25
+                            source: !folders.isFolder(index)?'../assets/icons/Deleted-file.svg':'../assets/icons/Deleted-folder.svg'
+                            anchors.verticalCenter:parent.verticalCenter
+                            MouseArea{
+                                anchors.fill:parent
+                                //hoverEnabled: true
+                                onClicked: {
+                                    console.log(filePath)
+                                }
+                                onEntered: {
+                                    parent.scale=1,2
+                                }
+                                onExited: {
+                                    parent.scale=1
+                                }
+                            }
                         }
                     }
 
@@ -1270,6 +1324,7 @@ Rectangle {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.margins: scaledMargin
+                    visible:fldrs.text==fileBrowser.projectPath?false:true
 
                     Image { anchors.fill: parent; anchors.margins: scaledMargin; source: "../assets/icons/deco.png" }
                     MouseArea { id: upRegion; anchors.fill: parent; onClicked: up() }
@@ -1284,7 +1339,7 @@ Rectangle {
 
                 Text {
                     id:fldrs
-                    anchors.left: upButton.right; anchors.right: parent.right; height: parent.height
+                    anchors.left: upButton.visible?upButton.right:parent.left; anchors.right: parent.right; height: parent.height
                     anchors.leftMargin: 10; anchors.rightMargin: 4
                     text: folders.folder
                     color: "white"

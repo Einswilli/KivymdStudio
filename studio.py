@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
+from importlib.resources import path
 import logging
-import os
 from pathlib import Path
 import pathlib
 import shutil
@@ -13,9 +13,12 @@ import glob,schedule
 from time import time
 import Synthaxhighlighter
 import platform
+from flake8 import *
+from autopep8 import fix_code
 #import execjs
 #import tree
 #from Emulator.emulator import Emulator
+
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine,QmlElement
@@ -38,11 +41,11 @@ from pygments.lexers.python import PythonLexer
 from pygments.lexers import load_lexer_from_file
 from pygments.lexers.special import TextLexer
 from pygments.formatters.html import HtmlFormatter
-from pygments.formatters.other import NullFormatter
 from pygments.styles import get_style_by_name
 from rich.console import Console
 from rich.syntax import Syntax
 import pyperclip
+from flake8.api import legacy
 
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
@@ -182,15 +185,13 @@ class Studio(QObject):
         
     @Slot(str,result='QString')
     def get_prev_indent_lvl(self,text):
-        l=str(text).replace('\u2029','\n').replace('â€©','\n').replace('\u21E5','\t').split('\n')
+        l=str(text).replace('\u2029','\n').replace('â€©','\n').replace('\u21E5','\t').replace('    ','\t').split('\n')
         prev_line=l[-2]
         tmp=prev_line.lstrip(' \t')
         p=len(prev_line.lstrip(' '))
         c=len(prev_line[:len(prev_line)-len(tmp)])+1 if prev_line.strip().endswith(':') else len(prev_line[:len(prev_line)-len(tmp)])
-        #prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
-        if p>=2*c:
-            c=p/c
-        return str(c)#prev_line.count('\t') if not prev_line.endswith(':') else prev_line.count('\t')+1
+        
+        return str(c)
 
     #@Slot(str,result='QString')
     def colorify(self,text):
@@ -260,6 +261,20 @@ class Studio(QObject):
         #os.system(f'touch {link}')
         #print('cool!')
 
+    @Slot(str,result='QVariant')
+    def check_code(self,path):
+        style_g=legacy.get_style_guide(
+            ignore=['E24','W5'],
+            select=['E','W','F'],
+            format='pylint'
+        )
+        stats=style_g.check_files(paths=path)
+        if stats.get_statistics('E')==[]:                                         #'No ERROR FOUND'
+            return [{'msgs':stats.get_statistics('W'),'t':0}]                     # Must return WARNNINGS
+        if stats.get_statistics('W')==[]:                                         #'No WARNNING FOUND'
+            return [{'msgs':stats.get_statistics('E'),'t':stats.total_errors}]    # Must return ERRORS
+
+
     @Slot(str,result='QString')
     def highlight(self,text):
         """This is used to highlight the given text and returns a html format text
@@ -270,10 +285,12 @@ class Studio(QObject):
         Returns:
             srt: the highlighted text (in html format)
         """
+        
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
-        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))#self.richcolor(text)#
+        text=fix_code(text)
+        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))#self.richcolor(text)#
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -348,7 +365,7 @@ class Studio(QObject):
             p=p[8:idx] if 'windows' in platform.system().lower() else p[7:idx]
         #print(p,fname,contenu)
         with open(os.path.join(p,fname),'w') as f:
-            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))
+            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))
             f.close()
 
     @Slot(result='QVariant')
@@ -542,6 +559,11 @@ class Studio(QObject):
         shutil.copytree(origin,os.path.join(target,f'{origin.split("/")[-1]}'))
         
         return Json.dumps({'msg':'SUCCESS:'},indent=4)
+
+    @Slot(str,str,str,bool,bool,bool,bool,str,result='QString')
+    def newProject(self,n,p,t,a,l,e,g,pt):
+        import projectCreator
+        return projectCreator.newProject(n,p,t,a,l,e,g,pt)
 
     def run(self):
 
