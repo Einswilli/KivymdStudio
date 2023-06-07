@@ -51,8 +51,16 @@ Item{
     property alias code:editor.text
     property alias link:chemin.text
     property variant mip
+
+    //SIGNALS
+    signal highlight(string value)
+
+    onHighlight:{
+        editor.highlightText(value);
+    }
     
     Component.onCompleted: {
+        // backend.highlighting.connect(root.highlight);
         // mip=editor.children
         // var copy=[]
         // for(let i=0;i<mip.length;i++){
@@ -75,7 +83,7 @@ Item{
         contentWidth: editor.paintedWidth
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
-        maximumFlickVelocity : 700
+        maximumFlickVelocity : 1200
         clip: true
 
         function ensureVisible(r)
@@ -89,51 +97,6 @@ Item{
             else if (contentY+height <= r.y+r.height)
                 contentY = r.y+r.height-height;
         }
-
-        // Rectangle{
-        //     id:lines
-        //     width:60
-        //     height:(editor.lineCount*25)+parent.height
-        //     anchors.left:parent.left
-        //     color:barfonce
-
-        //     Component{
-        //         id:comp
-        //         Rectangle{
-        //             width:58
-        //             height:25
-        //             color:compcolor
-
-        //             Text{
-        //                 text:num
-        //                 color:'white'
-        //                 font.pixelSize:14
-        //                 anchors.centerIn: parent
-        //             }
-        //             Rectangle{
-        //                 width:parent.width
-        //                 height:1
-        //                 color:'black'
-        //                 anchors.bottom:parent.bottom
-        //             }
-        //         }
-        //     }
-
-        //     ListModel{
-        //         id:mod
-        //         ListElement{
-        //             num:1
-        //         }
-        //         dynamicRoles: false
-        //     }
-
-        //     ListView{
-        //         y:5
-        //         model:mod
-        //         delegate:comp
-        //         anchors.fill: parent
-        //     }
-        // }
         
 
         SuggestionBox {
@@ -190,6 +153,17 @@ Item{
                     suggestionsBox.visible=true;
                 }
             }
+
+            function highlightText(value){
+                if(!processing){
+                    processing=true;
+                    let p = cursorPosition;
+                    text=value;
+                    cursorPosition= p;
+                    console.log(value);
+                    processing=false;
+                }
+            }
             
             function getCurrentWord(){
                 var t=getText(0,cursorPosition)//.split(' ')
@@ -201,7 +175,7 @@ Item{
                         break
                     }
                 }
-                suggestionsBox.line=editor.currentLine
+                suggestionsBox.line=editor.currentcursorPositionLine
                 suggestionsBox.pos=editor.cursorPosition
                 suggestionsBox.code=getText(0,length)
                 suggestionsBox.modeIndicator=t.substr(j,1)
@@ -269,13 +243,14 @@ Item{
                     let p = cursorPosition;
                     let l=text.length
                     var tx=getText(0, length)//.toString()
-                    var t=backend.highlight(tx)
-                    text=t;
+                    //var t=
+                    backend.highlight(tx)
+                    //text=t;
                     
                     
                     cursorPosition = p;
                     processing = false;
-                    minimap.text=t
+                    //minimap.text=t
                 }
             }
         }

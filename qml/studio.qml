@@ -53,6 +53,7 @@ ApplicationWindow {
     Component.onCompleted: {
         // root.showFullScreen();
         //backend.chargeTree(tree)
+        backend.termstdout.connect(root.tstdout)
         root.width=parseInt(backend.getScreen().split(',')[0])
         root.height=parseInt(backend.getScreen().split(',')[1])
         loading.msgt='loading plugins...'
@@ -106,6 +107,7 @@ ApplicationWindow {
             //console.log(error)
         }
     }
+
     function high_l(value){
         return value.toHtmlObject
     }
@@ -123,6 +125,12 @@ ApplicationWindow {
     property string imsource
     property string currentFolder
     signal emuLog(var msg)
+    signal tstdout(string value)
+
+
+    onTstdout:{
+        console.log(value);
+    }
 
     Shortcut {
         sequence: "Ctrl+T"
@@ -178,11 +186,8 @@ ApplicationWindow {
         sequence: "Ctrl+S"
         //enabled:parent.focus
         onActivated: {
-            //console.log('saving file...')
-            //console.log(codetab.getTab(codetab.currentIndex).item.lk.toString())
             cde=codetab.getTab(codetab.currentIndex).item.cd.getText(0,codetab.getTab(codetab.currentIndex).item.cd.length)
             backend.savefile(codetab.getTab(codetab.currentIndex).item.lk.toString(),backend.get_filename(codetab.getTab(codetab.currentIndex).item.lk),cde)
-            //cde=''
         }
     }
     // Shortcut {
@@ -197,10 +202,11 @@ ApplicationWindow {
     }
     
     
+    //LEFT BAR
     Rectangle{
         id:leftbar
         width:60
-        height:parent.height
+        height:parent.height-30
         color:barclaire
         anchors.left: parent.left
         property var pluglist:[xte,git,tree,searchbox]
@@ -271,6 +277,7 @@ ApplicationWindow {
         ListModel{
             id:lbarmod
         }
+
         Component.onCompleted:{
             lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
             lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
@@ -291,6 +298,7 @@ ApplicationWindow {
             }
             //lbarmod.append(JSON.parse(l));
         }
+
         ScrollView{
             id:scleftcol
             anchors.fill:parent
@@ -301,237 +309,8 @@ ApplicationWindow {
                 delegate:lbarcomp
                 model:lbarmod
             }
-            // Rectangle{
-            //     width:50
-            //     height:50
-            //     radius:12
-            //     //y:30
-            //     color:parent.parent.color
-            //     anchors.horizontalCenter: parent.horizontalCenter
-
-            //     Image{
-            //         width:25
-            //         height:25
-            //         source:'../assets/icons/loupe.png'
-            //         anchors.centerIn: parent
-            //     }
-
-            //     MouseArea{
-            //         anchors.fill: parent
-            //         hoverEnabled:true
-            //         onEntered:{
-            //             parent.color=hovercolor
-            //         }
-            //         onExited:{
-            //             parent.color=barclaire
-            //         }
-            //         onClicked:{
-            //             xhov.parent=parent;
-            //             xhov.visible=true;
-            //             if (leftbox.width==0){
-            //                 expbox.visible=true
-            //                 exptxt.text='SEARCH'
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=true
-            //                 tree.visible=false
-            //                 lb_on.start()
-            //             }
-            //             else if(leftbox.width>0 && searchbox.visible==true){
-            //                 expbox.visible=false
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_off.start()
-            //             }
-            //             else{
-            //                 exptxt.text='SEARCH'
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=true
-            //                 tree.visible=false
-            //             }
-            //         }
-            //     }
-            // }
-            // Rectangle{
-            //     width:50
-            //     height:50
-            //     radius:12
-            //     y:90
-            //     color:parent.parent.color
-            //     anchors.horizontalCenter: parent.horizontalCenter
-
-            //     Image{
-            //         width:25
-            //         height:25
-            //         source:'../assets/icons/fichier.png'
-            //         anchors.centerIn: parent
-            //     }
-
-            //     MouseArea{
-            //         anchors.fill: parent
-            //         hoverEnabled:true
-            //         onEntered:{
-            //             parent.color=hovercolor
-            //         }
-            //         onExited:{
-            //             parent.color=barclaire
-            //         }
-            //         onClicked:{
-            //             xhov.parent=parent;
-            //             xhov.visible=true;
-            //             if (leftbox.width==0){
-            //                 expbox.visible=true
-            //                 exptxt.text='EXPLORER'
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=true
-            //                 lb_on.start()
-            //             }
-            //             else if(leftbox.width>0 && tree.visible==true){
-            //                 expbox.visible=false
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_off.start()
-            //             }
-            //             else{
-            //                 exptxt.text='EXPLORER'
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=true
-            //             }
-            //         }
-            //     }
-                
-            // }
-            // Rectangle{
-            //     width:50
-            //     height:50
-            //     radius:12
-            //     y:150
-            //     color:parent.parent.color
-            //     anchors.horizontalCenter: parent.horizontalCenter
-
-            //     Image{
-            //         width:25
-            //         height:25
-            //         source:'../assets/icons/menu(1).png'
-            //         anchors.centerIn: parent
-            //     }
-
-            //     MouseArea{
-            //         anchors.fill: parent
-            //         hoverEnabled:true
-            //         onEntered:{
-            //             parent.color=hovercolor
-            //         }
-            //         onExited:{
-            //             parent.color=barclaire
-            //         }
-            //         onClicked:{
-            //             xhov.parent=parent;
-            //             xhov.visible=true;
-            //             if (leftbox.width==0){
-            //                 expbox.visible=true
-            //                 exptxt.text='EXTENTIONS'
-            //                 xte.visible=true
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_on.start()
-            //             }
-            //             else if(leftbox.width>0 && xte.visible==true){
-            //                 expbox.visible=false
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_off.start()
-            //             }
-            //             else{
-            //                 exptxt.text='EXTENTIONS'
-            //                 xte.visible=true
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //             }
-            //         }
-            //     }
-                
-            // }
-            // Rectangle{
-            //     width:50
-            //     height:50
-            //     radius:12
-            //     y:210
-            //     color:parent.parent.color
-            //     anchors.horizontalCenter: parent.horizontalCenter
-
-            //     Image{
-            //         width:25
-            //         height:25
-            //         source:'../assets/icons/github(1).png'
-            //         anchors.centerIn: parent
-            //     }
-
-            //     MouseArea{
-            //         anchors.fill: parent
-            //         hoverEnabled:true
-            //         onEntered:{
-            //             parent.color=hovercolor
-            //         }
-            //         onExited:{
-            //             parent.color=barclaire
-            //         }
-            //         onClicked:{
-            //             xhov.parent=parent;
-            //             xhov.visible=true;
-            //             if (leftbox.width==0){
-            //                 expbox.visible=true
-            //                 exptxt.text='GITHUB'
-            //                 xte.visible=false
-            //                 git.visible=true
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_on.start()
-            //             }
-            //             else if(leftbox.width>0 && git.visible==true){
-            //                 expbox.visible=false
-            //                 xte.visible=false
-            //                 git.visible=false
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //                 lb_off.start()
-            //             }
-            //             else{
-            //                 exptxt.text='GITHUB'
-            //                 xte.visible=false
-            //                 git.visible=true
-            //                 tree.visible=false
-            //                 searchbox.visible=false
-            //                 tree.visible=false
-            //             }
-            //         }
-            //     }
-            // }
         }
+
         Rectangle{
             width:50
             height:50
@@ -561,6 +340,7 @@ ApplicationWindow {
                 }
             }
         }
+
         Rectangle{
             width:50
             height:50
@@ -649,6 +429,7 @@ ApplicationWindow {
             }
         }
     }
+
     NumberAnimation{
         id:lb_on
         from: 0
@@ -665,11 +446,13 @@ ApplicationWindow {
         property: 'width'
         target:leftbox
     }
+
+    //LEFT BOX
     Rectangle{
         id:leftbox
         x:leftbar.width
         width:(root.width/5)
-        height:parent.height
+        height:parent.height-30
         color:moyen
 
         Rectangle{
@@ -765,6 +548,7 @@ ApplicationWindow {
             width:parent.width
             height:parent.height-expbox.height
             objectName:'folder'
+            clip: true
 
             FileManager{
                 id:fm
@@ -800,6 +584,7 @@ ApplicationWindow {
                     console.log(root.currentFolder)
                 }
             }
+
             Component{
                 id:imcomp
                 Rectangle{
@@ -822,112 +607,8 @@ ApplicationWindow {
                     }
                 }
             }
-
-            // CustomTree{
-            //     id:ftree
-            //     anchors.fill: parent
-            // }
-
-            // Component{
-            //     id:lstdlg
-            //     Rectangle{
-            //         id:lrec
-            //         width:tree.width
-            //         height:30
-            //         color:'#34373A'
-            //         radius:8
-            //         border.width:1
-            //         border.color:bordercolor
-
-            //         Image{
-            //             id:fimg
-            //             width:15
-            //             height:15
-            //             anchors.left:parent.left
-            //             anchors.leftMargin:10
-            //             anchors.verticalCenter: parent.verticalCenter
-            //             source:'../assets/icons/folderadd.png'
-            //         }
-            //         Text{
-            //             id:ftx
-            //             text:filename
-            //             font.pixelSize:14
-            //             color:'white'
-            //             x:5
-            //             anchors.verticalCenter: parent.verticalCenter
-            //         }
-            //         MouseArea{
-            //             anchors.fill: parent
-            //             hoverEnabled:true
-            //             onEntered:{
-            //                 parent.color=hovercolor
-            //                 //parent.visible=false
-            //             }
-            //             onExited:{
-            //                 parent.color='#34373A'
-            //             }
-            //             onClicked:{
-            //                 var xx=lll.currentItem.x
-            //                 var yy=lll.currentItem.y
-            //                 var colps=false
-            //                 if(colps==false){
-
-            //                     for(var i=lll.currentIndex+1;i<lll.count;i++){
-            //                         lll.incrementCurrentIndex()
-            //                         if(lll.currentItem.x>xx){
-            //                             lll.currentItem.visible=false
-            //                         }else{
-            //                             break
-            //                         }
-            //                     }
-            //                     colps=true
-            //                 }else{
-            //                     for(var i=lll.currentIndex+1;i<lll.count;i++){
-            //                         lll.incrementCurrentIndex()
-            //                         if(lll.currentItem.x>xx){
-            //                             lll.currentItem.visible=true
-            //                         }else{
-            //                             break
-            //                         }
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //         Component.onCompleted:{
-            //             //f=ftx.text.match(/  |/)
-            //             var o=ftx.text.toString().split(/├─|└─|[  ]|│ /).length-1
-            //             var l=o*2
-            //             ftx.text=ftx.text.substr(l-1,ftx.text.length-l)
-            //             if(ftx.text.length>13){
-            //                 ftx.text=ftx.text.substr(0,10)+'...'
-            //             }
-            //             ftx.x=40
-            //             lrec.x=(o)*10
-            //             lrec.width-=lrec.x
-            //         }
-            //     }
-            // }
-            
-            // ListModel{
-            //     id:tmod
-            //     // ListElement{
-            //     //     filename:'/root'
-            //     // }
-                
-            // }
-            
-
-            // ScrollView{
-            //     anchors.fill: parent
-            //     ListView{
-            //         id:lll
-            //         model:tmod
-            //         delegate:lstdlg
-            //         //draggingVertically: true
-            //     }
-            // }
-            
         }
+
         Rectangle{
             id:xte
             y:expbox.height+1
@@ -941,6 +622,7 @@ ApplicationWindow {
                 color:'white'
             }
         }
+
         Rectangle{
             id:git
             y:expbox.height+1
@@ -1098,7 +780,53 @@ ApplicationWindow {
             }
         }
         
+
+        //RESIZER
+        Rectangle{
+            width: 4
+            height: parent.height
+            color:'transparent'
+            anchors.top: parent.top
+            anchors.right: parent.right
+            MouseArea {
+                id: resizeArea
+                width: 4
+                height: parent.height
+                anchors.fill:parent
+                anchors.right: parent.right
+                cursorShape: Qt.SizeFDiagCursor
+
+                property int startX: 0
+                property int startY: 0
+
+                onPressed: {
+                    startX = mouseX
+                    startY = mouseY
+                }
+                onPressedChanged: parent.color='transparent'
+
+                onExited: parent.color='transparent'
+
+                onMouseXChanged: {
+                    parent.color='teal'
+                    if (mouse.buttons === Qt.LeftButton) {
+                        var deltaX = mouseX - startX
+                        var deltaY = mouseY - startY
+
+                        var newWidth = leftbox.width + deltaX
+                        leftbox.width = Math.max(100, Math.min(newWidth, (root.width*2/5)))
+
+
+                        startX = mouseX
+                        startY = mouseY
+                    }
+                }
+            }
+        }
     }
+
+
+    //TOP BAR
     Rectangle{
         id:top_bar
         x:leftbar.width+leftbox.width
@@ -1886,12 +1614,15 @@ ApplicationWindow {
             }
         }
     }
+
+
+    //BODY
     Rectangle{
         id:body
         y:top_bar.height
         color:appcolor
         x:leftbar.width+leftbox.width
-        height:parent.height-top_bar.height
+        height:parent.height-top_bar.height-30
         width:root.width-x//leftbar.width-leftbox.width
 
         
@@ -1903,13 +1634,21 @@ ApplicationWindow {
                 tab: Rectangle {
                     color: styleData.selected ? barfonce :barclaire
                     border.color:  barclaire
-                    implicitWidth: Math.max(text.width + 30, 140)
+                    implicitWidth: Math.max(text.width + 50, 140)
                     implicitHeight: 20
                     width:120
                     height:40
                     radius: 2
-                    
 
+                    Text {
+                        id: text
+                        x:33
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: styleData.title
+                        font.pointSize:12
+                        color: styleData.selected ? "white" : '#A4A5A7'
+                    }
+                    
                     Image{
                         id:fileimage
                         height:20
@@ -1938,14 +1677,6 @@ ApplicationWindow {
                         }
                     }
 
-                    Text {
-                        id: text
-                        anchors.centerIn: parent
-                        text: styleData.title
-                        font.pixelSize:12
-                        color: styleData.selected ? "white" : '#A4A5A7'
-                    }
-
                     Rectangle{
                         anchors.right:parent.right
                         anchors.margins: 8
@@ -1957,7 +1688,7 @@ ApplicationWindow {
 
                         Text{
                             text:qsTr('×')
-                            font.pixelSize:13
+                            font.pointSize:13
                             color:'white'
                             anchors.centerIn: parent
                         }
@@ -2001,7 +1732,7 @@ ApplicationWindow {
                         //font.bold:true
                         color:'#C6D6DF'
                         font.pixelSize:parent.height/12
-                        y:parent.height/6
+                        y:parent.height/10
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         
@@ -2025,7 +1756,7 @@ ApplicationWindow {
                                     src:'../assets/images/android.png'
                                     name:'Android'
                                     text_color:weltext.color
-                                    rect_height:parent.height
+                                    rect_height:parent.width
                                     rect_width:parent.width
                                     // anchors.left:parent.left
                                     // anchors.margins: 80
@@ -2039,10 +1770,10 @@ ApplicationWindow {
                                 color:parent.parent.color
                                 DeviceBox{
                                     id:ios
-                                    src:'../assets/images/apple.png'
+                                    src:'../assets/images/aple.png'
                                     name:'IOs X'
                                     text_color:weltext.color
-                                    rect_height:parent.height
+                                    rect_height:parent.width
                                     rect_width:parent.width
                                     // anchors.left:parent.left
                                     // anchors.margins: android.rect_width+120
@@ -2056,10 +1787,10 @@ ApplicationWindow {
                                 color:parent.parent.color
                                 DeviceBox{
                                     id:win10
-                                    src:'../assets/images/win10.png'
+                                    src:'../assets/images/windows.png'
                                     name:'Windows'
                                     text_color:weltext.color
-                                    rect_height:parent.height
+                                    rect_height:parent.width
                                     rect_width:parent.width
                                     //anchors.horizontalCenter: parent.horizontalCenter
                                     back:parent.color
@@ -2072,10 +1803,10 @@ ApplicationWindow {
                                 color:parent.parent.color
                                 DeviceBox{
                                     id:macos
-                                    src:'../assets/images/mac.png'
+                                    src:'../assets/images/macos.png'
                                     name:'Mac Os'
                                     text_color:weltext.color
-                                    rect_height:parent.height
+                                    rect_height:parent.width
                                     rect_width:parent.width
                                     // anchors.right:parent.right
                                     // anchors.margins: linux.rect_width+120
@@ -2092,7 +1823,7 @@ ApplicationWindow {
                                     src:'../assets/images/linux.png'
                                     name:'Linux'
                                     text_color:weltext.color
-                                    rect_height:parent.height
+                                    rect_height:parent.width
                                     rect_width:parent.width
                                     // anchors.right:parent.right
                                     // anchors.margins: 80
@@ -2403,49 +2134,19 @@ ApplicationWindow {
                 }
                 
             }
-            // Tab{
-            //     title: 'main.py'
-            //     active: true
-            //     //asynchronous: bool
-            //     Rectangle{
-            //         color:body.color
-            //         anchors.fill: parent
-
-            //         Rectangle{
-            //             color:parent.color
-            //             width:parent.width
-            //             height:parent.height
-            //             //x:60
-
-            //             CodeEditor{
-            //                 compcolor:barclaire
-            //                 edit_height:parent.height-20
-            //                 edit_width:parent.width-20
-            //                 anchors.fill: parent
-            //             }
-            //         }
-            //     }
-            // }
-
-            // Tab{
-            //     title: 'main.kv'
-            //     active: true
-            //     //asynchronous: bool
-            //     Rectangle{
-            //         color:body.color
-            //         anchors.fill: parent
-                    
-            //         CodeEditor{
-            //             compcolor:barclaire
-            //             edit_height:parent.height-20
-            //             edit_width:parent.width-20
-            //             anchors.fill: parent
-            //         }
-                    
-            //     }
-            // }
         }
     }
+
+    //STATTUS BAR
+    Rectangle{
+        id: status_bar
+        height: 30
+        width: parent.width
+        anchors.bottom: parent.bottom
+        color:'teal'
+    }
+
+    //TERMINAL
     Rectangle{
         id:terminal
         height:(parent.height/3)+50
@@ -2455,7 +2156,9 @@ ApplicationWindow {
         border.color:bordercolor
         border.width:1
         anchors.bottom:parent.bottom
+        anchors.margins: 30
         visible:false
+        clip:true
 
         UIText{
             anchors.left:parent.left
@@ -2466,6 +2169,7 @@ ApplicationWindow {
             color:'white'
         }
 
+        //CLOSER
         Rectangle{
             id:terferm
             width:30
@@ -2498,6 +2202,7 @@ ApplicationWindow {
             }
         }
 
+        //CLOSER
         Rectangle{
             id:xyw
             width:30
@@ -2538,77 +2243,127 @@ ApplicationWindow {
         Rectangle{
             y:xyw.height+15
             width:parent.width-2
-            height:parent.height-xyw.height-1
+            height:parent.height-xyw.height-20
             color:parent.color
             anchors.horizontalCenter: parent.horizontalCenter
-            // Terminal{
-            //     id:minal
-            //     //anchors.fill: parent
-            // }
-            Flickable{
-                id:fkb
-                anchors.fill: parent
+            
+            Terminal{
+                height:parent.height
+                width:parent.width
+                // anchors.fill: parent
+            }
+            // Flickable{
+            //     id:fkb
+            //     anchors.fill: parent
+
+
                 
-                TextEdit{
-                    id:txdt
-                    font.pixelSize:14
-                    font.family:'monospace'
-                    width:parent.width
-                    height:(lineCount*25)+100
-                    //anchors.fill: parent
-                    anchors.margins: 15
-                    color:'#D6D4D3'
-                    wrapMode:TextEdit.WordWrap
-                    readOnly:true
-                    Component.onCompleted:{//Keys.onReturnPressed:{
-                        insert(cursorPosition,Terminal.spawn(['/bin/bash']))
-                    }
-                    Rectangle{
-                        width:parent.width
-                        height:35
-                        anchors.bottom:parent.bottom
-                        color:'transparent'
-                        Text{
-                            id:mintex
-                            text:''
-                            font.bold:true
-                            font.pixelSize:14
-                            font.family:'monospace'
-                            color:'#044B85'
-                            anchors.verticalCenter: parent.verticalCenter
-                            Component.onCompleted:{
-                                text=backend.terminal()
-                            }
-                        }
-                        TextField{
-                            y:2
-                            x:mintex.width+5
-                            width:parent.width-mintex.width
-                            height:parent.height-10
-                            //anchors.verticalCenter: parent.verticalCenter
-                            background:Rectangle{
-                                anchors.fill: parent
-                                color:barclaire
-                            }
-                            color:'white'
-                            font.pixelSize:15
-                            font.family:'monospace'
-                            topPadding:2
-                            bottomPadding:4
-                            Keys.onReturnPressed:{
-                                txdt.insert(txdt.cursorPosition,backend.run_command(text))
-                                text=''
-                            }
-                        }
-                    }
+                
+            //     TextEdit{
+            //         id:txdt
+            //         font.pixelSize:14
+            //         font.family:'monospace'
+            //         width:parent.width
+            //         height:(lineCount*25)+100
+            //         //anchors.fill: parent
+            //         anchors.margins: 15
+            //         color:'#D6D4D3'
+            //         wrapMode:TextEdit.WordWrap
+            //         readOnly:true
+            //         visible: false
+            //         Component.onCompleted:{//Keys.onReturnPressed:{
+            //             insert(cursorPosition,Terminal.spawn(['/bin/bash']))
+            //         }
+            //         Rectangle{
+            //             width:parent.width
+            //             height:35
+            //             anchors.bottom:parent.bottom
+            //             color:'transparent'
+            //             Text{
+            //                 id:mintex
+            //                 text:''
+            //                 font.bold:true
+            //                 font.pixelSize:14
+            //                 font.family:'monospace'
+            //                 color:'#044B85'
+            //                 anchors.verticalCenter: parent.verticalCenter
+            //                 Component.onCompleted:{
+            //                     text=backend.terminal()
+            //                 }
+            //             }
+            //             TextField{
+            //                 y:2
+            //                 x:mintex.width+5
+            //                 width:parent.width-mintex.width
+            //                 height:parent.height-10
+            //                 //anchors.verticalCenter: parent.verticalCenter
+            //                 background:Rectangle{
+            //                     anchors.fill: parent
+            //                     color:barclaire
+            //                 }
+            //                 color:'white'
+            //                 font.pixelSize:15
+            //                 font.family:'monospace'
+            //                 topPadding:2
+            //                 bottomPadding:4
+            //                 Keys.onReturnPressed:{
+            //                     txdt.insert(txdt.cursorPosition,backend.run_command(text))
+            //                     text=''
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     ScrollBar.vertical: ScrollBar {
+            //         width:15
+            //         active: fkb.moving || !fkb.moving
+            //     }
+            // }
+        }
+
+        //RESIZER
+        Rectangle{
+            width: parent.width
+            height: 4
+            anchors.top: parent.top
+            color:'transparent'
+            MouseArea {
+                width: parent.width
+                height: 4
+                anchors.top: parent.top
+                anchors.right: parent.right
+                cursorShape: Qt.SizeFDiagCursor
+
+                property int startX: 0
+                property int startY: 0
+
+                onPressed: {
+                    startX = mouseX
+                    startY = mouseY
                 }
-                ScrollBar.vertical: ScrollBar {
-                    width:15
-                    active: fkb.moving || !fkb.moving
+                onPressedChanged: parent.color='transparent'
+
+                // onYChanged: parent.color='teal'
+
+                // onEntered: parent.color='teal'
+
+                onExited: parent.color='transparent'
+
+                onMouseYChanged: {
+                    parent.color='teal'
+                    if (mouse.buttons === Qt.LeftButton) {
+                        var deltaX = mouseX - startX
+                        var deltaY = mouseY - startY
+
+                        var newHeight = terminal.height + deltaY
+
+                        terminal.height = Math.abs(Math.max(200, Math.min(newHeight, (root.height*4/5))))
+
+                        startX = mouseX
+                        startY = mouseY
+                    }
                 }
             }
         }
-
     }
 
     NumberAnimation{
@@ -2681,6 +2436,7 @@ ApplicationWindow {
                     }
                 }
             }
+
             Rectangle{
                 height:parent.height-10
                 width:35
@@ -2907,6 +2663,7 @@ ApplicationWindow {
             // }
         }
     }
+
     Component{
         id:cb
         Rectangle{

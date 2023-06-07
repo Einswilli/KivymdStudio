@@ -1104,7 +1104,7 @@ Rectangle {
                         anchors.fill: parent; verticalAlignment: Text.AlignVCenter
                         text: fileName
                         anchors.leftMargin: img.width+15
-                        font.pixelSize: 14
+                        font.pointSize: 12
                         color: (wrapper.ListView.isCurrentItem && root.showFocusHighlight) ? palette.highlightedText : textColor
                         elide: Text.ElideRight
                     }
@@ -1341,10 +1341,12 @@ Rectangle {
                     id:fldrs
                     anchors.left: upButton.visible?upButton.right:parent.left; anchors.right: parent.right; height: parent.height
                     anchors.leftMargin: 10; anchors.rightMargin: 4
-                    text: folders.folder
+                    text: folders.folder//.split('/')[-1]
                     color: "white"
                     elide: Text.ElideLeft; horizontalAlignment: Text.AlignLeft; verticalAlignment: Text.AlignVCenter
-                    font.pixelSize: 14
+                    font.pointSize: 12
+                    font.bold: true
+                    font.capitalization:Font.AllUppercase
                 }
             }
 

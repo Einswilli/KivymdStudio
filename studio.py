@@ -6,7 +6,8 @@ import pathlib
 import shutil
 import sys
 import subprocess
-#from Terminal import*
+# from Terminal import*
+from shell import *
 import getpass
 import socket
 import glob,schedule
@@ -150,6 +151,43 @@ class changeHandler(LoggingEventHandler):
     def on_modified(self, event,callback):
         callback()
 
+####
+##  WORKER
+#####
+class Worker(QRunnable):
+    '''
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    '''
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+
+    @Slot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+
+        # Retrieve args/kwargs here; and fire processing using them
+        
+        self.fn(*self.args, **self.kwargs)
+
+
 class Studio(QObject):
 
     def __init__(self):
@@ -159,6 +197,8 @@ class Studio(QObject):
     colorhighlight=Signal(str)
     screeninfo=Signal(dict)
     terminalReady=Signal(str)
+    highlighting=Signal(str,name='highlighting')
+    termstdout=Signal(str,name='termstdout')
     #logevent=Signal(dict,name='logEvent')
     
     @Slot(result='QString')
@@ -212,7 +252,9 @@ class Studio(QObject):
         #QSyntaxHighlighter()
         style = get_style_by_name(utils.get_active_theme())
         #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        return highlight(text,self.detect_lang(text),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
+        h_text=highlight(text,self.detect_lang(text),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
+        # self.highlighting.emit(h_text)
+        return h_text
     
     def detect_lang(self,code):
         import re
@@ -285,12 +327,15 @@ class Studio(QObject):
         Returns:
             srt: the highlighted text (in html format)
         """
+
         
         #print(str(text).removeprefix('\r'))
         #s=Synthaxhighlighter.Highlighter().highlight(text)
         if text=='':return ''
         text=fix_code(text)
-        return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))#self.richcolor(text)#
+        #return self.colorify()#self.richcolor(text)#
+        worker=Worker(self.colorify,str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))
+        QThreadPool.globalInstance().start(worker)
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -476,7 +521,7 @@ class Studio(QObject):
         #     stdin=pty_s, stdout=pty_s, stderr=pty_s,
         #     env=child_env,
         #     preexec_fn=os.setsid)
-        return f'{getpass.getuser()}@{socket.gethostname()}:\n\r'
+        return f'{getpass.getuser()}@{socket.gethostname()}:'
         
     @Slot(str,result='QString')
     def run_command(self,cmd):
@@ -486,6 +531,9 @@ class Studio(QObject):
         sortie=str(executeur.stdout.read()+executeur.stderr.read())[2:-3]
         srt=sortie.replace('\n','\n\r')
         return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
+
+        # worker=Worker(Terminal().execute_cmd,cmd,self.termstdout)
+        # QThreadPool.globalInstance().start(worker)
 
     @Slot(str,str,str,int,int,result='QVariant')
     def filter(self,name,mode,code,line,pos):
@@ -572,9 +620,9 @@ class Studio(QObject):
         engine = QQmlApplicationEngine()
         #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()
-        #ft=FolderTree()
+        cmder=CommandManager()
         engine.rootContext().setContextProperty('backend',studio)
-        #engine.rootContext().setContextProperty('Terminal',ft)
+        engine.rootContext().setContextProperty('CommandManager',cmder)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():
