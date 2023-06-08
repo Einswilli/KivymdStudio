@@ -12,13 +12,12 @@ import getpass
 import socket
 import glob,schedule
 from time import time
-import Synthaxhighlighter
 import platform
-from flake8 import *
-from autopep8 import fix_code
 #import execjs
 #import tree
 #from Emulator.emulator import Emulator
+from editorManager import EditorManager
+import locale, sys,utils
 
 
 from PySide6.QtGui import QGuiApplication
@@ -30,30 +29,13 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 #from PyQt5 import QtCore, QtGui, QtWidgets
 from PySide2.QtQml import qmlRegisterType                                            
-import locale, sys,utils
 
 import simplejson as Json
 from plyer import notification
 import datetime
 import sys,os,requests,tempfile
 import sqlite3
-from pygments import highlight
-from pygments.lexers.python import PythonLexer
-from pygments.lexers import load_lexer_from_file
-from pygments.lexers.special import TextLexer
-from pygments.formatters.html import HtmlFormatter
-from pygments.styles import get_style_by_name
-from rich.console import Console
-from rich.syntax import Syntax
-import pyperclip
-from flake8.api import legacy
 
-
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView
-from PyQt5.Qt import QStandardItemModel, QStandardItem,QAbstractItemModel
-from PyQt5.QtWidgets import QApplication, QStyle, QTextEdit
-from PyQt5.QtGui import QFont, QColor
-from functools import partial
 from pathlib import Path
 from PySide6.QtQuickControls2 import QQuickStyle
 from watchdog.observers import Observer
@@ -223,66 +205,6 @@ class Studio(QObject):
             return f'{width},{height}'
         except:return'1200,800'
         
-    @Slot(str,result='QString')
-    def get_prev_indent_lvl(self,text):
-        l=str(text).replace('\u2029','\n').replace('â€©','\n').replace('\u21E5','\t').replace('    ','\t').split('\n')
-        prev_line=l[-2]
-        tmp=prev_line.lstrip(' \t')
-        p=len(prev_line.lstrip(' '))
-        c=len(prev_line[:len(prev_line)-len(tmp)])+1 if prev_line.strip().endswith(':') else len(prev_line[:len(prev_line)-len(tmp)])
-        
-        return str(c)
-
-    #@Slot(str,result='QString')
-    def colorify(self,text):
-
-        """This is used to highlight the given text and returns a html format text
-
-        Args:
-            text str: the text which will be highlighted (it could be a code)
-
-        Returns:
-            srt: the highlighted text (in html format)
-        """
-        # directives=[l for l in text.split('\n') if str(l).startswith('import') and len(l.split(' '))>=2 or str(l).startswith('from')and len(l.split(' '))>3]
-        
-        # mods=[' '.join(d.split(' ',1)[-1].split(',')).split(' ') if d.startswith('import') else ' '.join(d[d.index('import')+6:].split(',',1)).split(' ') for d in directives ]
-        # mods.extend([d.split(' ')[1] for d in directives if d.startswith('from')])
-        # utils.add_directives(mods)
-        #QSyntaxHighlighter()
-        style = get_style_by_name(utils.get_active_theme())
-        #print(highlight(text,PythonLexer(),HtmlFormatter(full=True,style=style)))
-        h_text=highlight(text,self.detect_lang(text),HtmlFormatter(full=True,style=style,noclasses=True,nobackground=True))
-        # self.highlighting.emit(h_text)
-        return h_text
-    
-    def detect_lang(self,code):
-        import re
-        defs=code.count('def ')
-        classes=code.count('class ')
-        if defs>1 or classes>1:
-            return PythonLexer()
-        return load_lexer_from_file('kivyLexer.py','KivyLexer')
-
-    def richcolor(self,text):
-
-        """This is used to highlight the given text and returns a html format text
-
-        Args:
-            text str: the text which will be highlighted (it could be a code)
-
-        Returns:
-            srt: the highlighted text (in html format)
-        """
-
-        #pyperclip.set_clipboard("xclip")
-        syntax = Syntax(text, "python",background_color="#1F1F20",tab_size=4,theme='monokai',indent_guides=True)
-        console = Console(record=True)
-        console.print(syntax)
-        r=console.export_html(code_format="<pre>{code}</pre>",inline_styles=True)
-        #print(r)
-
-        return r
 
     @Slot(str,str)
     def newfile(self,filename,fpath):
@@ -303,39 +225,6 @@ class Studio(QObject):
         #os.system(f'touch {link}')
         #print('cool!')
 
-    @Slot(str,result='QVariant')
-    def check_code(self,path):
-        style_g=legacy.get_style_guide(
-            ignore=['E24','W5'],
-            select=['E','W','F'],
-            format='pylint'
-        )
-        stats=style_g.check_files(paths=path)
-        if stats.get_statistics('E')==[]:                                         #'No ERROR FOUND'
-            return [{'msgs':stats.get_statistics('W'),'t':0}]                     # Must return WARNNINGS
-        if stats.get_statistics('W')==[]:                                         #'No WARNNING FOUND'
-            return [{'msgs':stats.get_statistics('E'),'t':stats.total_errors}]    # Must return ERRORS
-
-
-    @Slot(str,result='QString')
-    def highlight(self,text):
-        """This is used to highlight the given text and returns a html format text
-
-        Args:
-            text str: the text which will be highlighted (it could be a code)
-
-        Returns:
-            srt: the highlighted text (in html format)
-        """
-
-        
-        #print(str(text).removeprefix('\r'))
-        #s=Synthaxhighlighter.Highlighter().highlight(text)
-        if text=='':return ''
-        text=fix_code(text)
-        #return self.colorify()#self.richcolor(text)#
-        worker=Worker(self.colorify,str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))
-        QThreadPool.globalInstance().start(worker)
 
     @Slot(str,result='QString')
     def openfile(self,path):
@@ -359,7 +248,8 @@ class Studio(QObject):
             with open(p,'r') as f:
                 code=f.read()
                 #self.richcolor(code)
-            return self.colorify(code)#self.richcolor(code)# cod
+            return EditorManager().colorify(code)
+            #.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))#self.richcolor(code)# cod
         except Exception as e:
             print(e)
             return f'Error when trying to open the file: {path}\n may be the file extention is not supported '
@@ -480,25 +370,9 @@ class Studio(QObject):
     @Slot()
     def emulator(self):
         """ This function will be used to start the kivy emulator"""
-        #Emulator().run()
-        #Emulator().run()
+
         e=subprocess.Popen([sys.executable,'Emulator/emulator.py'])
-        #print(self.get_log_file())
-        # schedule.every(1).seconds.do(self.emulationLog)
-        #print(os.listdir(f'{pathlib.Path.home()}/.kivy/logs/'))
-        # p=self.get_log_file()
-        # ev_h=changeHandler()
-        # ev_h.on_modified(callback=self.emulatoinLog)
-        # o=Observer()
-        # o.schedule(ev_h,p)
-        # o.start()
-        # try:
-        #     import time
-        #     while True:
-        #         time.sleep(1)
-        # except:
-        #     o.stop()
-        # o.join()
+        
 
     @Slot(result='QVariant')
     def emulationLog(self):
@@ -522,22 +396,6 @@ class Studio(QObject):
         #     env=child_env,
         #     preexec_fn=os.setsid)
         return f'{getpass.getuser()}@{socket.gethostname()}:'
-        
-    @Slot(str,result='QString')
-    def run_command(self,cmd):
-        '''Runs shell commands and returns the output'''
-
-        executeur=subprocess.Popen(str(cmd),shell=True, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
-        sortie=str(executeur.stdout.read()+executeur.stderr.read())[2:-3]
-        srt=sortie.replace('\n','\n\r')
-        return f'\n\r{getpass.getuser()}@{socket.gethostname()}:{cmd}\n\r{srt}'
-
-        # worker=Worker(Terminal().execute_cmd,cmd,self.termstdout)
-        # QThreadPool.globalInstance().start(worker)
-
-    @Slot(str,str,str,int,int,result='QVariant')
-    def filter(self,name,mode,code,line,pos):
-        return Json.dumps(utils.filter(name,mode,code,line,pos),indent=4)
 
     @Slot(result='QString')
     def get_default_proj_dir(self):
@@ -621,8 +479,10 @@ class Studio(QObject):
         #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()
         cmder=CommandManager()
+        editor=EditorManager()
         engine.rootContext().setContextProperty('backend',studio)
         engine.rootContext().setContextProperty('CommandManager',cmder)
+        engine.rootContext().setContextProperty('EditorManager',editor)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():

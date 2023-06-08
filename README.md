@@ -1,9 +1,13 @@
 <p align="center">
 <img src="assets/images/kv.png?raw=true" height="60"><br>
-A kivyMD devellopment studio
+A kivyMD development studio
 </p>
 
+<p>This is not the official repository of KIVYMDSTUDIO. It is a small homemade project just for fun. This project was created during a short one-week break, so I didn't have enough time to adopt a well-defined structure for the project (everything was done in a hurry). I didn't expect this project to resonate with people, but I received emails containing both insults regarding the editor's malfunctions and words of encouragement.
 
+I would like to thank all those who liked it and want to contribute, as well as those who sent me insults, as it made me realize the value they attach to this project...
+
+Now, I will make improvements and dedicate at least three evenings out of seven to push bug fixes.</p>
 
 
 ## Prerequisites 
@@ -27,30 +31,45 @@ A kivyMD devellopment studio
     - `python studio.py` <-- start the script
 
 ## Screenshots
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/14.png?raw=true"> 
-    <img width="1604" src="Screenshots/14.png?raw=true">
-</a> 
 
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/13.png?raw=true"> 
-    <img width="1604" src="Screenshots/13.png?raw=true">
-    
-</a> 
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/18.png?raw=true"> 
-    <img width="1604" src="Screenshots/18.png?raw=true"> 
-    
-</a> 
-<a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/20.png?raw=true">
+| | |
+|---|---|
+|![Image 1](Screenshots/33.png)|![Image 1](Screenshots/32.png)|
+|![Image 1](Screenshots/26.png)|![Image 1](Screenshots/27.png)|
+|![Image 1](Screenshots/28.png)|![Image 1](Screenshots/20.png)|
+|![Image 1](Screenshots/24.png)|![Image 1](Screenshots/21.png)|
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/33.png?raw=true"> 
+    <img width="1604" src="Screenshots/33.png?raw=true">
+</a> -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/32.png?raw=true"> 
+    <img width="1604" src="Screenshots/32.png?raw=true">
+</a>  -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/26.png?raw=true"> 
+    <img width="1604" src="Screenshots/26.png?raw=true"> 
+</a>  -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/27.png?raw=true">
+ <img width="1604" src="Screenshots/27.png?raw=true"> 
+</a> -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/28.png?raw=true">
+ <img width="1604" src="Screenshots/28.png?raw=true"> 
+</a> -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/20.png?raw=true">
  <img width="1604" src="Screenshots/20.png?raw=true"> 
- </a>
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/22.png?raw=true">
- <img width="1604" src="Screenshots/22.png?raw=true"> 
- </a>
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/24.png?raw=true">
+</a> -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/24.png?raw=true">
  <img width="1604" src="Screenshots/24.png?raw=true"> 
- </a>
- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/21.png?raw=true">
+</a> -->
+
+<!-- <a href="https://github.com/Einswilli/KivymdStudio/tree/master/Screenshots/21.png?raw=true">
  <img width="1604" src="Screenshots/21.png?raw=true"> 
- </a>
+</a> -->
 
  ## Quick Start
 
@@ -224,7 +243,6 @@ But the emulator does not work very well under windows for the moment.I will fix
 
 ## Bugs
 
-    - Emulator does not work very well under windows
     - Emulator can't load Python file correctly yet
 
 

@@ -13,14 +13,14 @@ Item{
     Connections{
         enabled: true
         ignoreUnknownSignals: false
-        target: backend
+        target: EditorManager
 
-        function onColorhighlight(value){
-            return value
-        }
-        function onFolderOpen(value){
-            return JSON.stringify(value)
-        }
+        // function onColorhighlight(value){
+        //     return value
+        // }
+        // function onFolderOpen(value){
+        //     return JSON.stringify(value)
+        // }
     }
 
     property alias scode:editor
@@ -55,12 +55,12 @@ Item{
     //SIGNALS
     signal highlight(string value)
 
-    onHighlight:{
-        editor.highlightText(value);
-    }
+    // onHighlight:{
+    //     editor.highlightText(value);
+    // }
     
     Component.onCompleted: {
-        // backend.highlighting.connect(root.highlight);
+        // EditorManager.highlighting.connect(root.highlight);
         // mip=editor.children
         // var copy=[]
         // for(let i=0;i<mip.length;i++){
@@ -71,7 +71,14 @@ Item{
         // // mip.parent=map
         // // mip.anchors.fill=map
     }
-    
+
+    //MINIMAP
+    MiniMap{
+        width:100//parent.width
+        height:parent.height
+        textEditor:editor
+        anchors.right: parent.right
+    }
 
     Flickable {
         id: flickb
@@ -133,7 +140,7 @@ Item{
             color:'white'
             mouseSelectionMode:TextEdit.SelectCharacters
             font.pixelSize:14
-            font.family:'arial'//'monospace'
+            font.family:'monospace'
             selectByMouse: true
             selectionColor: '#254655C5'//'#1C98E0'
             tabStopDistance: 40
@@ -175,7 +182,7 @@ Item{
                         break
                     }
                 }
-                suggestionsBox.line=editor.currentcursorPositionLine
+                suggestionsBox.line=editor.currentLine
                 suggestionsBox.pos=editor.cursorPosition
                 suggestionsBox.code=getText(0,length)
                 suggestionsBox.modeIndicator=t.substr(j,1)
@@ -197,6 +204,31 @@ Item{
 
             onLinkHovered: {
                 console.log(link)
+            }
+
+            Keys.onPressed: {
+                if (event.key === Qt.Key_Tab) {
+                    // Remplace la tabulation par des espaces
+                    event.accepted = true;
+                    // var spaces = " ".repeat(editor.tabWidth);
+                    // editor.insert(spaces);
+
+                    if(getText(0,cursorPosition).substr(cursorPosition-1,1)=='\u2029'){
+                        var str=''
+                        //console.log(getText(0,cursorPosition));
+                        var tt=EditorManager.get_prev_indent_lvl(getText(0,cursorPosition))
+                        var lvl=parseInt(tt)
+                        console.log(lvl)
+                        for(var i=0;i<lvl;i++){
+                            str+='\u21E5'//'&#9;'
+                        }
+                        //tx.replace(tx.substr(0,cursorPosition),tt.split('[:--:]')[1])
+                        insert(cursorPosition,str)
+                        //cursorPosition+=lvl
+                    }else{
+                        insert(cursorPosition,'\u21E5')
+                    }
+                }
             }
             
             onTextChanged: {
@@ -223,30 +255,29 @@ Item{
                 }else{
                     suggestionsBox.visible=true
                 }
-                if(getText(0,length).substr(cursorPosition-1,1)=='\u2029'){
-                    var str=''
-                    //console.log(getText(0,cursorPosition));
-                    var tt=backend.get_prev_indent_lvl(getText(0,cursorPosition))
-                    var lvl=parseInt(tt)
-                    console.log(lvl)
-                    for(var i=0;i<lvl;i++){
-                        str+='\u21E5'//'&#9;'
-                    }
-                    //tx.replace(tx.substr(0,cursorPosition),tt.split('[:--:]')[1])
-                    insert(cursorPosition,str)
-                    //cursorPosition+=lvl
-                }
-                // console.log(backend.check_code(link))
+                // if(getText(0,length).substr(cursorPosition-1,1)=='\u2029'){
+                //     var str=''
+                //     //console.log(getText(0,cursorPosition));
+                //     var tt=EditorManager.get_prev_indent_lvl(getText(0,cursorPosition))
+                //     var lvl=parseInt(tt)
+                //     console.log(lvl)
+                //     for(var i=0;i<lvl;i++){
+                //         str+='\u21E5'//'&#9;'
+                //     }
+                //     //tx.replace(tx.substr(0,cursorPosition),tt.split('[:--:]')[1])
+                //     insert(cursorPosition,str)
+                //     //cursorPosition+=lvl
+                // }
+                // console.log(EditorManager.check_code(link))
                 
                 if (!processing) {
                     processing = true;
                     let p = cursorPosition;
-                    let l=text.length
                     var tx=getText(0, length)//.toString()
-                    //var t=
-                    backend.highlight(tx)
-                    //text=t;
+                    var text=EditorManager.highlight(tx)
+                    // text=t;
                     
+                    // console.log(t)
                     
                     cursorPosition = p;
                     processing = false;
@@ -254,6 +285,7 @@ Item{
                 }
             }
         }
+
         Rectangle{
             x:58
             y:editor.cursorRectangle.y
@@ -270,6 +302,8 @@ Item{
                 visible:false
             }
         }
+
+        // FILEURL VIEW
         Rectangle{
             y:0
             color: "#1E1E1F"//'transparent'//'#609EAD96'
@@ -283,6 +317,8 @@ Item{
                 color:'white'
             }
         }
+
+        // LINE NUMBERS
         Rectangle{
             height: childrenRect.height
             width: childrenRect.width
@@ -323,67 +359,49 @@ Item{
         
         ScrollBar.vertical: ScrollBar {
             id:sv
-            width:110
+            width:15
             size:root.height/flickb.contentHeight
             active: flickb.moving || !flickb.moving
             hoverEnabled: true
             // onPositionChanged: {
             //     inner.position=position
             // }
-            contentItem: Rectangle{
-                height: root.height/flickb.contentHeight
-                width: 110
-                color:'#609EAD98'
-            }
-            background: Rectangle{
-                id:map
-                color: appcolor
-                height: sv.height
-                width: 110
-                border.color:'#2E2F30'
-                border.width:1
-                anchors.right:parent.right
+            // contentItem: Rectangle{
+            //     height: root.height/flickb.contentHeight
+            //     width: 110
+            //     color:'#609EAD98'
+            // }
+            // background: Rectangle{
+            //     id:map
+            //     color: appcolor
+            //     height: sv.height
+            //     width: 110
+            //     border.color:'#2E2F30'
+            //     border.width:1
+            //     anchors.right:parent.right
                 
-                    
-                TextEdit{
-                    id:minimap
-                    y:(-inner.position)*(height/3)
-                    focus:false
-                    clip:true
-                    //text:editor.text
-                    width: parent.width//flickb.width
-                    height: editor.height/5//(lineCount*25)+flickb.height//flickb.height
-                    color:'white'
-                    mouseSelectionMode:TextEdit.SelectCharacters
-                    font.pixelSize:2
-                    font.family:'arial'//'monospace'
-                    selectByMouse: false
-                    selectionColor: '#254655C5'//'#1C98E0'
-                    tabStopDistance: 5
-                    textFormat: TextEdit.RichText
-                    property bool processing:false
-                    leftPadding :col.width/10//35
-                    //topPadding:2
-                    wrapMode: Text.WordWrap
-                    enabled:false
-                    layer.mipmap:true
-                    readOnly: true
-                }
-                ScrollBar{
-                    id:inner
-                    active:sv.active
-                    orientation: Qt.Vertical
-                    //policy:ScrollBar.AlwaysOff
-                    position: sv.position
-                    // size:parent.height/minimap.height
-                }
-            }
+            //     MiniMap{
+            //         width:parent.width
+            //         height:parent.height
+            //         textEditor:editor
+            //     }    
+                
+            //     ScrollBar{
+            //         id:inner
+            //         active:sv.active
+            //         orientation: Qt.Vertical
+            //         //policy:ScrollBar.AlwaysOff
+            //         position: sv.position
+            //         // size:parent.height/minimap.height
+            //     }
+            // }
         }
         ScrollBar.horizontal: ScrollBar {
             height:15
             active: flickb.moving || !flickb.moving
         }
     }
+
     MouseArea {
         height: 40
         width: height
@@ -403,6 +421,7 @@ Item{
             opts.visible=false
         }
     }
+
     Rectangle{
         id:opts
         width: 100

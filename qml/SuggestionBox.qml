@@ -53,14 +53,14 @@ Rectangle {
         // onSourceModelChanged: invalidateFilter()
         function onIfilterChanged(){
             lmod.clear()
-            lmod.append(JSON.parse(backend.filter(ifilter,modeIndicator,code,line,pos)))
+            lmod.append(JSON.parse(EditorManager.filter(ifilter,modeIndicator,code,line,pos)))
             if (lmod.length==0){
                 var d={'name':'No Suggestions','text':'','doc':''}
                 lmod.append(d)
             }
         }
     }
-    Component.onCompleted: lmod.append(JSON.parse(backend.filter(' ',' ',' ',0,0)))
+    Component.onCompleted: lmod.append(JSON.parse(EditorManager.filter(' ',' ',' ',0,0)))
 
 
     // --- defaults
@@ -163,7 +163,5 @@ Rectangle {
                     }
                 }
             }
-    //     }
-    // }
 }
 

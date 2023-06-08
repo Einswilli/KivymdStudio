@@ -20,7 +20,7 @@ Item{
         enabled: true
         ignoreUnknownSignals: false
         function onCommandOutput(output) {
-            terminal.append("<ul><li><span style='color:teal'><b>"+backend.terminal()+' '+root.cmd+"</b><span/></li></ul>")
+            terminal.append("<ul><li><span style='color:teal'><b>"+backend.terminal()+' '+"</b><span/>"+root.cmd+"</li></ul>")
             terminal.append(output);
         }
     }
@@ -59,6 +59,8 @@ Item{
                 font.pointSize: 11
                 text: "<span style='color:grey'>Thanks for using KivyMDStudio...<span/><br>"
                 color:'white'
+                selectByMouse: true
+                selectionColor: 'teal'
             }
         }
 
@@ -101,6 +103,10 @@ Item{
                     focus:true
                     color:'white'
                     font.pointSize:12
+                    cursorDelegate: Rectangle{
+                        height: cursorRectangle.height
+                        width:7
+                    }
                     onAccepted: {
                         var command = inputField.text.trim();
                         root.cmd=inputField.text;

@@ -69,12 +69,12 @@ Rectangle {
         ignoreUnknownSignals: false
         target: backend
 
-        function onColorhighlight(value){
-            return value
-        }
-        function onFolderOpen(value){
-            return JSON.stringify(value)
-        }
+        // function onColorhighlight(value){
+        //     return value
+        // }
+        // function onFolderOpen(value){
+        //     return JSON.stringify(value)
+        // }
 
     }
     function verify(word,lst){

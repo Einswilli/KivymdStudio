@@ -1634,7 +1634,7 @@ ApplicationWindow {
                 tab: Rectangle {
                     color: styleData.selected ? barfonce :barclaire
                     border.color:  barclaire
-                    implicitWidth: Math.max(text.width + 50, 140)
+                    implicitWidth: Math.max(childrenRect.width + 20, 140)
                     implicitHeight: 20
                     width:120
                     height:40
@@ -2252,72 +2252,6 @@ ApplicationWindow {
                 width:parent.width
                 // anchors.fill: parent
             }
-            // Flickable{
-            //     id:fkb
-            //     anchors.fill: parent
-
-
-                
-                
-            //     TextEdit{
-            //         id:txdt
-            //         font.pixelSize:14
-            //         font.family:'monospace'
-            //         width:parent.width
-            //         height:(lineCount*25)+100
-            //         //anchors.fill: parent
-            //         anchors.margins: 15
-            //         color:'#D6D4D3'
-            //         wrapMode:TextEdit.WordWrap
-            //         readOnly:true
-            //         visible: false
-            //         Component.onCompleted:{//Keys.onReturnPressed:{
-            //             insert(cursorPosition,Terminal.spawn(['/bin/bash']))
-            //         }
-            //         Rectangle{
-            //             width:parent.width
-            //             height:35
-            //             anchors.bottom:parent.bottom
-            //             color:'transparent'
-            //             Text{
-            //                 id:mintex
-            //                 text:''
-            //                 font.bold:true
-            //                 font.pixelSize:14
-            //                 font.family:'monospace'
-            //                 color:'#044B85'
-            //                 anchors.verticalCenter: parent.verticalCenter
-            //                 Component.onCompleted:{
-            //                     text=backend.terminal()
-            //                 }
-            //             }
-            //             TextField{
-            //                 y:2
-            //                 x:mintex.width+5
-            //                 width:parent.width-mintex.width
-            //                 height:parent.height-10
-            //                 //anchors.verticalCenter: parent.verticalCenter
-            //                 background:Rectangle{
-            //                     anchors.fill: parent
-            //                     color:barclaire
-            //                 }
-            //                 color:'white'
-            //                 font.pixelSize:15
-            //                 font.family:'monospace'
-            //                 topPadding:2
-            //                 bottomPadding:4
-            //                 Keys.onReturnPressed:{
-            //                     txdt.insert(txdt.cursorPosition,backend.run_command(text))
-            //                     text=''
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     ScrollBar.vertical: ScrollBar {
-            //         width:15
-            //         active: fkb.moving || !fkb.moving
-            //     }
-            // }
         }
 
         //RESIZER
