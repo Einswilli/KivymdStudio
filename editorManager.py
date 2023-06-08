@@ -152,9 +152,10 @@ class EditorManager(QObject):
         #return self.colorify()#self.richcolor(text)#
 
         try:
-            print(self.clean(str(text)))
-            worker=Worker(self.colorify,self.clean(str(text)))
-            QThreadPool.globalInstance().start(worker)
+            #print(self.clean(str(text)))
+            # worker=Worker(self.colorify,self.clean(str(text)))
+            # QThreadPool.globalInstance().start(worker)
+            return self.colorify(self.clean(str(text)))
         except Exception as e:
             print(e)
 

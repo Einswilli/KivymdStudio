@@ -241,8 +241,14 @@ But the emulator does not work very well under windows for the moment.I will fix
     - Auto Indentation in OdeEditor(done)
     - Syntax Highlight in CodeEditor(done)
     - General Project Search 
-    - Custom Terminal
+    - Custom Terminal (done)
     - Emmulator (done)
+
+
+## Next
+    
+    - Chat with GPT 4
+    - Imqge generation with DALL-E
 
 ## Bugs
 

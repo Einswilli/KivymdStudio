@@ -209,7 +209,7 @@ ApplicationWindow {
         height:parent.height-30
         color:barclaire
         anchors.left: parent.left
-        property var pluglist:[xte,git,tree,searchbox]
+        property var pluglist:[xte,git,tree,searchbox,chatgpt]
         function leftNavigation(s){
             for (let a in pluglist){
                 pluglist[a].visible=false;
@@ -227,6 +227,7 @@ ApplicationWindow {
             anchors.left:parent.left
             visible:false
         }
+
         Component{
             id:lbarcomp
             Rectangle{
@@ -283,6 +284,7 @@ ApplicationWindow {
             lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
             lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/menu(1).png',ui:xte})
             lbarmod.append({name:'GITHUB',icon:'../assets/icons/github(1).png',ui:git})
+            lbarmod.append({name:'OPENIA CHAT',icon:'../assets/icons/gpt.png',ui:chatgpt})
             var l = obj.reparse(backend.loadPlugins())
             for(let i of JSON.parse(l)){
                 var cc=Qt.createComponent('../'+i.template)
@@ -310,7 +312,8 @@ ApplicationWindow {
                 model:lbarmod
             }
         }
-
+        
+        //COFFEE
         Rectangle{
             width:50
             height:50
@@ -341,6 +344,7 @@ ApplicationWindow {
             }
         }
 
+        //SETTINGS
         Rectangle{
             width:50
             height:50
@@ -463,12 +467,13 @@ ApplicationWindow {
             border.color:bordercolor
             border.width:1
             
-            UIText{
+            Text{
                 id:exptxt
                 y:10
                 text:qsTr('Explorer')
-                font.pixelSize:12
+                font.pointSize:12
                 color:'white'
+                font.bold:true
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Rectangle{
@@ -541,6 +546,7 @@ ApplicationWindow {
             }
         }
 
+        //TREE TAB
         Rectangle{
             id:tree
             y:expbox.height
@@ -609,6 +615,7 @@ ApplicationWindow {
             }
         }
 
+        //EXTENTIONS TAB
         Rectangle{
             id:xte
             y:expbox.height+1
@@ -623,6 +630,7 @@ ApplicationWindow {
             }
         }
 
+        //GIT TAB
         Rectangle{
             id:git
             y:expbox.height+1
@@ -639,6 +647,28 @@ ApplicationWindow {
             }
             Text{
                 text:'Github'
+                anchors.centerIn: parent
+                color:'white'
+            }
+        }
+
+        //CHAT
+        Rectangle{
+            id:chatgpt
+            y:expbox.height+1
+            width:parent.width
+            height:parent.height-expbox.height-2
+            color:parent.color
+            visible:false
+            Image{
+                y:150
+                width:150
+                height:width
+                source:'../assets/icons/chatgpt.png'
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text{
+                text:'OpenIA  chat'
                 anchors.centerIn: parent
                 color:'white'
             }

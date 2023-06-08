@@ -5,7 +5,7 @@ import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
 //import '../Js/highlightcolor.js' as Logic
-import '../Js/prism.js' as Logic
+// import '../Js/prism.js' as PrismJS
 
 Item{
 
@@ -53,11 +53,15 @@ Item{
     property variant mip
 
     //SIGNALS
-    signal highlight(string value)
+    // signal highlight(string value)
 
     // onHighlight:{
     //     editor.highlightText(value);
     // }
+
+    function applySyntaxHighlighting(text) {
+        return PrismJS.highlight(text, PrismJS.languages.javascript);
+    }
     
     Component.onCompleted: {
         // EditorManager.highlighting.connect(root.highlight);
@@ -274,10 +278,9 @@ Item{
                     processing = true;
                     let p = cursorPosition;
                     var tx=getText(0, length)//.toString()
-                    var text=EditorManager.highlight(tx)
-                    // text=t;
                     
-                    // console.log(t)
+                    text=EditorManager.highlight(tx)
+                    // text=t;
                     
                     cursorPosition = p;
                     processing = false;
