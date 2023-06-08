@@ -32,7 +32,8 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
 ## Screenshots
 
-| | |
+![Image 1](Screenshots/36.png)
+|.|.|
 |---|---|
 |![Image 1](Screenshots/33.png)|![Image 1](Screenshots/32.png)|
 |![Image 1](Screenshots/26.png)|![Image 1](Screenshots/27.png)|
