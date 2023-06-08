@@ -94,6 +94,10 @@ Rectangle {
     //         // height: parent.visible?300:0
     //         anchors.fill:parent
     //         visible: false//parent.visible
+        ScrollView{
+            height: Math.min(250,popup.childrenRect.height)
+            width: parent.width
+            clip:true
             Column {
                 id: popup
                 clip: true
@@ -119,8 +123,8 @@ Rectangle {
                         id: delegateItem
                         property variant suggestion: model
 
-                        height: textComponent.height
-                        width: container.width-10
+                        height: textComponent.height+10
+                        width: container.width-5
                         anchors.horizontalCenter: parent.horizontalCenter
                         color: '#292828'
                         border {
@@ -134,6 +138,8 @@ Rectangle {
                             text: suggestion.name
                             textFormat: TextEdit.RichText
                             width: parent.width - 6
+                            font.pointSize:11
+                            anchors.verticalCenter: parent.verticalCenter
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                         Image{
@@ -163,5 +169,6 @@ Rectangle {
                     }
                 }
             }
+        }
 }
 
