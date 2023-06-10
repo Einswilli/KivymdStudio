@@ -143,7 +143,7 @@ Item{
             height: (lineCount*25)+flickb.height//flickb.height
             color:'white'
             mouseSelectionMode:TextEdit.SelectCharacters
-            font.pixelSize:14
+            font.pointSize:12
             font.family:'monospace'
             selectByMouse: true
             selectionColor: '#254655C5'//'#1C98E0'

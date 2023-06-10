@@ -209,7 +209,7 @@ ApplicationWindow {
         height:parent.height-30
         color:barclaire
         anchors.left: parent.left
-        property var pluglist:[xte,git,tree,searchbox,chatgpt]
+        property var pluglist:[xte,git,tree,searchbox,chatgpt,stackoverflow]
         function leftNavigation(s){
             for (let a in pluglist){
                 pluglist[a].visible=false;
@@ -282,9 +282,10 @@ ApplicationWindow {
         Component.onCompleted:{
             lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
             lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
-            lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/menu(1).png',ui:xte})
-            lbarmod.append({name:'GITHUB',icon:'../assets/icons/github(1).png',ui:git})
+            lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/plugins.png',ui:xte})
+            lbarmod.append({name:'GITHUB',icon:'../assets/icons/github.png',ui:git})
             lbarmod.append({name:'OPENIA CHAT',icon:'../assets/icons/gpt.png',ui:chatgpt})
+            lbarmod.append({name:'STACK OVERFLOW',icon:'../assets/icons/stack2.png',ui:stackoverflow})
             var l = obj.reparse(backend.loadPlugins())
             for(let i of JSON.parse(l)){
                 var cc=Qt.createComponent('../'+i.template)
@@ -660,17 +661,36 @@ ApplicationWindow {
             height:parent.height-expbox.height-2
             color:parent.color
             visible:false
-            Image{
-                y:150
-                width:150
-                height:width
-                source:'../assets/icons/chatgpt.png'
-                anchors.horizontalCenter: parent.horizontalCenter
+
+            ChatView{
+                anchors.fill:parent
             }
-            Text{
-                text:'OpenIA  chat'
-                anchors.centerIn: parent
-                color:'white'
+
+            // Image{
+            //     y:150
+            //     width:150
+            //     height:width
+            //     source:'../assets/icons/chatgpt.png'
+            //     anchors.horizontalCenter: parent.horizontalCenter
+            // }
+            // Text{
+            //     text:'OpenIA  chat'
+            //     anchors.centerIn: parent
+            //     color:'white'
+            // }
+        }
+
+        //STACKOVERFLOW
+        Rectangle{
+            id:stackoverflow
+            y:expbox.height+1
+            width:parent.width
+            height:parent.height-expbox.height-2
+            color:parent.color
+            visible:false
+
+            StackOverflow{
+                anchors.fill:parent
             }
         }
 

@@ -17,6 +17,7 @@ import platform
 #import tree
 #from Emulator.emulator import Emulator
 from editorManager import EditorManager
+from stackOverflow import StackManager
 import locale, sys,utils
 
 
@@ -480,9 +481,11 @@ class Studio(QObject):
         studio=Studio()
         cmder=CommandManager()
         editor=EditorManager()
+        stack=StackManager()
         engine.rootContext().setContextProperty('backend',studio)
         engine.rootContext().setContextProperty('CommandManager',cmder)
         engine.rootContext().setContextProperty('EditorManager',editor)
+        engine.rootContext().setContextProperty('StackManager',stack)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
         if not engine.rootObjects():
