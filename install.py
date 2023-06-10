@@ -3,7 +3,7 @@ from pathlib import Path
 import utils
 import simplejson as Json
 #os.system("pip install -r requirements.txt")
-folder_naames=['plugins/python','config','logs','logs/studio','logs/emulator']
+folder_names=['plugins/python','config','logs','logs/studio','logs/emulator']
 
 if not os.path.exists(f'{Path.home}/.kvStudio/'):
     for i in utils.PATHS:

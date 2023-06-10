@@ -114,7 +114,7 @@ Screen:
                                 halign:'center'
                                 pos_hint:{'center_x':.5,'center_y':.5}
                             Widget:
-                        
+
 
         Carousel:
             id:car
@@ -145,7 +145,7 @@ Screen:
                             allow_strech:True
                             anim_delay:1
                             anim_reset:1
-                        
+
                         Lab:
                             id:lab
                             halign:'center'
@@ -170,7 +170,7 @@ Screen:
                     #size_hint_y:None
                     pos_hint:{'center_x':0.5,'center_y':.5}
                     canvas:
-                        Color: 
+                        Color:
                             rgba:hex('#373F3F49')
                         RoundedRectangle:
                             size:self.size
@@ -298,7 +298,7 @@ class Emulator(MDApp):
             self.root.ids.batimg.source='icons/battery-mid.png'
         elif int(bat)>95:
             self.root.ids.batimg.source='icons/battery.png'
-        
+
 
     def mytime(self,*args):
         heure=strftime("%H : %M : %S")
@@ -328,9 +328,9 @@ class Emulator(MDApp):
         #i2.on_press=self.plg
         c.add_widget(i1)
         c.add_widget(i2)
-        c.add_widget(i3)
+        c.add_wigitdget(i3)
         set_box.add_widget(c)
-        
+
         self.setting=MDDialog(
             title="Settings",
             type="custom",
@@ -344,16 +344,16 @@ class Emulator(MDApp):
             #         ],
         )
         self.setting.open()
-        
+
     def set_asset(self):
         filechooser.choose_dir(on_selection=self.handle_folder_selection)
-        
+
     def handle_folder_selection(self,folder):
         print(folder)
         if os.path.exists(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}")):
             shutil.rmtree(os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}"))
         shutil.copytree(folder[0],os.fspath(Path(__file__).resolve().parent / f"assets/{folder[0].split('/')[-1]}"))
-        
+
     def choose_file(self):
         filechooser.open_file(on_selection=self.handle_selection)
 
@@ -384,7 +384,7 @@ class Emulator(MDApp):
         sys.path.append(dirname)
         os.chdir(dirname)
         resource_add_path(dirname)
-        
+
         ############## il supprime les widgets ##################--------00
         self.root.ids.emusc.clear_widgets()
 
@@ -464,19 +464,19 @@ class Emulator(MDApp):
                 try:  # cahching error with kivy files
                     Builder.unload_file(kv_filename)
                     root = Builder.load_file(kv_filename)
-                    
+
                     kv_filename=str(filename).replace('.py','.kv')
                     root = Builder.load_file(kv_filename)
                     return root
                 except:
-                    
+
                     traceback.print_exc()
                     msg=MDLabel(text="Your kivy file has a problem",halign='center')
                     self.root.ids.emusc.add_widget(msg)
                     print("Your kivy file has a problem")
 
                     return None
-                
+
 
     def get_app_cls_name(self,filename):
         with open(filename) as fn:
@@ -522,7 +522,7 @@ class Emulator(MDApp):
             return root
 
     def load_py_file(self,filename):
-        
+
         app_cls_name = self.get_app_cls_name(filename)
         if app_cls_name:
             print('in')
