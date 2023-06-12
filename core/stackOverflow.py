@@ -98,4 +98,5 @@ class StackManager(QObject):
             f'questions/{post_id}/answers'
         )
 
+# /questions/{ids}/answers
 # StackManager().process_search('How to declare variables in python')

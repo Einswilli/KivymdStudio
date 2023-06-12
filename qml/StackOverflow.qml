@@ -115,6 +115,14 @@ Item{
             width: parent.width
             color:'transparent'
 
+            Component{
+                id:answerdelegate
+                Rectangle{
+                    height:childrenRect.height
+                    width:parent.width
+                }
+            }
+
             ListModel{
                 id:questionmodel
             }

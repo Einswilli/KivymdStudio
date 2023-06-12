@@ -16,7 +16,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
  
 
 ## Installation 
-1. Install Python3.x
+1. Install Python3.9
     - Debian, Ubuntu, Etc
         - `sudo apt-get install python3.9 python3-pip`
     - Fedora, Oracle, Red Hat, etc
@@ -24,7 +24,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
     - Windows 
         - click [HERE](https://www.python.org/downloads/windows/) for downloads
 
-2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/KivymdStudio/master)
+2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/KivymdStudio.git)
 
 3. In the extracted folder, run these commands
     - `python install.py` <- install dependencies

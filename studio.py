@@ -7,7 +7,7 @@ import shutil
 import sys
 import subprocess
 # from Terminal import*
-from shell import *
+from core.shell import *
 import getpass
 import socket
 import glob,schedule
@@ -16,8 +16,8 @@ import platform
 #import execjs
 #import tree
 #from Emulator.emulator import Emulator
-from editorManager import EditorManager
-from stackOverflow import StackManager
+from core.editorManager import EditorManager
+from core.stackOverflow import StackManager
 import locale, sys,utils
 
 
@@ -171,6 +171,9 @@ class Worker(QRunnable):
         self.fn(*self.args, **self.kwargs)
 
 
+####
+##  STUDIO
+#####
 class Studio(QObject):
 
     def __init__(self):
@@ -469,7 +472,7 @@ class Studio(QObject):
 
     @Slot(str,str,str,bool,bool,bool,bool,str,result='QString')
     def newProject(self,n,p,t,a,l,e,g,pt):
-        import projectCreator
+        from core import projectCreator
         return projectCreator.newProject(n,p,t,a,l,e,g,pt)
 
     def run(self):
