@@ -42,29 +42,33 @@ class Worker(QRunnable):
 class StackManager(QObject):
 
     result=Signal(str,name='result')
+    busy=Signal(bool,name='busy')
+    exception=Signal(str,name='excepton')
 
     try:
         stackOverflow=StackAPI('stackoverflow')
     except Exception as e:
         print(e)
+        exception.emit(str(e))
         stackOverflow=None
 
     @Slot(str,result='QVariant')
     def search(self,text):
 
+        self.busy.emit(True)
         worker=Worker(self.process_search,text)
         QThreadPool.globalInstance().start(worker)
 
-    def format_question(self,question):
+    def format_question(self,question:dict):
         # print(question['question_id'])
         return{
             'id':question['question_id'],
             'title':question['title'],
             'link':question['link'],
             'user_id':question['owner']['user_id'] if question['owner']['user_type']!='does_not_exist' else 0,
-            'user_name':question['owner']['display_name'],
-            'user_image':question['owner']['profile_image'] if question['owner']['user_type']!='does_not_exist' else '--',
-            'user_link':question['owner']['link'] if question['owner']['user_type']!='does_not_exist' else '-',
+            'user_name':question['owner']['display_name'] if 'display_name' in question['owner'].keys() else '--',
+            'user_image':question['owner']['profile_image'] if 'profile_image' in question['owner'].keys() else '--',
+            'user_link':question['owner']['link'] if 'link' in question['owner'].keys() else '--',
             'tags':' ,'.join(question['tags']),
             'view_count':question['view_count'],
             'answer_count':question['answer_count'],
@@ -82,10 +86,12 @@ class StackManager(QObject):
             with open('st.json','w')as f:
                 f.write(Json.dumps(questions,indent=4))
             qs=[self.format_question(q) for q in questions['items']]
+            self.busy.emit(False)
             self.result.emit(Json.dumps(qs,indent=4))
         except Exception as e:
             print(e)
-            pass
+            self.busy.emit(False)
+            self.exception.emit(str(e))
 
     def process_post(self,post_id):
         comments=self.stackOverflow.fetch(

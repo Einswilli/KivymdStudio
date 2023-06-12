@@ -13,8 +13,21 @@ Item{
         target: StackManager
         enabled: true
         ignoreUnknownSignals: false
+
+        //RESULT IS EMITTED FROM BACKEND
         function onResult(value){
+            // progressBar.visible=false
             questionmodel.append(JSON.parse(value))
+        }
+
+        //PROCESSING IS EMITTED FROM BACKEND
+        function onBusy(value) {
+            progressBar.visible=value
+        }
+
+        //EXCEPTION IS EMITTED FROM BACKEND
+        function onException(argument) {
+            // body...
         }
     }
 
@@ -28,7 +41,7 @@ Item{
             width: parent.width
             color:'transparent'
 
-            Row{
+            Column{
                 anchors.fill:parent
                 anchors.margins: 0
                 spacing:5
@@ -37,7 +50,7 @@ Item{
                     radius:8
                     color:'transparent'
                     height:parent.height
-                    width:parent.width-height-5
+                    width:parent.width//-height-5
 
                     TextField{
                         id:question
@@ -71,17 +84,29 @@ Item{
                     }
                 }
 
-                Rectangle{
-                    height:parent.height
-                    width:height
-                    color:'transparent'
+                ProgressBar {
+                    id: progressBar
+                    width: parent.width
+                    height: 5
+                    visible:false
+                    indeterminate: true
 
-                    Image{
-                        anchors.fill:parent
-                        anchors.margins: 10
-                        source:'../assets/icons/loupe.png'
+                    background: Rectangle {
+                        color: "teal"
                     }
                 }
+
+                // Rectangle{
+                //     height:parent.height
+                //     width:height
+                //     color:'transparent'
+
+                //     Image{
+                //         anchors.fill:parent
+                //         anchors.margins: 10
+                //         source:'../assets/icons/loupe.png'
+                //     }
+                // }
             }
         }
 
@@ -106,21 +131,22 @@ Item{
                     }
 
                     Column{
-                        spacing:5
+                        spacing:8
                         anchors{
                             fill:parent
                             margins:10
                         }
 
                         Rectangle{
-                            height:parent.height*.35
+                            height:parent.height*.42
                             width:parent.width
                             color:'transparent'
+                            clip:true
 
                             Text{
                                 id:qs
-                                text:title.length>80?title.substr(0,80)+'...':title
-                                font.pointSize:12
+                                text:title.length>70?title.substr(0,80)+'...':title
+                                font.pointSize:11
                                 font.bold:true
                                 color:'#CCCCCC'
                                 wrapMode:Text.WordWrap
@@ -133,7 +159,7 @@ Item{
                         Row{
                             height:25
                             width:parent.width
-                            spacing:10
+                            spacing:5
 
                             //how to declare variables in python
                             //VIEW COUNT
@@ -144,7 +170,7 @@ Item{
                                 radius:4
                                 Row{
                                     anchors.fill:parent
-                                    anchors.margins: 0
+                                    anchors.margins: 5
                                     spacing:2
 
                                     Rectangle{
@@ -193,12 +219,12 @@ Item{
                             //ANSWER COUNT
                             Rectangle{
                                 height:parent.height
-                                width:parent.width*.33
+                                width:parent.width*.30
                                 color:'#2E2F30'
                                 radius:4
                                 Row{
                                     anchors.fill:parent
-                                    anchors.margins: 0
+                                    anchors.margins: 5
                                     spacing:2
 
                                     Rectangle{
@@ -212,7 +238,7 @@ Item{
                                         Text{
                                             text:answer_count
                                             font.pointSize:9
-                                            color:'white'
+                                            color:'teal'
                                         }
                                     }
 
@@ -229,6 +255,94 @@ Item{
                                             color:'white'
                                         }
                                     }
+                                }
+                            }
+
+                            //SCORE COUNT
+                            Rectangle{
+                                height:parent.height
+                                width:parent.width*.29
+                                color:'#2E2F30'
+                                radius:4
+                                Row{
+                                    anchors.fill:parent
+                                    anchors.margins: 5
+                                    spacing:2
+
+                                    Rectangle{
+                                        height:childrenRect.height+5
+                                        width:childrenRect.width+5
+                                        color:'transparent'
+                                        anchors{
+                                            verticalCenter:parent.verticalCenter
+                                        }
+
+                                        Text{
+                                            text:score
+                                            font.pointSize:9
+                                            color:'orange'
+                                        }
+                                    }
+
+                                    Rectangle{
+                                        height:childrenRect.height+5
+                                        width:childrenRect.width+5
+                                        color:'transparent'
+                                        anchors{
+                                            verticalCenter:parent.verticalCenter
+                                        }
+                                        Text{
+                                            text:'score'
+                                            font.pointSize:9
+                                            color:'white'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Text{
+                            text:'#: '+tags
+                            font.pointSize:9
+                            color:'white'
+                            font.bold:true
+                            width:parent.width
+                            wrapMode:Text.WordWrap
+                        }
+
+                        //BUTTONS
+                        Row{
+                            height:25
+                            width:parent.width
+                            spacing:20
+
+                            Rectangle{
+                                height:parent.height
+                                width:parent.width*.45
+                                color:'teal'
+                                radius:8
+
+                                Text{
+                                    text:'View answers'
+                                    font.pointSize:9
+                                    color:'white'
+                                    font.bold:true
+                                    anchors.centerIn: parent
+                                }
+                            }
+
+                            Rectangle{
+                                height:parent.height
+                                width:parent.width*.45
+                                color:'#414141'
+                                radius:8
+
+                                Text{
+                                    text:'Open link'
+                                    font.pointSize:9
+                                    color:'white'
+                                    font.bold:true
+                                    anchors.centerIn: parent
                                 }
                             }
                         }
