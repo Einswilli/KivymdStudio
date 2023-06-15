@@ -7,6 +7,7 @@ import QtQuick.Layouts 1.0
 import QtQuick.Dialogs 1.2
 import Qt.labs.folderlistmodel 2.15
 import QtQml.Models 2.2
+// import QtApplicationManager 2.0
 //import QtQuick.Controls 1.4 as OV
 //import DotPy.Core 1.0
 //import '../highlightcolor.js' as Logic
@@ -20,7 +21,7 @@ ApplicationWindow {
     height: 700
     visible: true
     color: "#1F1F20"
-    title: qsTr("Kivymd-Studio")
+    title: qsTr("Kivymd Studio Code")
 
     QtObject{
         id:obj
@@ -242,6 +243,7 @@ ApplicationWindow {
                     height:25
                     source:icon
                     anchors.centerIn: parent
+                    fillMode:Image.PreserveAspectFit
                 }
                 MouseArea{
                     anchors.fill: parent
@@ -2369,6 +2371,7 @@ ApplicationWindow {
        
     }
 
+    // EMULATOR BOX
     Rectangle{
         id:emmubox
         width:350
@@ -2391,6 +2394,7 @@ ApplicationWindow {
             color:parent.color
             anchors.horizontalCenter: parent.horizontalCenter
 
+            // RUN BUTTON
             Rectangle{
                 height:parent.height-10
                 width:35
@@ -2409,10 +2413,12 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        // parent.color=hovercolor
+                        parent.scale=1.2
                     }
                     onExited:{
-                        parent.color=barclaire
+                        // parent.color=barclaire
+                        parent.scale=1.0
                     }
                     onClicked:{
                         backend.emulator()
@@ -2421,6 +2427,7 @@ ApplicationWindow {
                 }
             }
 
+            //REFRESH BUTTON
             Rectangle{
                 height:parent.height-10
                 width:35
@@ -2439,16 +2446,20 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        // parent.color=hovercolor
+                        parent.scale=1.2
                     }
                     onExited:{
-                        parent.color=barclaire
+                        // parent.color=barclaire
+                        parent.scale=1.0
                     }
                     onClicked:{
                         
                     }
                 }
             }
+
+            //HIDE BUTTON
             Rectangle{
                 height:parent.height-10
                 width:35
@@ -2467,10 +2478,12 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        // parent.color=hovercolor
+                        parent.scale=1.2
                     }
                     onExited:{
-                        parent.color=barclaire
+                        // parent.color=barclaire
+                        parent.scale=1.0
                     }
                     onClicked:{
                         emmubox.visible=false
@@ -2491,15 +2504,18 @@ ApplicationWindow {
                     width:20
                     anchors.centerIn: parent
                     source:'../assets/icons/deco.png'
+                    rotation:180
                 }
                 MouseArea{
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        // parent.color=hovercolor
+                        parent.scale=1.2
                     }
                     onExited:{
-                        parent.color=barclaire
+                        // parent.color=barclaire
+                        parent.scale=1.0
                     }
                     onClicked:{
                         
@@ -2822,10 +2838,31 @@ ApplicationWindow {
                     id:insmsg
                     text:loading.msgt
                     color:'white'
-                    font.pixelSize:11
+                    font.pointSize:10
                     anchors.centerIn:parent
                 }
             }
+        }
+    }
+
+    // NOTIFICATION WIDGET
+    Rectangle{
+        id:notification
+        width:350
+        height:childrenRect.height
+        anchors.right:parent.right
+        anchors.bottom:parent.bottom
+        anchors.margins: 35
+        color:appcolor
+        visible:false
+        border{
+            width:1
+            color:'#EEEEEE'
+        }
+
+        Rectangle{
+            height:10
+            width:10
         }
     }
 

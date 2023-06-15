@@ -21,8 +21,8 @@ from core.stackOverflow import StackManager
 import locale, sys,utils
 
 
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlApplicationEngine,QmlElement
+# from PySide6.QtGui import QGuiApplication
+# from PySide6.QtQml import QQmlApplicationEngine,QmlElement
 from PySide2.QtGui import QGuiApplication
 from PySide2.QtQml import QQmlApplicationEngine,QQmlContext
 from PySide2.QtCore import *
@@ -38,7 +38,7 @@ import sys,os,requests,tempfile
 import sqlite3
 
 from pathlib import Path
-from PySide6.QtQuickControls2 import QQuickStyle
+# from PySide6.QtQuickControls2 import QQuickStyle
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
@@ -242,6 +242,7 @@ class Studio(QObject):
         """
         code=''
         curs,conn=self.connect_To_Db()
+        print(path)
         
         try:
             if not path.startswith('file://'):
@@ -255,7 +256,7 @@ class Studio(QObject):
             return EditorManager().colorify(code)
             #.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))#self.richcolor(code)# cod
         except Exception as e:
-            print(e)
+            print('EXCEPTION OPENNING FILE: '+str(e))
             return f'Error when trying to open the file: {path}\n may be the file extention is not supported '
 
     @Slot(str,result='QString')
@@ -478,7 +479,7 @@ class Studio(QObject):
     def run(self):
 
         app = QGuiApplication(sys.argv)
-        QQuickStyle.setStyle("Material")
+        #QQuickStyle.setStyle("Material")
         engine = QQmlApplicationEngine()
         #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
         studio=Studio()

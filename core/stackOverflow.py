@@ -43,7 +43,8 @@ class StackManager(QObject):
 
     result=Signal(str,name='result')
     busy=Signal(bool,name='busy')
-    exception=Signal(str,name='excepton')
+    exception=Signal(str,name='exception')
+    answered=Signal(str,name='answered')
 
     try:
         stackOverflow=StackAPI('stackoverflow')
@@ -76,6 +77,15 @@ class StackManager(QObject):
             'is_answered':question['is_answered']
         }
 
+    def format_answer(self,ans:dict):
+        return {
+            'id':ans['answer_id'],
+            'question_id':ans['question_id'],
+            'content':ans['body'],
+            'is_accepted':ans['is_accepted'],
+            'score':ans['score']
+        }
+
     def process_search(self,text):
 
         try:
@@ -93,10 +103,28 @@ class StackManager(QObject):
             self.busy.emit(False)
             self.exception.emit(str(e))
 
-    def process_post(self,post_id):
-        comments=self.stackOverflow.fetch(
-            f'questions/{post_id}/answers'
-        )
+    @Slot(int)
+    def get_answers(self,question_id):
+        self.busy.emit(True)
+        worker=Worker(self.process_post_answers,question_id)
+        QThreadPool.globalInstance().start(worker)
+
+    def process_post_answers(self,post_id):
+
+        try:
+            answers=self.stackOverflow.fetch(
+                f'questions/{post_id}/answers',filter='withbody'
+            )
+
+            with open('st.json','w')as f:
+                f.write(Json.dumps(answers,indent=4))
+            qs=[self.format_answer(q) for q in answers['items']]
+            self.busy.emit(False)
+            self.answered.emit(Json.dumps(qs,indent=4))
+        except Exception as e:
+            print(e)
+            self.busy.emit(False)
+            self.exception.emit(str(e))
 
 # /questions/{ids}/answers
-# StackManager().process_search('How to declare variables in python')
+# StackManager().process_post_answers(74923685)#.process_search('How to declare variables in python')

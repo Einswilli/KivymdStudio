@@ -1326,7 +1326,7 @@ Rectangle {
                     anchors.margins: scaledMargin
                     visible:fldrs.text==fileBrowser.projectPath?false:true
 
-                    Image { anchors.fill: parent; anchors.margins: scaledMargin; source: "../assets/icons/deco.png" }
+                    Image { anchors.fill: parent; anchors.margins: scaledMargin; source: "../assets/icons/deco.png"; rotation:180 }
                     MouseArea { id: upRegion; anchors.fill: parent; onClicked: up() }
                     states: [
                         State {

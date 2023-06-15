@@ -1,0 +1,29 @@
+{
+    "backoff": 0,
+    "has_more": false,
+    "page": 1,
+    "quota_max": 300,
+    "quota_remaining": 299,
+    "total": 0,
+    "items": [
+        {
+            "owner": {
+                "reputation": 5712,
+                "user_id": 3399066,
+                "user_type": "registered",
+                "accept_rate": 84,
+                "profile_image": "https://www.gravatar.com/avatar/d172044b860e517fd6dba7df2d1841aa?s=256&d=identicon&r=PG&f=y&so-version=2",
+                "display_name": "NumesSanguis",
+                "link": "https://stackoverflow.com/users/3399066/numessanguis"
+            },
+            "is_accepted": true,
+            "score": 12,
+            "last_activity_date": 1450303999,
+            "creation_date": 1450303999,
+            "answer_id": 34323108,
+            "question_id": 33858127,
+            "content_license": "CC BY-SA 3.0",
+            "body": "<p>O wow... I was stuck on this so long because buildozer doesn't support in-line comments... I had it like this in my buildozer.spec:</p>\n\n<pre><code>icon.filename = %(source.dir)s/ko.png # %(source.dir)s/data/icon.png\n</code></pre>\n\n<p>This is what solved it:</p>\n\n<pre><code># %(source.dir)s/data/icon.png\nicon.filename = %(source.dir)s/ko.png\n</code></pre>\n"
+        }
+    ]
+}

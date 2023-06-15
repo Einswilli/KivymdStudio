@@ -9,6 +9,8 @@ Item{
     id:root
     anchors.fill: parent
 
+    property bool is_answer:false
+
     Connections {
         target: StackManager
         enabled: true
@@ -16,7 +18,7 @@ Item{
 
         //RESULT IS EMITTED FROM BACKEND
         function onResult(value){
-            // progressBar.visible=false
+            root.is_answer=false
             questionmodel.append(JSON.parse(value))
         }
 
@@ -28,6 +30,15 @@ Item{
         //EXCEPTION IS EMITTED FROM BACKEND
         function onException(argument) {
             // body...
+            console.log(argument)
+        }
+
+        //A QUESTION ANSWERS ARE EMITTED
+        function onAnswered(value){
+            answermodel.clear()
+            answermodel.append(JSON.parse(value))
+            // console.log(value)
+            root.is_answer=true
         }
     }
 
@@ -114,14 +125,8 @@ Item{
             height: root.height*.88
             width: parent.width
             color:'transparent'
-
-            Component{
-                id:answerdelegate
-                Rectangle{
-                    height:childrenRect.height
-                    width:parent.width
-                }
-            }
+            visible:!root.is_answer
+        
 
             ListModel{
                 id:questionmodel
@@ -157,6 +162,7 @@ Item{
                                 font.pointSize:11
                                 font.bold:true
                                 color:'#CCCCCC'
+                                textFormat:TextEdit.RichText
                                 wrapMode:Text.WordWrap
                                 width:parent.width
                                 height:parent.height
@@ -337,6 +343,15 @@ Item{
                                     font.bold:true
                                     anchors.centerIn: parent
                                 }
+
+                                MouseArea{
+                                    anchors.fill:parent
+                                    hoverEnabled:true
+
+                                    onClicked:{
+                                        StackManager.get_answers(id)
+                                    }
+                                }
                             }
 
                             Rectangle{
@@ -363,10 +378,12 @@ Item{
                 clip:true
 
                 ListView{
+                    id:list
                     spacing:5
                     anchors.fill:parent
                     model:questionmodel
                     delegate:questiondelegate
+                    // visible:root.is_answer?false:true
                 }
 
                 // Image{
@@ -381,6 +398,195 @@ Item{
                 //     anchors.centerIn: parent
                 //     color:'white'
                 // }
+            }
+        }
+
+        Rectangle{
+            height: root.height*.88
+            width: parent.width
+            color:'transparent'
+            visible:root.is_answer
+
+            ListModel{
+                id:answermodel
+            }
+
+            Component{
+                id:answerdelegate
+                Rectangle{
+                    height:Math.min(resview.c_heigt+60,300)
+                    width:parent.width
+                    color:'#292828'
+                    radius:8
+
+                    Column{
+                        anchors.fill:parent
+                        spacing:5
+                        anchors.margins: 3
+
+                        Rectangle{
+                            height:25
+                            width:parent.width
+                            color:'transparent'
+
+                            Row{
+                                height:parent.height
+                                width:parent.width*.74
+                                spacing:10
+
+                                // RETURN BUTTON
+                                Rectangle{
+                                    height:parent.height
+                                    width:height
+                                    color:'transparent'
+
+                                    Image{
+                                        anchors.fill:parent
+                                        anchors.margins: 5
+                                        source:'../assets/icons/deco.png'
+                                        fillMode:Image.PreserveAspectFit
+                                        rotation:180
+                                    }
+
+                                    MouseArea{
+                                        anchors.fill:parent
+                                        hoverEnabled:true
+
+                                        onEntered:{
+                                            parent.scale=1.2
+                                        }
+
+                                        onExited:{
+                                            parent.scale=1
+                                        }
+
+                                        onClicked:{
+                                            root.is_answer=false
+                                        }
+                                    }
+                                }
+
+                                // SCORE
+                                Row{
+                                    height:parent.height
+                                    width:parent.width*.3
+                                    spacing:5
+
+                                    Rectangle{
+                                        height:parent.height
+                                        width:height
+                                        color:'transparent'
+
+                                        Image{
+                                            anchors.fill:parent
+                                            anchors.margins: 2
+                                            source:'../assets/icons/score1.png'
+                                            fillMode:Image.PreserveAspectFit
+                                            // rotation:180
+                                        }
+
+                                        MouseArea{
+                                            anchors.fill:parent
+                                            hoverEnabled:true
+
+                                            onEntered:{
+                                                parent.scale=1.2
+                                            }
+
+                                            onExited:{
+                                                parent.scale=1
+                                            }
+                                        }
+                                    }
+
+                                    Text{
+                                        text:score
+                                        font.pointSize:9
+                                        color:'#DDDDDD'
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+
+                                //STATUS
+                                Row{
+                                    height:parent.height
+                                    width:parent.height
+                                    visible:is_accepted
+                                    spacing:5
+
+                                    Rectangle{
+                                        height:parent.height
+                                        width:height
+                                        color:'transparent'
+
+                                        Image{
+                                            anchors.fill:parent
+                                            anchors.margins: 1
+                                            source:'../assets/icons/status-ok.svg'
+                                            fillMode:Image.PreserveAspectFit
+                                            // rotation:180
+                                        }
+
+                                        MouseArea{
+                                            anchors.fill:parent
+                                            hoverEnabled:true
+
+                                            onEntered:{
+                                                parent.scale=1.2
+                                            }
+
+                                            onExited:{
+                                                parent.scale=1
+                                            }
+                                        }
+                                    }
+
+                                    // Text{
+                                    //     text:score
+                                    //     font.pointSize:9
+                                    //     color:'#DDDDDD'
+                                    //     anchors.verticalCenter: parent.verticalCenter
+                                    // }
+                                }
+                            }
+
+                            Text{
+                                text:'Result '+(index+1)
+                                font.pointSize:9
+                                color:'#DDDDDD'
+                                anchors.right:parent.right
+                                anchors.margins:10
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Rectangle{
+                            color:'#1F1F20'
+                            height:parent.height-30
+                            width:parent.width
+                            anchors.bottom:parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            CodeView{
+                                id:resview
+                                code:content
+                                // anchors.fill:parent
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            ScrollView{
+                anchors.fill: parent
+                clip:true
+
+                ListView{
+                    spacing:25
+                    anchors.fill:parent
+                    model:answermodel
+                    delegate:answerdelegate
+                    // visible:root.is_answer?false:true
+                }
             }
         }
     }

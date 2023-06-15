@@ -33,6 +33,7 @@ Item{
                         anchors.fill:parent
                         anchors.margins: 5
                         source:'../assets/icons/chatgpt.png'
+                        fillMode:Image.PreserveAspectFit
                     }
                 }
 
@@ -42,14 +43,14 @@ Item{
                     height:parent.height
                     width:parent.width-height-10
                     border{
-                        width:1
-                        color:'#CCCCCC'
+                        width:0
+                        color:'#DDDDDD'
                     }
 
                     Text{
                         text:'Hi, welcome to KivyMDStudio'
                         color:'#FFFFFF'
-                        font.pointSize:11
+                        font.pointSize:10
                     
                         anchors.centerIn: parent
                     }

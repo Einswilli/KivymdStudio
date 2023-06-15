@@ -294,7 +294,7 @@ Item{
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: editor.cursorRectangle.height//root.lineHeight
-            width: editor.width//+200
+            width: editor.contentWidth+10
             border.width:1
             border.color:'#2E2F30'//bordercolor
             Rectangle{
