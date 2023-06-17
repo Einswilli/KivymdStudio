@@ -1952,6 +1952,7 @@ ApplicationWindow {
                                                     //console.log()
                                                     // backend.openfile(rtx.text)
                                                     fm.folder=link
+                                                    fm.show()
                                                 }
                                             }
                                         }
