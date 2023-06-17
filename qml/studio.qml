@@ -1896,6 +1896,7 @@ ApplicationWindow {
                                 y:7
                                 text:qsTr('Recents')
                                 font.pointSize:14
+                                font.bold:true
                                 color:bordercolor
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
