@@ -1889,7 +1889,7 @@ ApplicationWindow {
                                 id:uit
                                 y:7
                                 text:qsTr('Recents')
-                                font.pixelSize:16
+                                font.pointSize:12
                                 color:bordercolor
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
@@ -1914,7 +1914,7 @@ ApplicationWindow {
                                         Text{
                                             id:rtx
                                             x:5
-                                            text:fname
+                                            text:name
                                             font.pixelSize:14
                                             color:'#4FA3E7'
                                             anchors.verticalCenter: parent.verticalCenter
@@ -1950,7 +1950,8 @@ ApplicationWindow {
                                                         codetab.insertTab(codetab.currentIndex+1,tl,cb)
                                                     }
                                                     //console.log()
-                                                    backend.openfile(rtx.text)
+                                                    // backend.openfile(rtx.text)
+                                                    fm.folder=link
                                                 }
                                             }
                                         }
