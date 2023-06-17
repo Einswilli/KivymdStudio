@@ -1,7 +1,9 @@
 import os
 import sqlite3
+from pathlib import Path
 
-DB_URL=os.path.join(os.path.expanduser('~'),'/.kvStudio/','studio.sqlite')
+DB_URL=os.path.join(Path.home(),'/.kvStudio/','studio.sqlite')
+print(DB_URL)
 TABLES_SCRIPTS=[
     {
         'name':'history',
