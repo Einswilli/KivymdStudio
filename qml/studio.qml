@@ -51,7 +51,7 @@ ApplicationWindow {
         
     }
 
-    Connection{
+    Connections{
         enabled:true
         target:FileManagerBackend
         ignoreUnknownSignals: false
