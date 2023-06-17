@@ -1874,7 +1874,7 @@ ApplicationWindow {
                         y:weltext.height+60+linux.height
                         width:parent.width
                         color:parent.color
-                        height:(parent.height/3)+50
+                        height:(parent.height/4)+50
                         anchors.bottom:parent.bottom
                         anchors.margins: 20
                         
@@ -1897,7 +1897,7 @@ ApplicationWindow {
                                 text:qsTr('Recents')
                                 font.pointSize:12
                                 color:bordercolor
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.centerIn: parent
                             }
                             Rectangle{
                                 y:uit.height+10
