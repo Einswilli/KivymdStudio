@@ -2,8 +2,13 @@ import os
 import sqlite3
 from pathlib import Path
 
-DB_URL=os.path.join(Path.home(),'/.kvStudio/','studio.sqlite')
+DB_URL=os.path.join(Path.home(),'.kvStudio','studio.sqlite')
+
+# CREATING DB FILE
 print(DB_URL)
+with open(DB_URL,'w') as f: 
+    f.write('')
+
 TABLES_SCRIPTS=[
     {
         'name':'history',
@@ -45,6 +50,7 @@ def create_db():
         created=True
     except Exception as e:
         error=str(e)
+        print(error)
     
     return created,error
 
