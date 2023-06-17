@@ -3,27 +3,44 @@
     "has_more": false,
     "page": 1,
     "quota_max": 300,
-    "quota_remaining": 299,
+    "quota_remaining": 296,
     "total": 0,
     "items": [
         {
             "owner": {
-                "reputation": 5712,
-                "user_id": 3399066,
+                "reputation": 21,
+                "user_id": 20915007,
                 "user_type": "registered",
-                "accept_rate": 84,
-                "profile_image": "https://www.gravatar.com/avatar/d172044b860e517fd6dba7df2d1841aa?s=256&d=identicon&r=PG&f=y&so-version=2",
-                "display_name": "NumesSanguis",
-                "link": "https://stackoverflow.com/users/3399066/numessanguis"
+                "profile_image": "https://www.gravatar.com/avatar/72379fe2294bef19b16ed02f90e65801?s=256&d=identicon&r=PG",
+                "display_name": "Slawek",
+                "link": "https://stackoverflow.com/users/20915007/slawek"
+            },
+            "is_accepted": false,
+            "score": 2,
+            "last_activity_date": 1672701505,
+            "creation_date": 1672701505,
+            "answer_id": 74987832,
+            "question_id": 67551525,
+            "content_license": "CC BY-SA 4.0",
+            "body": "<p>Didn't work for me. Following your suggestion I tried:</p>\n<pre><code>sudo gem uninstall cocoapods\nsudo gem install -n /usr/local/bin cocoapods\n</code></pre>\n<p>And it worked. I also had to run:</p>\n<pre><code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer\n</code></pre>\n<p>In order to get rid of the <i>&quot;WARNING: Xcode is not installed or is not configured properly.&quot;</i></p>\n<p>Mac OS 13.1 Ventura, M1, Xcode 14.2, tns 8.4.0</p>\n"
+        },
+        {
+            "owner": {
+                "reputation": 186,
+                "user_id": 4687255,
+                "user_type": "registered",
+                "profile_image": "https://lh5.googleusercontent.com/-Rx1HSHi8dT0/AAAAAAAAAAI/AAAAAAAAAV8/bRU6XDnPCvk/photo.jpg?sz=256",
+                "display_name": "David",
+                "link": "https://stackoverflow.com/users/4687255/david"
             },
             "is_accepted": true,
-            "score": 12,
-            "last_activity_date": 1450303999,
-            "creation_date": 1450303999,
-            "answer_id": 34323108,
-            "question_id": 33858127,
-            "content_license": "CC BY-SA 3.0",
-            "body": "<p>O wow... I was stuck on this so long because buildozer doesn't support in-line comments... I had it like this in my buildozer.spec:</p>\n\n<pre><code>icon.filename = %(source.dir)s/ko.png # %(source.dir)s/data/icon.png\n</code></pre>\n\n<p>This is what solved it:</p>\n\n<pre><code># %(source.dir)s/data/icon.png\nicon.filename = %(source.dir)s/ko.png\n</code></pre>\n"
+            "score": 15,
+            "last_activity_date": 1624717223,
+            "creation_date": 1624717223,
+            "answer_id": 68143199,
+            "question_id": 67551525,
+            "content_license": "CC BY-SA 4.0",
+            "body": "<p>Much like the cocoapods install, I had to direct where xcodeproj needed to be installed.</p>\n<p>After running this:</p>\n<pre><code>sudo gem install -n /usr/local/bin xcodeproj\n</code></pre>\n<p>The issue resolved.</p>\n"
         }
     ]
 }

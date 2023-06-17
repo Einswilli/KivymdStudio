@@ -18,6 +18,8 @@ import platform
 #from Emulator.emulator import Emulator
 from core.editorManager import EditorManager
 from core.stackOverflow import StackManager
+from core.fileManager import FileManager
+from core.dbManager import get_db
 import locale, sys,utils
 
 
@@ -241,12 +243,12 @@ class Studio(QObject):
             str: the file content
         """
         code=''
-        curs,conn=self.connect_To_Db()
-        print(path)
+        # curs,conn=self.connect_To_Db()
+        # print(path)
         
         try:
             if not path.startswith('file://'):
-                self.save_to_history(path)
+                # self.save_to_history(path)
                 p=path[1:].replace('/','\\') if 'windows' in platform.system().lower() else path
             else:
                 p=path[8:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
@@ -314,7 +316,7 @@ class Studio(QObject):
         lst=[]
         try:
             curs.execute('SELECT * FROM history')
-            lst=[{'fname':i[1]} for i in curs.fetchall()]
+            lst=[{'name':os.path.basename(i[1]),'link':i[1]} for i in curs.fetchall()]
         except Exception as e:print(e)
         #self.loadPlugins()
         conn.close()
@@ -415,7 +417,7 @@ class Studio(QObject):
             return  tree,lst
 
     def connect_To_Db(self):
-        connection=sqlite3.connect('studio.sqlite')
+        connection=get_db()
         curs=connection.cursor()
         return curs,connection
 
@@ -485,10 +487,12 @@ class Studio(QObject):
         studio=Studio()
         cmder=CommandManager()
         editor=EditorManager()
+        filemanager=FileManager()
         stack=StackManager()
         engine.rootContext().setContextProperty('backend',studio)
         engine.rootContext().setContextProperty('CommandManager',cmder)
         engine.rootContext().setContextProperty('EditorManager',editor)
+        engine.rootContext().setContextProperty('FileManagerBackend',filemanager)
         engine.rootContext().setContextProperty('StackManager',stack)
         # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
         engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))

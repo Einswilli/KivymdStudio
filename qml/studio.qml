@@ -282,8 +282,8 @@ ApplicationWindow {
         }
 
         Component.onCompleted:{
-            lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
             lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
+            lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
             lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/plugins.png',ui:xte})
             lbarmod.append({name:'GITHUB',icon:'../assets/icons/github.png',ui:git})
             lbarmod.append({name:'OPENIA CHAT',icon:'../assets/icons/gpt.png',ui:chatgpt})
@@ -513,6 +513,7 @@ ApplicationWindow {
             }
         }
 
+        //SEARCH BOX
         Rectangle{
             id:searchbox
             y:expbox.height+1
@@ -521,31 +522,8 @@ ApplicationWindow {
             color:parent.color
             visible:false
 
-            TextField{
-                y:20
-                width:parent.width-20
-                height:30
-                anchors.horizontalCenter: parent.horizontalCenter
-                color:'#AEB5BD'
-                font.pixelSize:13
-                background: Rectangle{
-                    anchors.fill: parent
-                    radius:10
-                    color:barfonce
-                    border.width:1
-                    border.color:'#045685'
-                }
-                placeholderText: 'Search...'
-                placeholderTextColor: moyen
-                leftPadding: 10
-                bottomPadding:3
-                
-            }
-            Image{
-                width:150
-                height:200
-                source:'../assets/icons/magnify.png'
-                anchors.centerIn: parent
+            SearchBox{
+                anchors.fill:parent
             }
         }
 
@@ -866,7 +844,7 @@ ApplicationWindow {
                         var deltaY = mouseY - startY
 
                         var newWidth = leftbox.width + deltaX
-                        leftbox.width = Math.max(100, Math.min(newWidth, (root.width*2/5)))
+                        leftbox.width = Math.max(150, Math.min(newWidth, (root.width*2/5)))
 
 
                         startX = mouseX
@@ -2768,6 +2746,7 @@ ApplicationWindow {
             //tmod.clear()
             fm.folder=text.toString()//.substr(6,text.length-6)
             fm.show()
+            FileManagerBackend.save_to_history(text)
         }
     }
 

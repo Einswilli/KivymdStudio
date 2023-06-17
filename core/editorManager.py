@@ -59,7 +59,7 @@ class EditorManager(QObject):
         classes=code.count('class ')
         if defs>1 or classes>1:
             return PythonLexer()
-        return load_lexer_from_file('kivyLexer.py','KivyLexer')
+        return load_lexer_from_file('core/kivyLexer.py','KivyLexer')
 
     def richcolor(self,text):
 
