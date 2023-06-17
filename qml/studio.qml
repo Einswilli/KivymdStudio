@@ -1895,9 +1895,9 @@ ApplicationWindow {
                                 id:uit
                                 y:7
                                 text:qsTr('Recents')
-                                font.pointSize:12
+                                font.pointSize:14
                                 color:bordercolor
-                                anchors.centerIn: parent
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
                             Rectangle{
                                 y:uit.height+10
