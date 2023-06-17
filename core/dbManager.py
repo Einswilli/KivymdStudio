@@ -6,8 +6,9 @@ DB_URL=os.path.join(Path.home(),'.kvStudio','studio.sqlite')
 
 # CREATING DB FILE
 print(DB_URL)
-with open(DB_URL,'w') as f: 
-    f.write('')
+if not os.path.exists(DB_URL):
+    with open(DB_URL,'w') as f: 
+        f.write('')
 
 TABLES_SCRIPTS=[
     {
