@@ -75,7 +75,8 @@ class FileManager(QObject):
 
         try:
             curs.execute(f'UPDATE currentproject SET url=? where id=1',(url,))
-        except:
+        except Exception as e:
+            print(str(e))
             curs.execute("INSERT INTO currentproject VALUES(null,?)",(url,))
         db.commit()
         db.close()

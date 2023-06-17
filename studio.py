@@ -317,7 +317,7 @@ class Studio(QObject):
         try:
             curs.execute('SELECT * FROM history')
             lst=[{'name':os.path.basename(i[1]),'link':i[1]} for i in curs.fetchall()]
-        except Exception as e:print(e)
+        except Exception as e:print('ERROR'+e)
         #self.loadPlugins()
         conn.close()
         return Json.dumps(lst, indent=4)
