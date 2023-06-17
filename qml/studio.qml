@@ -51,6 +51,12 @@ ApplicationWindow {
         
     }
 
+    Connection{
+        enabled:true
+        target:FileManagerBackend
+        ignoreUnknownSignals: false
+    }
+
     Component.onCompleted: {
         // root.showFullScreen();
         //backend.chargeTree(tree)
