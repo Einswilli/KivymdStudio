@@ -1883,15 +1883,15 @@ ApplicationWindow {
                             id:recents
                             //x:parent.width/5
                             // y:weltext.height+90+170
-                            border.width:1
-                            border.color:bordercolor
-                            width:(parent.width/3)+30
+                            // border.width:1
+                            // border.color:bordercolor
+                            width:(parent.width/4)+30
                             height:parent.height-10
-                            color:barfonce
+                            color:'transparent'//barfonce
                             anchors.left:parent.left
                             anchors.margins: 90
                             anchors.verticalCenter: parent.verticalCenter
-                            UIText{
+                            Text{
                                 id:uit
                                 y:7
                                 text:qsTr('Recents')
@@ -1946,15 +1946,15 @@ ApplicationWindow {
                                                 hoverEnabled:true
                                                 onClicked:{
                                                     var tx=backend.openfile('file://'+rtx.text)
-                                                    cde=tx
-                                                    lnk='file://'+rtx.text.toString()
-                                                    var tl=backend.get_filename('file://'+rtx.text)
-                                                    if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
-                                                        imsource='file://'+rtx.text
-                                                        codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
-                                                    }else{
-                                                        codetab.insertTab(codetab.currentIndex+1,tl,cb)
-                                                    }
+                                                    // cde=tx
+                                                    // lnk='file://'+rtx.text.toString()
+                                                    // var tl=backend.get_filename('file://'+rtx.text)
+                                                    // if (tl.substr(-4,4)=='.png' ||tl.substr(-4,4)=='.PNG' ||tl.substr(-4,4)=='.jpg' ||tl.substr(-4,4)=='.JPG' ||tl.substr(-5,5)=='.jpeg' ||tl.substr(-5,5)=='.JPEG' ||tl.substr(-4,4)=='.svg' ||tl.substr(-5,5)=='.webp' ||tl.substr(-5,5)=='.WEBP'){
+                                                    //     imsource='file://'+rtx.text
+                                                    //     codetab.insertTab(codetab.currentIndex+1,tl,imcomp)
+                                                    // }else{
+                                                    //     codetab.insertTab(codetab.currentIndex+1,tl,cb)
+                                                    // }
                                                     //console.log()
                                                     // backend.openfile(rtx.text)
                                                     fm.folder=link
