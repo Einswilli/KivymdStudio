@@ -262,7 +262,7 @@ Kvs Code (Kivymd Studio Code) is a free and open source project, and will remain
 [![Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/einswilli/donate)
 [![Patreon](assets/icons/brands/donate-patreon.png)](https://www.patreon.com/user?u=54110867)
 [![Buy Me a Coffee](assets/icons/coffee4.png)](https://www.buymeacoffee.com/einswilligK)
-<img src="https://img.shields.io/liberapay/gives/einswilli.svg?logo=liberapay">
+<img src="https://img.shields.io/liberapay/gives/einswilli.svg?logo=liberapay" height=50>
 
 <p align="center">Made with ❤️ By #Einswilli</p>
 <p align="center" style="font-size: 8px">v1.1.1</p>
