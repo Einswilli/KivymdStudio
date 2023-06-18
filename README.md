@@ -247,13 +247,22 @@ But the emulator does not work very well under windows for the moment.I will fix
 
 ## Next
     
-    - Chat with GPT 4
-    - Imqge generation with DALL-E
+    - Chat with GPT 4 ()
+    - Stack Overflow integration
 
 ## Bugs
 
     - Emulator can't load Python file correctly yet
 
+## Donate
+
+Kvs Code (Kivymd Studio Code) is a free and open source project, and will remain as one. If you would like to provide financial support, you can use the following links. This is completely optional, but every contribution is much appreciated!
+
+<!-- [![PayPal](https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png)](https://paypal.me/MatyasMustoha) -->
+[![Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/einswilli/donate)
+[![Patreon](assets/icons/brands/donate-patreon.png)](https://www.patreon.com/user?u=54110867)
+[![Buy Me a Coffee](assets/icons/coffee4.png)](https://www.buymeacoffee.com/einswilligK)
+<img src="https://img.shields.io/liberapay/gives/einswilli.svg?logo=liberapay">
 
 <p align="center">Made with ❤️ By #Einswilli</p>
 <p align="center" style="font-size: 8px">v1.1.1</p>
