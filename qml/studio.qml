@@ -1660,6 +1660,7 @@ ApplicationWindow {
         x:leftbar.width+leftbox.width
         height:parent.height-top_bar.height-30
         width:root.width-x//leftbar.width-leftbox.width
+        clip:true
 
         
         TabView{
