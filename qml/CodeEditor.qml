@@ -293,7 +293,7 @@ Item{
         }
 
         Rectangle{
-            x:col.width-2
+            x:0 //col.width-2
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: editor.cursorRectangle.height//root.lineHeight
