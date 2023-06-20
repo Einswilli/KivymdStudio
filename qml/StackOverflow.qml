@@ -70,7 +70,7 @@ Item{
                         color:'white'
                         font.family:'monospace'
                         selectByMouse: true
-                        font.pointSize:10
+                        font.pointSize:12
                         padding :5
                         placeholderText:'search on Stackoverflow'
                         //topPadding:2

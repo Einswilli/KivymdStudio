@@ -95,7 +95,7 @@ Item{
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
         maximumFlickVelocity : 1200
-        clip: true
+        // clip: true
 
         function ensureVisible(r)
         {
@@ -294,7 +294,7 @@ Item{
             y:editor.cursorRectangle.y
             color: 'transparent'//'#609EAD96'
             height: editor.cursorRectangle.height//root.lineHeight
-            width: editor.contentWidth+10
+            width: Math.max(editor.contentWidth+10,flickb.width)
             border.width:1
             border.color:'#2E2F30'//bordercolor
             Rectangle{
