@@ -374,7 +374,7 @@ Item{
         y:-flickb.contentY
         height: childrenRect.height
         width: childrenRect.width
-        color:'#1F1F20'
+        color:'red'//'#1F1F20'
         Column {
             id:col
             clip:true
