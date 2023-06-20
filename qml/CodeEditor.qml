@@ -91,11 +91,11 @@ Item{
         width:edit_width//parent.width-20 
         height: edit_height//parent.height-20
         anchors.centerIn: parent
-        contentWidth: editor.paintedWidth
+        contentWidth: editor.contentWidth//paintedWidth
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
         maximumFlickVelocity : 1200
-        // clip: true
+        clip: true
 
         function ensureVisible(r)
         {
