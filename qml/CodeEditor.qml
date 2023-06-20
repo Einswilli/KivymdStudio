@@ -88,7 +88,7 @@ Item{
     Flickable {
         id: flickb
         y:25
-        x:col.width
+        anchors.left:col.right
         //anchors.fill: parent
         width: parent.width-col.width//Math.max(edit_width,parent.width)
         height: parent.height//Math.max(edit_height,parent.height)
