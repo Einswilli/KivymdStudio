@@ -151,7 +151,7 @@ Item{
             textFormat: TextEdit.RichText
             property bool processing:false
             leftPadding :col.width//35
-            rightMargin:30
+            rightPadding:30
             //topPadding:2
             wrapMode: Text.WordWrap
             enabled:true
