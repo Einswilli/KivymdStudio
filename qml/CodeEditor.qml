@@ -84,47 +84,7 @@ Item{
         anchors.right: parent.right
     }
 
-    // LINE NUMBERS
-        Rectangle{
-            y:flickb.y
-            height: childrenRect.height
-            width: childrenRect.width
-            color:'#1F1F20'
-            Column {
-                id:col
-                // start position of line numbers depends on text margin
-                y: 0//editor.textMargin
-                width: 60//parent.width
-
-
-                // add line numbers based on line count and height
-                Repeater {
-                    id:rep
-                    model: editor.lineCount
-                    delegate: Text {
-                        id: text
-                        width: implicitWidth
-                        height: root.lineHeight
-                        color: editor.getText(0, editor.cursorPosition).split('\u2029').length==parseInt(index+1)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
-                        font: editor.font
-                        text: index + 1
-                        anchors.right:parent.right
-                        anchors.margins: 15
-                        MouseArea{
-                            anchors.fill: parent
-                            hoverEnabled:true
-
-                            onClicked:{
-                                parent.color='#26B83F'
-                                //console.log(editor.getText(0, editor.cursorPosition).split('\u2029').length,parent.text)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-
+    
     Flickable {
         id: flickb
         y:25
@@ -132,7 +92,7 @@ Item{
         width:edit_width//parent.width-20 
         height: edit_height//parent.height-20
         anchors.centerIn: parent
-        contentWidth: editor.paintedWidth+50
+        contentWidth: editor.paintedWidth+30
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
         maximumFlickVelocity : 1200
@@ -405,6 +365,46 @@ Item{
         ScrollBar.horizontal: ScrollBar {
             height:15
             active: flickb.moving || !flickb.moving
+        }
+    }
+
+    // LINE NUMBERS
+    Rectangle{
+        y:editor.y
+        height: childrenRect.height
+        width: childrenRect.width
+        color:'#1F1F20'
+        Column {
+            id:col
+            // start position of line numbers depends on text margin
+            y: 0//editor.textMargin
+            width: 60//parent.width
+
+
+            // add line numbers based on line count and height
+            Repeater {
+                id:rep
+                model: editor.lineCount
+                delegate: Text {
+                    id: text
+                    width: implicitWidth
+                    height: root.lineHeight
+                    color: editor.getText(0, editor.cursorPosition).split('\u2029').length==parseInt(index+1)?"#FFFFFF":"#898A8B"//editor.cursorRectangle.y==y?"#FFFFFF":"#898A8B"
+                    font: editor.font
+                    text: index + 1
+                    anchors.right:parent.right
+                    anchors.margins: 15
+                    MouseArea{
+                        anchors.fill: parent
+                        hoverEnabled:true
+
+                        onClicked:{
+                            parent.color='#26B83F'
+                            //console.log(editor.getText(0, editor.cursorPosition).split('\u2029').length,parent.text)
+                        }
+                    }
+                }
+            }
         }
     }
 
