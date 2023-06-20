@@ -152,7 +152,7 @@ Item{
             tabStopDistance: 40
             textFormat: TextEdit.RichText
             property bool processing:false
-            leftPadding :col.width//35
+            leftPadding :0 //col.width
             // rightPadding:30
             //topPadding:2
             wrapMode: Text.WordWrap
