@@ -89,8 +89,8 @@ Item{
         id: flickb
         y:25
         //anchors.fill: parent
-        width:edit_width//parent.width-20 
-        height: edit_height//parent.height-20
+        width:Math.max(edit_width,parent.width)
+        height: Math.max(edit_height,parent.height)
         anchors.centerIn: parent
         contentWidth: editor.paintedWidth+30
         contentHeight: editor.paintedHeight+300
