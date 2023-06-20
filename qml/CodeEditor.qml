@@ -140,7 +140,7 @@ Item{
             id:editor
             focus:true
             clip:true
-            width: contentWidth//flickb.width
+            width: root.width//contentWidth//flickb.width
             height: (lineCount*25)+flickb.height//flickb.height
             color:'white'
             mouseSelectionMode:TextEdit.SelectCharacters
