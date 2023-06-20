@@ -370,7 +370,7 @@ Item{
 
     // LINE NUMBERS
     Rectangle{
-        y:editor.y
+        y:flickb.contentY
         height: childrenRect.height
         width: childrenRect.width
         color:'#1F1F20'
