@@ -88,11 +88,12 @@ Item{
     Flickable {
         id: flickb
         y:25
+        x:col.width
         //anchors.fill: parent
-        width: parent.width//Math.max(edit_width,parent.width)
+        width: parent.width-col.with//Math.max(edit_width,parent.width)
         height: parent.height//Math.max(edit_height,parent.height)
         anchors.centerIn: parent
-        contentWidth: editor.paintedWidth+30
+        contentWidth: editor.paintedWidth
         contentHeight: editor.paintedHeight+300
         //flickDeceleration:-10
         maximumFlickVelocity : 1200
