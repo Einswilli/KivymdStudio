@@ -141,7 +141,7 @@ Item{
             id:editor
             focus:true
             clip:true
-            width: parent.width//contentWidth//flickb.width
+            width: flickb.width
             height: (lineCount*25)+flickb.height//flickb.height
             color:'white'
             mouseSelectionMode:TextEdit.SelectCharacters
@@ -375,6 +375,7 @@ Item{
         height: childrenRect.height
         width: childrenRect.width
         color:'#1F1F20'
+        clip:true
         Column {
             id:col
             // start position of line numbers depends on text margin
