@@ -373,7 +373,7 @@ Item{
     Rectangle{
         y:-flickb.contentY
         height: childrenRect.height
-        width: childrenRect.width
+        width: 60//childrenRect.width
         color:'red'//'#1F1F20'
         Column {
             id:col
