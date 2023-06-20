@@ -1750,7 +1750,7 @@ ApplicationWindow {
                         anchors.right:parent.right
                     }
                 }
-                frame: Rectangle { color: root.color }
+                frame: Rectangle { color: root.color ; clip:true}
                 tabsMovable: true
             }
             
