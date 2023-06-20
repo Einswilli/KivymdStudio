@@ -90,7 +90,7 @@ Item{
         y:25
         x:col.width
         //anchors.fill: parent
-        width: parent.width-col.with//Math.max(edit_width,parent.width)
+        width: parent.width-col.width//Math.max(edit_width,parent.width)
         height: parent.height//Math.max(edit_height,parent.height)
         anchors.centerIn: parent
         contentWidth: editor.paintedWidth
