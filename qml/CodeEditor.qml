@@ -375,9 +375,9 @@ Item{
         height: childrenRect.height
         width: childrenRect.width
         color:'#1F1F20'
-        clip:true
         Column {
             id:col
+            clip:true
             // start position of line numbers depends on text margin
             y: 0//editor.textMargin
             width: 60//parent.width
