@@ -87,7 +87,7 @@ Item{
     Rectangle{
         anchors.left:col.right
         width: parent.width-col.width//Math.max(edit_width,parent.width)
-        height: parent.height/
+        height: parent.height
         Flickable {
             id: flickb
             y:25
