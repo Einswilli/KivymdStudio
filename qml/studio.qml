@@ -263,7 +263,7 @@ ApplicationWindow {
 
                 TextIcon{
                     id:ico_
-                    _size:20
+                    _size:25
                     text:root.icons[icon]
                     anchors.fill:parent
                     visible:is_icon
@@ -1552,15 +1552,8 @@ ApplicationWindow {
                 color:parent.color
                 anchors.margins: 30
                 anchors.verticalCenter: parent.verticalCenter
-                // Image{
-                //     source:'../assets/icons/list.png'
-                //     width:parent.width-5
-                //     height:parent.height-5
-                //     anchors.centerIn: parent
-                // }
 
                 TextIcon{
-                    id:ico_
                     _size:18
                     text:root.icons['menu']
                     anchors.fill:parent
