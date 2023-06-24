@@ -343,7 +343,7 @@ ApplicationWindow {
             id:scleftcol
             anchors.fill:parent
             ListView{
-                spacing:10
+                spacing:2
                 anchors.fill:parent
                 clip:true
                 delegate:lbarcomp
