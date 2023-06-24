@@ -212,6 +212,10 @@ class Studio(QObject):
         except:return'1200,800'
         
 
+    @Slot(result='QString')
+    def load_icons(self):
+        return Json.dumps(utils.md_icons)
+
     @Slot(str,str)
     def newfile(self,filename,fpath):
         """this is used to create a new file in a given path

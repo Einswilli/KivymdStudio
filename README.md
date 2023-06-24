@@ -236,19 +236,23 @@ But the emulator does not work very well under windows for the moment.I will fix
 ## To do make_list
 
     - File Explorer (TreeView) (done)
-    - Project creator
+    - Project creator(done)
     - Auto Completion in CodeEditor(plugin)
     - Auto Indentation in OdeEditor(done)
     - Syntax Highlight in CodeEditor(done)
     - General Project Search 
     - Custom Terminal (done)
     - Emmulator (done)
+    - Stack Overflow integration(done)
+    - Settings
 
 
 ## Next
     
-    - Chat with GPT 4 ()
-    - Stack Overflow integration
+    - Chat with GPT 4 (User must use his own Openai APIKEY)
+    - General Project Search
+    - Settings
+    
 
 ## Bugs
 

@@ -93,8 +93,10 @@ class StackManager(QObject):
                 'search/advanced',tagged='python',
                 q=text
             )
-            with open('st.json','w')as f:
-                f.write(Json.dumps(questions,indent=4))
+            
+            # with open('st.json','w')as f:
+            #     f.write(Json.dumps(questions,indent=4))
+
             qs=[self.format_question(q) for q in questions['items']]
             self.busy.emit(False)
             self.result.emit(Json.dumps(qs,indent=4))

@@ -7,6 +7,7 @@ import QtQuick.Layouts 1.0
 import QtQuick.Dialogs 1.2
 import Qt.labs.folderlistmodel 2.15
 import QtQml.Models 2.2
+import "settings"
 // import QtApplicationManager 2.0
 //import QtQuick.Controls 1.4 as OV
 //import DotPy.Core 1.0
@@ -67,6 +68,7 @@ ApplicationWindow {
         loading.visible=true
         timer.interval=5000
         timer.running=true
+        root.icons=JSON.parse(backend.load_icons())
         
         //console.log(l)
         // for(let i of JSON.parse(l)){
@@ -119,7 +121,7 @@ ApplicationWindow {
         return value.toHtmlObject
     }
     
-
+    // PROPERTIES
     property color appcolor:"#1F1F20"
     property color barclaire:'#292828'
     property color barfonce:'#18191A'
@@ -131,6 +133,9 @@ ApplicationWindow {
     property string lnk
     property string imsource
     property string currentFolder
+    property var icons
+
+    //SIGNALS
     signal emuLog(var msg)
     signal tstdout(string value)
 
@@ -139,6 +144,7 @@ ApplicationWindow {
         console.log(value);
     }
 
+    //SHORTCUTS
     Shortcut {
         sequence: "Ctrl+T"
         onActivated: terminal.visible=true
@@ -213,7 +219,7 @@ ApplicationWindow {
     Rectangle{
         id:leftbar
         width:60
-        height:parent.height-30
+        height:parent.height-25
         color:barclaire
         anchors.left: parent.left
         property var pluglist:[xte,git,tree,searchbox,chatgpt,stackoverflow]
@@ -228,13 +234,14 @@ ApplicationWindow {
 
         Rectangle{
             id:xhov
-            height:parent.height
+            height:50//parent.height
             width:3
             color:'white'
             anchors.left:parent.left
-            visible:false
+            // visible:false
         }
 
+        //COMPONENT
         Component{
             id:lbarcomp
             Rectangle{
@@ -245,20 +252,40 @@ ApplicationWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Image{
+                    id:im_
                     width:25
                     height:25
                     source:icon
+                    visible:!is_icon
                     anchors.centerIn: parent
                     fillMode:Image.PreserveAspectFit
                 }
+
+                TextIcon{
+                    id:ico_
+                    _size:20
+                    text:root.icons[icon]
+                    anchors.fill:parent
+                    visible:is_icon
+                    color:xhov.parent==parent?'#EEEFFF':'#AAAAAA'
+                }
+
                 MouseArea{
                     anchors.fill: parent
                     hoverEnabled:true
                     onEntered:{
-                        parent.color=hovercolor
+                        // parent.color=hovercolor
+                        im_.scale=1.2
+                        ico_.scale=1.2
                     }
                     onExited:{
-                        parent.color=barclaire
+                        // parent.color=barclaire
+                        im_.scale=1
+                        ico_.scale=1
+                    }
+
+                    onPressed:{
+                        root.clicked(index, name)
                     }
                     onClicked:{
                         xhov.visible=true
@@ -283,17 +310,19 @@ ApplicationWindow {
                 }
             }
         }
+
         ListModel{
             id:lbarmod
         }
 
+        //LOAD SIDEBAR COMPONENTS 
         Component.onCompleted:{
-            lbarmod.append({name:'EXPLORER',icon:'../assets/icons/fichier.png',ui:tree})
-            lbarmod.append({name:'SEARCH',icon:'../assets/icons/loupe.png',ui:searchbox})
-            lbarmod.append({name:'EXTENSIONS',icon:'../assets/icons/plugins.png',ui:xte})
-            lbarmod.append({name:'GITHUB',icon:'../assets/icons/github.png',ui:git})
-            lbarmod.append({name:'OPENIA CHAT',icon:'../assets/icons/gpt.png',ui:chatgpt})
-            lbarmod.append({name:'STACK OVERFLOW',icon:'../assets/icons/stack2.png',ui:stackoverflow})
+            lbarmod.append({name:'EXPLORER',is_icon:true,icon:'file-outline',ui:tree})
+            lbarmod.append({name:'SEARCH',is_icon:true,icon:'magnify',ui:searchbox})
+            lbarmod.append({name:'EXTENSIONS',is_icon:true,icon:'view-dashboard-outline',ui:xte})
+            lbarmod.append({name:'GITHUB',is_icon:true,icon:'github',ui:git})
+            lbarmod.append({name:'OPENIA CHAT',is_icon:false,icon:'../assets/icons/gpt.png',ui:chatgpt})
+            lbarmod.append({name:'STACK OVERFLOW',is_icon:true,icon:'stack-overflow',ui:stackoverflow})
             var l = obj.reparse(backend.loadPlugins())
             for(let i of JSON.parse(l)){
                 var cc=Qt.createComponent('../'+i.template)
@@ -362,11 +391,18 @@ ApplicationWindow {
             color:parent.color
             anchors.horizontalCenter: parent.horizontalCenter
 
-            Image{
-                width:25
-                height:25
-                source:'../assets/icons/param.png'
-                anchors.centerIn: parent
+            // Image{
+            //     width:25
+            //     height:25
+            //     source:'../assets/icons/param.png'
+            //     anchors.centerIn: parent
+            // }
+
+            
+            TextIcon{
+                _size:25
+                text:root.icons['cog-outline']
+                anchors.fill:parent
             }
 
             MouseArea{
@@ -379,64 +415,17 @@ ApplicationWindow {
                     parent.color=barclaire
                 }
                 onClicked:{
-                    paramMenu.open()
-                }
-            }
-            Menu{
-                id:paramMenu
-                height: 250
-                width: 200
-                x:parent.width
-                y:parent.parent.height-height-50
-                background: Rectangle{
-                    color:barclaire
-                    anchors.fill:parent
-                    border.color:bordercolor
-                    border.width: 1
-                }
-                MenuItem{
-                    Text{
-                        text:'Highlight Theme'
-                        color:'#3B7EAC'
-                        font.pixelSize:15
-                        x:15
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                MenuItem{
-                    Text{
-                        text:'Highlight Theme'
-                        color:'#3B7EAC'
-                        font.pixelSize:15
-                        x:15
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                MenuItem{
-                    Text{
-                        text:'Highlight Theme'
-                        color:'#3B7EAC'
-                        font.pixelSize:15
-                        x:15
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                MenuItem{
-                    Text{
-                        text:'Highlight Theme'
-                        color:'#3B7EAC'
-                        font.pixelSize:15
-                        x:15
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                MenuItem{
-                    Text{
-                        text:'Highlight Theme'
-                        color:'#3B7EAC'
-                        font.pixelSize:15
-                        x:15
-                        anchors.verticalCenter: parent.verticalCenter
+                    if(codetab.contains('Settings')==false){
+                        codetab.insertTab(codetab.currentIndex+1, 'Settings',settingcomponent)
+                    }else{
+                        let idx=codetab.indexOf('Settings')
+                        if(codetab.currentIndex>idx){
+                            codetab.currentIndex-=codetab.currentIndex-idx
+                        }else if(codetab.currentIndex<idx){
+                            codetab.currentIndex+=idx-codetab.currentIndex
+                        }else{
+                            //nothings!
+                        }
                     }
                 }
             }
@@ -465,7 +454,7 @@ ApplicationWindow {
         id:leftbox
         x:leftbar.width
         width:(root.width/5)
-        height:parent.height-30
+        height:parent.height-25
         color:moyen
 
         Rectangle{
@@ -963,6 +952,7 @@ ApplicationWindow {
                         }
                     }
                 }
+
                 Rectangle{
                     //x:250
                     id:plug
@@ -990,6 +980,7 @@ ApplicationWindow {
                         }
                     }
                 }
+
                 Rectangle{
                     //x:250
                     height:parent.height
@@ -1107,6 +1098,7 @@ ApplicationWindow {
                 }
             }
         }
+
         Menu{
             id:terminalmen
             x:180
@@ -1144,6 +1136,7 @@ ApplicationWindow {
                 }
             }
         }
+
         Menu{
             id:editmen
             x:100
@@ -1202,6 +1195,7 @@ ApplicationWindow {
                 }
             }
         }
+
         Menu{
             id:filesmen
             x:10
@@ -1497,6 +1491,8 @@ ApplicationWindow {
                     }
                 }
             }
+
+            //EMULATOR BUTTON
             Rectangle{
                 //x:90
                 color:parent.color
@@ -1549,36 +1545,43 @@ ApplicationWindow {
 
             Rectangle{
                 id:list
-                width:24
+                width:20
                 height:parent.height-2
                 anchors.right:parent.right
                 radius:4
                 color:parent.color
-                border.color:bordercolor
-                border.width:1
                 anchors.margins: 30
                 anchors.verticalCenter: parent.verticalCenter
-                Image{
-                    source:'../assets/icons/list.png'
-                    width:parent.width-5
-                    height:parent.height-5
-                    anchors.centerIn: parent
-                }
+                // Image{
+                //     source:'../assets/icons/list.png'
+                //     width:parent.width-5
+                //     height:parent.height-5
+                //     anchors.centerIn: parent
+                // }
 
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onClicked:{
-                        avd.open()
-                    }
-                    onEntered:{
-                        parent.color=hovercolor
-                    }
-                    onExited:{
-                        parent.color=top_bar.color
+                TextIcon{
+                    id:ico_
+                    _size:18
+                    text:root.icons['menu']
+                    anchors.fill:parent
+                    visible:is_icon
+                    color:'#AAAAAA'
+                    MouseArea{
+                        anchors.fill: parent
+                        hoverEnabled:true
+                        onClicked:{
+                            avd.open()
+                        }
+                        onEntered:{
+                            parent.color='#EEEFFF'
+                            parent.scale=1.1
+                        }
+                        onExited:{
+                            parent.color='#AAAAAA'
+                            parent.scale=1
+                        }
                     }
                 }
-                
             }
             Menu{
                 id:avd
@@ -1658,7 +1661,7 @@ ApplicationWindow {
         y:top_bar.height
         color:appcolor
         x:leftbar.width+leftbox.width
-        height:parent.height-top_bar.height-30
+        height:parent.height-top_bar.height-25
         width:root.width-x//leftbar.width-leftbox.width
         clip:true
 
@@ -1667,10 +1670,10 @@ ApplicationWindow {
             id:codetab
             anchors.fill: parent
             style: TabViewStyle {
-                frameOverlap: 1
+                frameOverlap: 0
                 tab: Rectangle {
                     color: styleData.selected ? barfonce :barclaire
-                    border.color:  barclaire
+                    // border.color:  barclaire
                     implicitWidth: Math.max(childrenRect.width + 20, 140)
                     implicitHeight: 20
                     width:120
@@ -1711,6 +1714,8 @@ ApplicationWindow {
                             fileimage.source='../assets/images/js.png'
                         }else if(ext=='.md'){
                             fileimage.source='../assets/images/md.png'
+                        }else if(ext=='ngs'){
+                            fileimage.source='../assets/icons/param.png'
                         }
                     }
 
@@ -2179,7 +2184,7 @@ ApplicationWindow {
     //STATTUS BAR
     Rectangle{
         id: status_bar
-        height: 30
+        height: 25
         width: parent.width
         anchors.bottom: parent.bottom
         color:'teal'
@@ -2195,7 +2200,7 @@ ApplicationWindow {
         border.color:bordercolor
         border.width:1
         anchors.bottom:parent.bottom
-        anchors.margins: 30
+        anchors.margins: 25
         visible:false
         clip:true
 
@@ -2346,8 +2351,8 @@ ApplicationWindow {
         duration: 200
         property: 'x'
         target:emmubox
-       
     }
+
     NumberAnimation{
         id:emu_on
         from: root.width
@@ -2355,7 +2360,6 @@ ApplicationWindow {
         duration: 200
         property: 'x'
         target:emmubox
-       
     }
 
     // EMULATOR BOX
@@ -2620,178 +2624,10 @@ ApplicationWindow {
         }
     }
 
-    Component{
-        id:codebox
-        Rectangle{
-            color:root.color
-            property alias furl:nfc.link
-            property alias codealias:nfc.code
-            CodeEditor{
-                id:nfc
-                compcolor:barclaire
-                edit_height:parent.height
-                edit_width:parent.width
-                anchors.fill: parent
-                //code:''
-                
-            }
-            Component.onCompleted:{
-                nfc.link=lnk
-            }
-            // Shortcut {
-            //     sequence: "Ctrl+S"
-            //     onActivated: {
-            //         console.log('saving file...')
-            //         cde=nfc.scode.getText(0,nfc.code.length)
-            //         //console.log(cde)
-            //         backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
-            //         //cde=''
-            //     }
-            // }
-        }
-    }
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////////    TOP LEVEL WIDGETS     ///////////////////////////
 
-    Component{
-        id:cb
-        Rectangle{
-            color:root.color
-            width:codetab.width
-            height:codetab.height
-            property alias cd:ce.scode
-            property alias lk:ce.link
-            CodeEditor{
-                id:ce
-                compcolor:barclaire
-                edit_height:parent.height
-                edit_width:parent.width
-                anchors.fill: parent
-                //code:text
-            }
-            Component.onCompleted:{
-                ce.code=qsTr(cde).replace('\n\r',qsTr('\n'))
-                ce.link=lnk
-                //console.log(ce.link)
-            }
-            
-        }
-    }
-
-    FileOpenDialog{
-        id:fileop
-        anchors.centerIn: parent
-        visible:false
-        theme_color:barclaire
-        border_color:bordercolor
-        Keys.onReturnPressed:{
-            visible=false
-            if(root.currentFolder==''){
-                root.currentFolder=fm.folder
-            }
-            backend.newfile(fileop.get_filename,root.currentFolder.toString())
-            lnk=root.currentFolder.toString()+fileop.get_filename.toString()
-            codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
-        }
-    }
-    FileOpenDialog{
-        id:foldn
-        anchors.centerIn: parent
-        visible:false
-        theme_color:barclaire
-        border_color:bordercolor
-        message:'Create new folder'
-        field.placeholderText:'foldername'
-        Keys.onReturnPressed:{
-            visible=false
-            //console.log()
-            backend.newfolder(foldn.get_filename,root.currentFolder.toString())
-            //codetab.addTab(fileop.get_filename,cb)
-        }
-    }
-
-    FileDialog{
-        id:opfile
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: false
-        selectMultiple: false
-        //selectedNameFilter: string
-        //shortcuts: Object
-        //sidebarVisible: bool
-        title: 'Open file'
-        //visible: bool
-        onAccepted:{
-            var text=backend.openfile(fileUrl)
-            var titre=backend.get_filename(fileUrl)
-            cde=text
-            lnk=fileUrl.toString()
-            codetab.insertTab(codetab.currentIndex+1, titre,cb)
-            //root.setcode(text)
-        }
-    }
-    FileDialog{
-        id:opfold
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: true
-        selectMultiple: true
-        //selectedNameFilter: string
-        //shortcuts: Object
-        //sidebarVisible: bool
-        title: 'Open folder'
-        //visible: bool
-        onAccepted:{
-            var text=opfold.fileUrl
-            //console.log(text.toString())//.substr(6,text.length-6))
-            //tmod.clear()
-            fm.folder=text.toString()//.substr(6,text.length-6)
-            fm.show()
-            FileManagerBackend.save_to_history(text)
-        }
-    }
-
-    FileDialog{
-        id:plugdialog
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: true
-        selectMultiple: true
-        //selectedNameFilter: string
-        //shortcuts: Object
-        sidebarVisible: true
-        title: 'Choose Plugin folder to install'
-        //visible: bool
-        onAccepted:{
-            var text=fileUrl
-            //console.log(text.toString())//.substr(6,text.length-6))
-            loading.visible=true
-            timer.running=true
-            var r=backend.installPlugin(text);
-        }
-    }
-    Timer{
-        id: timer
-        running: false
-        repeat: false
-        interval:3000
-
-        onTriggered: loading.visible=false;
-    }
-
+    //LOADER
     Rectangle{
         id:loading
         height:110
@@ -2854,6 +2690,132 @@ ApplicationWindow {
         }
     }
 
+
+    /////////////////////////////////////////////////////////////////////////
+    ///////////////////////////        TIMERS     ///////////////////////////
+
+    Timer{
+        id: timer
+        running: false
+        repeat: false
+        interval:3000
+
+        onTriggered: loading.visible=false;
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////////      DIALOG  WIDGETS     ///////////////////////////
+
+    FileOpenDialog{
+        id:fileop
+        anchors.centerIn: parent
+        visible:false
+        theme_color:barclaire
+        border_color:bordercolor
+        Keys.onReturnPressed:{
+            visible=false
+            if(root.currentFolder==''){
+                root.currentFolder=fm.folder
+            }
+            backend.newfile(fileop.get_filename,root.currentFolder.toString())
+            lnk=root.currentFolder.toString()+fileop.get_filename.toString()
+            codetab.insertTab(codetab.currentIndex+1,fileop.get_filename,codebox)
+        }
+    }
+
+    FileOpenDialog{
+        id:foldn
+        anchors.centerIn: parent
+        visible:false
+        theme_color:barclaire
+        border_color:bordercolor
+        message:'Create new folder'
+        field.placeholderText:'foldername'
+        Keys.onReturnPressed:{
+            visible=false
+            //console.log()
+            backend.newfolder(foldn.get_filename,root.currentFolder.toString())
+            //codetab.addTab(fileop.get_filename,cb)
+        }
+    }
+
+    FileDialog{
+        id:opfile
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: false
+        selectMultiple: false
+        //selectedNameFilter: string
+        //shortcuts: Object
+        //sidebarVisible: bool
+        title: 'Open file'
+        //visible: bool
+        onAccepted:{
+            var text=backend.openfile(fileUrl)
+            var titre=backend.get_filename(fileUrl)
+            cde=text
+            lnk=fileUrl.toString()
+            codetab.insertTab(codetab.currentIndex+1, titre,cb)
+            //root.setcode(text)
+        }
+    }
+
+    FileDialog{
+        id:opfold
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: true
+        selectMultiple: true
+        //selectedNameFilter: string
+        //shortcuts: Object
+        //sidebarVisible: bool
+        title: 'Open folder'
+        //visible: bool
+        onAccepted:{
+            var text=opfold.fileUrl
+            //console.log(text.toString())//.substr(6,text.length-6))
+            //tmod.clear()
+            fm.folder=text.toString()//.substr(6,text.length-6)
+            fm.show()
+            FileManagerBackend.save_to_history(text)
+        }
+    }
+
+    FileDialog{
+        id:plugdialog
+        defaultSuffix: '*.py'
+        //fileUrl: url
+        //fileUrls: list<url>
+        folder: shortcuts.home
+        //modality: Qt: : WindowModality
+        nameFilters: ["All files (*)"]
+        selectExisting: true
+        selectFolder: true
+        selectMultiple: true
+        //selectedNameFilter: string
+        //shortcuts: Object
+        sidebarVisible: true
+        title: 'Choose Plugin folder to install'
+        //visible: bool
+        onAccepted:{
+            var text=fileUrl
+            //console.log(text.toString())//.substr(6,text.length-6))
+            loading.visible=true
+            timer.running=true
+            var r=backend.installPlugin(text);
+        }
+    }
+
     Dialog{
         id:newproj
         height: 450
@@ -2870,5 +2832,80 @@ ApplicationWindow {
             }
         }
         standardButtons: StandardButton.Cancel| StandardButton.Ok
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////
+    ////////////////////    COMPONENTS WIDGETS     ///////////////////////////
+
+
+    // CODEBOX
+    Component{
+        id:codebox
+        Rectangle{
+            color:root.color
+            property alias furl:nfc.link
+            property alias codealias:nfc.code
+            CodeEditor{
+                id:nfc
+                compcolor:barclaire
+                edit_height:parent.height
+                edit_width:parent.width
+                anchors.fill: parent
+                //code:''
+                
+            }
+            Component.onCompleted:{
+                nfc.link=lnk
+            }
+            // Shortcut {
+            //     sequence: "Ctrl+S"
+            //     onActivated: {
+            //         console.log('saving file...')
+            //         cde=nfc.scode.getText(0,nfc.code.length)
+            //         //console.log(cde)
+            //         backend.savefile(fm.folder.toString(),codetab.getTab(codetab.currentIndex).title,cde)
+            //         //cde=''
+            //     }
+            // }
+        }
+    }
+
+    //CB
+    Component{
+        id:cb
+        Rectangle{
+            color:root.color
+            width:codetab.width
+            height:codetab.height
+            property alias cd:ce.scode
+            property alias lk:ce.link
+            CodeEditor{
+                id:ce
+                compcolor:barclaire
+                edit_height:parent.height
+                edit_width:parent.width
+                anchors.fill: parent
+                //code:text
+            }
+            Component.onCompleted:{
+                ce.code=qsTr(cde).replace('\n\r',qsTr('\n'))
+                ce.link=lnk
+                //console.log(ce.link)
+            }
+            
+        }
+    }
+
+    //SETTINGS
+    Component{
+        id:settingcomponent
+        Rectangle{
+            anchors.fill:parent
+            color:'transparent'
+            Preferences{
+                anchors.fill:parent
+            }
+        }
     }
 }
