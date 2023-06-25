@@ -5,10 +5,10 @@ from pathlib import Path
 DB_URL=os.path.join(Path.home(),'.kvStudio','studio.sqlite')
 
 # CREATING DB FILE
-if not os.path.exists(DB_URL):
-    with open(DB_URL,'w') as f: 
-        f.write('')
-print(DB_URL)
+# if not os.path.exists(DB_URL):
+#     with open(DB_URL,'w') as f: 
+#         f.write('')
+# print(DB_URL)
 
 TABLES_SCRIPTS=[
     {

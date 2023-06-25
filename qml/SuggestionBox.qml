@@ -33,6 +33,7 @@ Rectangle {
     property string ifilter: ''//filterItem.filter
     property string modeIndicator:''
     property string code:''
+    property string module:''
     property int line
     property int pos
     // property alias property: filterItem.property
@@ -51,16 +52,23 @@ Rectangle {
         // onFilterChanged: invalidateFilter()
         // onPropertyChanged: invalidateFilter()
         // onSourceModelChanged: invalidateFilter()
-        function onIfilterChanged(){
+        target: EditorManager
+
+        function onSuggestions(value){
             lmod.clear()
-            lmod.append(JSON.parse(EditorManager.filter(ifilter,modeIndicator,code,line,pos)))
+            lmod.append(JSON.parse(value))
             if (lmod.length==0){
                 var d={'name':'No Suggestions','text':'','doc':''}
                 lmod.append(d)
             }
+            // container.visible=false
         }
     }
-    Component.onCompleted: lmod.append(JSON.parse(EditorManager.filter(' ',' ',' ',0,0)))
+    onIfilterChanged:{
+        EditorManager.filter(ifilter,modeIndicator,code,line,pos,container.module)
+    }
+    
+    Component.onCompleted: EditorManager.filter(' ',' ',code,0,0,contai,ner.module)
 
 
     // --- defaults
@@ -142,12 +150,27 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
-                        Image{
+                        // Image{
+                        //     height: parent.height
+                        //     width:height
+                        //     source: '../assets/icons/File.svg'
+                        //     anchors.right:parent.right
+                        //     anchors.margins:5
+                        // }
+
+                        Rectangle{
                             height: parent.height
                             width:height
-                            source: '../assets/icons/File.svg'
                             anchors.right:parent.right
                             anchors.margins:5
+                            color:'transparent'
+                            TextIcon{
+                                id:ico_
+                                _size:14
+                                text:icons[icon]
+                                anchors.fill:parent
+                                color:icon_color
+                            }
                         }
 
                         MouseArea {

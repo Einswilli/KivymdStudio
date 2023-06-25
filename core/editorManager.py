@@ -53,6 +53,8 @@ class Worker(QRunnable):
 
 class EditorManager(QObject):
 
+    suggestions=Signal(str,name='suggestions')
+
     def detect_lang(self,code):
         import re
         defs=code.count('def ')
@@ -161,6 +163,8 @@ class EditorManager(QObject):
 
         # return self.colorify(str(text).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))
 
-    @Slot(str,str,str,int,int,result='QVariant')
-    def filter(self,name,mode,code,line,pos):
-        return Json.dumps(utils.filter(name,mode,code,line,pos),indent=4)
+    @Slot(str,str,str,int,int,str,result='QVariant')
+    def filter(self,name,mode,code,line,pos,module):
+        worker=Worker(utils.filter,name,mode,code,line,pos,module,self.suggestions)
+        QThreadPool.globalInstance().start(worker)
+        # return Json.dumps(utils.filter(name,mode,code,line,pos,module),indent=4)

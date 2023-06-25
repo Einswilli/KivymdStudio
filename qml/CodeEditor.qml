@@ -122,6 +122,7 @@ Item{
                 width: 200
                 y: editor.cursorRectangle.y+15
                 x: editor.cursorRectangle.left
+                module:chemin.text
                 visible:false
                 onItemSelected:{
                     var i=item.text

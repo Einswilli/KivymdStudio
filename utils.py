@@ -1,5 +1,4 @@
 import shutil,os,glob,sys,pathlib
-from numpy import False_
 import simplejson as Json
 
 PATHS={
@@ -213,41 +212,76 @@ words=[
     'raise', 'break', 'pass', 'continue', 'with', 'from', 'assert', 'elif','Finally', 'yield', 'lambda',
     '__init__','__str__','__repr__','__dict__','__hash__','__annotations__','__delatrtr__','__class__',
     '__dir__','__doc__','__eq__','__format__','__getattribute__','__init_subclass__','__module__','__reduce__',
-    '__ne__','__new__','__reduce_ex__','__sizeof__','setattr__','__slots__'
+    '__ne__','__new__','__reduce_ex__','__sizeof__','__setattr__','__slots__'
 ]
 
-def filter(name,mode,code,line,pos):
-    if mode in (' ',',','@','\t','\u21E5','\u2029'):
-        return[{'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),'text':w,'doc':''}for w in sorted(words) if w.startswith(name)] if name!='' else []
-    elif mode =='.':
-        from jedi.api import Script
+def filter(name,mode,code,line,pos,module,sig):
+    # if mode in (' ',',','@','\t','\u21E5','\u2029'):
+    #     sig.emit(Json.dumps([
+    #         {
+    #             'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),
+    #             'text':w,
+    #             'doc':'',
+    #             'icon':'cube-outline' if not w.startswith('__') and not  w.endswith('__') else 'code-braces-box',
+    #             'icon_color':'#9477E4' if not w.startswith('__') and not  w.endswith('__') else '#81C6F5'
+    #         }for w in sorted(words) if w.startswith(name)] if name!='' else [],indent=4))
+    # elif mode =='.':
+
+    if code not in('',' ',None):
+        from jedi import Script
         import inspect
 
         try:
-            s=Script(source=code.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'))
+            s=Script(code.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'),path=module)
+            print(module)
             results = []
-            col=len(str(code)[:pos].splitlines()[-1])
+            col=len(str(code)[:pos].splitlines()[-1])# if len(str(code)[:pos].splitlines())>0 else 0
             line=len(str(code)[:pos].splitlines())
             # s.
             for c in s.complete(line,col):
                 d={}
                 doc=''
+                icon=''
+                color=''
                 d['name']=c.name.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>')
                 d['text']=c.name
                 if c.type in ['function', 'class', 'instance']:
                     doc = c.docstring().replace("(self,", "(")
                 d['doc']=doc
+                if c.type in['class', 'instance']:
+                    icon='cube-outline'
+                    color='#9477E4'
+                elif c.type=='function':
+                    icon='code-braces'
+                    color='#E4D077'
+                elif c.type=='keyword':
+                    icon='cube-outline'
+                    color='#81C6F5'
+                elif c.type=='builtin':
+                    icon='code-braces-box-outline'
+                    color='#E4D077'
+                elif c.type in['module','snippet']:
+                    icon='puzzle-outline'
+                    color='#2F917B'
+                elif c.type in['param','attribute']:
+                    icon='history'
+                    color='#81C6F5'
+                elif c.type in['property','path']:
+                    icon='bolt'
+                    color='#2F917B'
+                else:
+                    icon='ghost'
+                    color='#E2E0E6'
+                d['icon']=icon
+                d['icon_color']=color
                 # if doc.startswith("{}(".format(c.name)):
                 #     continue
                 results.append(d)
-            if results==[]:
-                prev_name=code[:pos].splitlines()[-1].split('.')[-2].split(' ')[-1]
-                results=[{'name':e[0].replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),'text':e[0],'doc':''} for e in inspect.getmembers(prev_name) if e[0].startswith(name) if name!='']
-                #print(prev_name,results)
-            return results
-        except Exception as e:
-            print(e)
-            return []
+            
+            sig.emit(Json.dumps(results,indent=4))
+        except Exception as er:
+            print(er)
+            sig.emit(Json.dumps([],indent=4))
 
 
 def add_directives(d):
