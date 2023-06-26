@@ -214,6 +214,9 @@ ApplicationWindow {
         }
     }
     
+
+    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////    WIDGETS     ////////////////////////////
     
     //LEFT BAR
     Rectangle{
@@ -239,76 +242,6 @@ ApplicationWindow {
             color:'white'
             anchors.left:parent.left
             // visible:false
-        }
-
-        //COMPONENT
-        Component{
-            id:lbarcomp
-            Rectangle{
-                height:50
-                width:50
-                radius:12
-                color:barclaire
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                Image{
-                    id:im_
-                    width:25
-                    height:25
-                    source:icon
-                    visible:!is_icon
-                    anchors.centerIn: parent
-                    fillMode:Image.PreserveAspectFit
-                }
-
-                TextIcon{
-                    id:ico_
-                    _size:25
-                    text:root.icons[icon]
-                    anchors.fill:parent
-                    visible:is_icon
-                    color:xhov.parent==parent?'#EEEFFF':'#AAAAAA'
-                }
-
-                MouseArea{
-                    anchors.fill: parent
-                    hoverEnabled:true
-                    onEntered:{
-                        // parent.color=hovercolor
-                        im_.scale=1.2
-                        ico_.scale=1.2
-                    }
-                    onExited:{
-                        // parent.color=barclaire
-                        im_.scale=1
-                        ico_.scale=1
-                    }
-
-                    onPressed:{
-                        root.clicked(index, name)
-                    }
-                    onClicked:{
-                        xhov.visible=true
-                        xhov.parent=parent
-                        //console.log(ui)
-                        if (leftbox.width==0){
-                            exptxt.text=name
-                            lb_on.start();
-                            expbox.visible=true
-                            leftbar.leftNavigation(ui);
-                        }
-                        else if(leftbox.width>0 && ui.visible==true){
-                            expbox.visible=false
-                            ui.visible=false
-                            lb_off.start()
-                        }
-                        else{
-                            exptxt.text=name
-                            leftbar.leftNavigation(ui);
-                        }
-                    }
-                }
-            }
         }
 
         ListModel{
@@ -430,23 +363,6 @@ ApplicationWindow {
                 }
             }
         }
-    }
-
-    NumberAnimation{
-        id:lb_on
-        from: 0
-        to: (root.width/5)
-        duration: 200
-        property: 'width'
-        target:leftbox
-    }
-    NumberAnimation{
-        id:lb_off
-        from: (root.width/5)
-        to: 0
-        duration: 200
-        property: 'width'
-        target:leftbox
     }
 
     //LEFT BOX
@@ -849,7 +765,6 @@ ApplicationWindow {
             }
         }
     }
-
 
     //TOP BAR
     Rectangle{
@@ -2337,24 +2252,6 @@ ApplicationWindow {
         }
     }
 
-    NumberAnimation{
-        id:emu_off
-        from: emmubox.x
-        to: root.width
-        duration: 200
-        property: 'x'
-        target:emmubox
-    }
-
-    NumberAnimation{
-        id:emu_on
-        from: root.width
-        to: emmubox.x
-        duration: 200
-        property: 'x'
-        target:emmubox
-    }
-
     // EMULATOR BOX
     Rectangle{
         id:emmubox
@@ -2685,6 +2582,45 @@ ApplicationWindow {
 
 
     /////////////////////////////////////////////////////////////////////////
+    ///////////////////////////    ANIMATIONS     ///////////////////////////
+
+    NumberAnimation{
+        id:lb_on
+        from: 0
+        to: (root.width/5)
+        duration: 200
+        property: 'width'
+        target:leftbox
+    }
+    NumberAnimation{
+        id:lb_off
+        from: (root.width/5)
+        to: 0
+        duration: 200
+        property: 'width'
+        target:leftbox
+    }
+
+    NumberAnimation{
+        id:emu_off
+        from: emmubox.x
+        to: root.width
+        duration: 200
+        property: 'x'
+        target:emmubox
+    }
+
+    NumberAnimation{
+        id:emu_on
+        from: root.width
+        to: emmubox.x
+        duration: 200
+        property: 'x'
+        target:emmubox
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////
     ///////////////////////////        TIMERS     ///////////////////////////
 
     Timer{
@@ -2831,6 +2767,76 @@ ApplicationWindow {
     /////////////////////////////////////////////////////////////////////////
     ////////////////////    COMPONENTS WIDGETS     ///////////////////////////
 
+
+    //LEFT BAR COMPONENT
+    Component{
+        id:lbarcomp
+        Rectangle{
+            height:50
+            width:50
+            radius:12
+            color:barclaire
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            Image{
+                id:im_
+                width:25
+                height:25
+                source:icon
+                visible:!is_icon
+                anchors.centerIn: parent
+                fillMode:Image.PreserveAspectFit
+            }
+
+            TextIcon{
+                id:ico_
+                _size:25
+                text:root.icons[icon]
+                anchors.fill:parent
+                visible:is_icon
+                color:xhov.parent==parent?'#EEEFFF':'#AAAAAA'
+            }
+
+            MouseArea{
+                anchors.fill: parent
+                hoverEnabled:true
+                onEntered:{
+                    // parent.color=hovercolor
+                    im_.scale=1.2
+                    ico_.scale=1.2
+                }
+                onExited:{
+                    // parent.color=barclaire
+                    im_.scale=1
+                    ico_.scale=1
+                }
+
+                onPressed:{
+                    root.clicked(index, name)
+                }
+                onClicked:{
+                    xhov.visible=true
+                    xhov.parent=parent
+                    //console.log(ui)
+                    if (leftbox.width==0){
+                        exptxt.text=name
+                        lb_on.start();
+                        expbox.visible=true
+                        leftbar.leftNavigation(ui);
+                    }
+                    else if(leftbox.width>0 && ui.visible==true){
+                        expbox.visible=false
+                        ui.visible=false
+                        lb_off.start()
+                    }
+                    else{
+                        exptxt.text=name
+                        leftbar.leftNavigation(ui);
+                    }
+                }
+            }
+        }
+    }
 
     // CODEBOX
     Component{

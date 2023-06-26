@@ -65,6 +65,7 @@ Rectangle {
         }
     }
     onIfilterChanged:{
+        lmod.clear()
         EditorManager.filter(ifilter,modeIndicator,code,line,pos,container.module)
     }
     

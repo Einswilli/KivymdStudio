@@ -146,7 +146,7 @@ Item{
                 id:editor
                 focus:true
                 clip:true
-                width: flickb.width
+                width: paintedWidth//flickb.width
                 height: (lineCount*25)+flickb.height//flickb.height
                 color:'white'
                 mouseSelectionMode:TextEdit.SelectCharacters
