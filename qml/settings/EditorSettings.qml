@@ -32,7 +32,7 @@ Item{
             //BUTTON
             Rectangle{
                 height: parent.height
-                width: parent.width*.2
+                width: Math.min((parent.width*.2),130)
                 color:parent.color
                 anchors.right:parent.right
                 anchors.margins:15
@@ -46,7 +46,7 @@ Item{
                     Text{
                         text:'save'
                         color:'#EEEEEE'
-                        font.pointSize:11
+                        font.pointSize:12
                         anchors.centerIn: parent
                     }
                     MouseArea{

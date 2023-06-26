@@ -41,8 +41,9 @@ Item{
 
             //LEFT PANEL
             Rectangle{
+                id:leftpanel
                 height:parent.height
-                width:parent.width*.20
+                width:Math.min((parent.width*.20),220)
                 color:'#292828'
 
                 Column{
@@ -141,7 +142,7 @@ Item{
             //RIGHT PANEL
             Rectangle{
                 height:parent.height
-                width:(parent.width*.80)-10
+                width:parent.width-leftpanel.width-10
                 color:'Transparent'
 
                 EditorSettings{
