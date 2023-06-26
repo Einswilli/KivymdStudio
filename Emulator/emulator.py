@@ -41,7 +41,7 @@ Window.resizable=False
 Config.set('graphics','resizable',False)
 
 kv="""
-#:import HotReloadViewer kivymd.utils.hot_reload_viewer.HotReloadViewer
+#:import HotReloadViewer hot_reload_viewer.HotReloadViewer
 #:import hex kivy.utils.get_color_from_hex
 
 Screen:

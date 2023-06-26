@@ -48,7 +48,8 @@ Item{
         spacing: 15
 
         Rectangle{
-            height: root.height*.07
+            id:top_
+            height: Math.min(root.height*.07,50)
             width: parent.width
             color:'transparent'
 
@@ -122,7 +123,7 @@ Item{
         }
 
         Rectangle{
-            height: root.height*.88
+            height: parent.height-top_.height-10
             width: parent.width
             color:'transparent'
             visible:!root.is_answer
@@ -402,7 +403,7 @@ Item{
         }
 
         Rectangle{
-            height: root.height*.88
+            height: parent.height-top_.height-10
             width: parent.width
             color:'transparent'
             visible:root.is_answer
