@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
+import "../"
 
 Item{
     id:root
@@ -45,11 +46,13 @@ Item{
                             radius:5
                             color:'#2E2F30'
                             anchors.verticalCenter:parent.verticalCenter
-                            Image{
-                                height: 20
-                                width: 20
-                                source: '../../assets/icons/folder-app.svg'
-                                anchors.centerIn:parent
+                            
+                            TextIcon{
+                                id:ico_
+                                _size:17
+                                text: icons["check"]
+                                anchors.fill: parent
+                                color:active?_color:'#AAAAAA'
                                 visible:check.checked
                             }
                         }

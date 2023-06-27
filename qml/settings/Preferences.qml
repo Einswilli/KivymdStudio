@@ -10,7 +10,7 @@ Item{
     anchors.fill:parent
 
     property var navs:[editornav,accountnav,appearancenav,openainav]
-    property var pages:[editorsettings,]
+    property var pages:[editorsettings,appearancesettings,openaisettings]
 
     function changeNav(nav){
         for (var i=0;i<navs.length;++i) {
@@ -28,6 +28,12 @@ Item{
         }
         page.enabled=true
         page.visible=true
+    }
+
+    
+    Component.onCompleted:{
+        root.changeNav(editornav);
+        root.changePage(editorsettings);
     }
 
     Rectangle{
@@ -97,11 +103,12 @@ Item{
 
                             onTapped:{
                                 root.changeNav(appearancenav);
+                                root.changePage(appearancesettings);
                             }
                         }
                     }
 
-                    // APPEARANCES
+                    // OPENAI
                     Rectangle{
                         height:40
                         width:parent.width
@@ -115,6 +122,7 @@ Item{
 
                             onTapped:{
                                 root.changeNav(openainav);
+                                root.changePage(openaisettings);
                             }
                         }
                     }
@@ -144,6 +152,16 @@ Item{
                 height:parent.height
                 width:parent.width-leftpanel.width-10
                 color:'Transparent'
+
+                OpenaiSettings{
+                    id:openaisettings
+                    anchors.fill:parent
+                }
+
+                AppearanceSettings{
+                    id:appearancesettings
+                    anchors.fill:parent
+                }
 
                 EditorSettings{
                     id:editorsettings
