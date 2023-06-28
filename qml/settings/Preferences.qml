@@ -10,7 +10,7 @@ Item{
     anchors.fill:parent
 
     property var navs:[editornav,accountnav,appearancenav,openainav]
-    property var pages:[editorsettings,appearancesettings,openaisettings]
+    property var pages:[editorsettings,appearancesettings,openaisettings,accountsettings]
 
     function changeNav(nav){
         for (var i=0;i<navs.length;++i) {
@@ -141,6 +141,7 @@ Item{
 
                             onTapped:{
                                 root.changeNav(accountnav);
+                                root.changePage(accountsettings);
                             }
                         }
                     }
@@ -152,6 +153,11 @@ Item{
                 height:parent.height
                 width:parent.width-leftpanel.width-10
                 color:'Transparent'
+
+                AccountSettings{
+                    id:accountsettings
+                    anchors.fill:parent
+                }
 
                 OpenaiSettings{
                     id:openaisettings
