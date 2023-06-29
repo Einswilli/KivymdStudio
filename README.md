@@ -294,7 +294,6 @@ If you encounter an issue or have an idea for a new feature, feel free to open a
 
 We greatly appreciate all contributions, and thank you in advance for your participation in the project!
 
-Feel free to customize this contribution section according to your specific needs and the contribution guidelines of your project.
 
 ## Donate
 
