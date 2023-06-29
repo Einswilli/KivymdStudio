@@ -426,6 +426,7 @@ Item{
         hoverEnabled: true
         onEntered: {
             opts.visible= true
+            icon_.visible=true
         }
         onExited: {
             //opts.visible=false
@@ -433,6 +434,7 @@ Item{
         onWheel: {}
         onClicked: {
             opts.visible=false
+            icon_.visible=false
         }
     }
 
@@ -452,6 +454,7 @@ Item{
             anchors.fill:parent
             anchors.margins:2
             spacing:10
+
             Rectangle{
                 width:height
                 height:parent.height
@@ -477,6 +480,7 @@ Item{
                     }
                 }
             }
+
             Rectangle{
                 width:height
                 height:parent.height
@@ -502,6 +506,65 @@ Item{
                     }
                 }
             }
+        }
+    }
+
+    //ICONS
+    Rectangle{
+        id:icon_
+        width: 40
+        height: 40
+        clip:true
+        visible:false
+        anchors.right:parent.right
+        anchors.top:opts.bottom
+        anchors.margins:20
+        border.color:'#2E2F30'
+        border.width:1
+        color:appcolor
+
+        Rectangle{
+            height:parent.height
+            width:height
+            color:'transparent'
+            anchors.verticalCenter: parent.verticalCenter
+
+            TextIcon{
+                id:ico_
+                _size:17
+                text: icons['emoticon']
+                anchors.fill: parent
+                color:'#AAAAAA'
+            }
+        }
+
+        MouseArea{
+            hoverEnabled:true
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+
+
+            onClicked:{
+                picker_.visible=!picker_.visible
+            }
+        }
+    }
+
+    //ICONPICKER
+    Rectangle{
+        id:picker_
+        height:450
+        width:300
+        radius:8
+        visible:false
+        anchors.centerIn: parent
+        border.color:'#2E2F30'
+        border.width:1
+        color:appcolor
+        
+        IconPicker{
+            id:icp_
+            anchors.fill:parent
         }
     }
     
