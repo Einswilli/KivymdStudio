@@ -24,7 +24,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
     - Windows 
         - click [HERE](https://www.python.org/downloads/windows/) for downloads
 
-2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/archive/refs/heads/master.zip)
+2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/KivymdStudio/archive/refs/heads/master.zip)
 
 3. In the extracted folder, run these commands
     - `python install.py` <- install dependencies
