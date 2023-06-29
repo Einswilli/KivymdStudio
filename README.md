@@ -265,6 +265,37 @@ But the emulator does not work very well under windows for the moment.I will fix
 
     - Emulator can't load Python file correctly yet
 
+## Contribution
+
+ I am thrilled that you are considering contributing to our project! Here is some information to help you get started.
+
+### How to Contribute
+
+1. Clone this repository to your local machine.
+2. Create a branch for your changes: git checkout -b your-branch-name.
+3. Make the desired changes in the code.
+4. Thoroughly test your modifications.
+5. Submit your changes:
+   - Add the modified files: git add .
+   - Commit your changes: git commit -m "Description of your modifications"
+   - Push your changes to your branch: git push origin your-branch-name
+6. Open a pull request to the main branch of the repository.
+
+### Contribution Guidelines
+
+- Make sure to follow coding best practices and maintain consistency with the existing code.
+- Document new features or modifications in the code.
+- Thoroughly test your modifications and ensure they do not introduce any regressions.
+- Respect the project's code of conduct and treat other contributors with respect and courtesy.
+
+### Issues and Feature Requests
+
+If you encounter an issue or have an idea for a new feature, feel free to open an issue in this repository. We are always open to suggestions and will do our best to address them promptly.
+
+We greatly appreciate all contributions, and thank you in advance for your participation in the project!
+
+Feel free to customize this contribution section according to your specific needs and the contribution guidelines of your project.
+
 ## Donate
 
 Kvs Code (Kivymd Studio Code) is a free and open source project, and will remain as one. If you would like to provide financial support, you can use the following links. This is completely optional, but every contribution is much appreciated!
