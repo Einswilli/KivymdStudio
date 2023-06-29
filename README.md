@@ -243,7 +243,7 @@ But the emulator does not work very well under windows for the moment.I will fix
     - [ ] General Project Search 
     - [x] Custom Terminal (done)
     - [x] Emmulator (done)
-    - [ ] Stack Overflow integration(done)
+    - [x] Stack Overflow integration(done)
     - [ ] Settings
     - [x] MDIcons Picker (done)
     - [ ] PyLint integration
