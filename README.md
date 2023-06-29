@@ -11,7 +11,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
 
 ## Prerequisites 
- - Python3.x
+ - Python3.9
     - See [installation](#Installation) for OS specifics 
  
 
@@ -24,7 +24,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
     - Windows 
         - click [HERE](https://www.python.org/downloads/windows/) for downloads
 
-2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/KivymdStudio.git)
+2. Download and Extract the latest release from [HERE](https://github.com/Einswilli/archive/refs/heads/master.zip)
 
 3. In the extracted folder, run these commands
     - `python install.py` <- install dependencies
@@ -235,16 +235,23 @@ But the emulator does not work very well under windows for the moment.I will fix
 
 ## To do make_list
 
-    - File Explorer (TreeView) (done)
-    - Project creator(done)
-    - Auto Completion in CodeEditor(plugin)
-    - Auto Indentation in OdeEditor(done)
-    - Syntax Highlight in CodeEditor(done)
-    - General Project Search 
-    - Custom Terminal (done)
-    - Emmulator (done)
-    - Stack Overflow integration(done)
-    - Settings
+    - [x] File Explorer (TreeView) (done)
+    - [x] Project creator(done)
+    - [x] Auto Completion in CodeEditor(done)
+    - [x] Auto Indentation in OdeEditor(done)
+    - [x] Syntax Highlight in CodeEditor(done)
+    - [ ] General Project Search 
+    - [x] Custom Terminal (done)
+    - [x] Emmulator (done)
+    - [ ] Stack Overflow integration(done)
+    - [ ] Settings
+    - [x] MDIcons Picker (done)
+    - [ ] PyLint integration
+    - [ ] Git Integration
+    - [ ] Plugin Manager
+    - [ ] Theme Manager
+    - [ ] Project Deps Manager (Integration with pip)
+    - [ ] Virtualenv Manager
 
 
 ## Next
