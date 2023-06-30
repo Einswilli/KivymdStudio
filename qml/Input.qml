@@ -19,7 +19,7 @@ Item{
     property alias txt:field.text
     property int rad:field.width/2
     property var valid:RegExpValidator{
-        regExp: /^([a-zA-Z0-9_@.éè ]+)$/
+        regExp: /^([a-zA-Z0-9_@.éè \-]+)$/
     }
     //anchors.horizontalCenter: parent.horizontalCenter
 

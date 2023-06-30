@@ -565,6 +565,11 @@ Item{
         IconPicker{
             id:icp_
             anchors.fill:parent
+
+            onIconSelected:{
+                editor.insert(editor.cursorPosition,name)
+                picker_.visible=false
+            }
         }
     }
     

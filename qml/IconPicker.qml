@@ -13,6 +13,9 @@ Item{
     property var icons_
     property var icons_list:[]
 
+    //SIGNALS
+    signal iconSelected(string name)
+
     Connections{
         enabled:true
         target:backend
@@ -39,18 +42,19 @@ Item{
     }
 
     function search(text){
-        var filteredlist=[]
+        // var filteredlist=[]
         var dict={}
+        model_.clear()
         for(const key in root.icons_){
             if(key.includes(text)){
                 dict['name']=key
                 dict['value']=root.icons_[key]
-                filteredlist.push(dict)
+                // filteredlist.push(dict)
+                //add it to the model
+                model_.append(dict)
             }
         }
-        //add it to the model
-        model_.clear()
-        model_.append(filteredlist)
+        
     }
 
     Rectangle{
@@ -76,6 +80,10 @@ Item{
                     backcolor:'#292828'
                     plhc:'#CCCCCC'
                     plhtext:'search for icons...'
+
+                    onTxtChanged:{
+                        root.search(txt)
+                    }
                 }
             }
 
@@ -118,6 +126,10 @@ Item{
 
                             onExited:{
                                 parent.color='#292828'
+                            }
+
+                            onClicked:{
+                                root.iconSelected(name)
                             }
                         }
                     }
