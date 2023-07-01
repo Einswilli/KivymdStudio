@@ -255,8 +255,11 @@ But the emulator does not work very well under windows for the moment.I will fix
     - [ ] Virtualenv Manager
 
 ## Showcase
-
-![Showcase](Screenshots/kvscode_showcase.mp4)
+<video width="320" height="240" controls>
+  <source src="../Screenshots/kvscode_showcase.mp4" type="video/mp4">
+  Votre navigateur ne prend pas en charge la balise vidéo.
+</video>
+<!-- ![Showcase](Screenshots/kvscode_showcase.mp4) -->
 
 
 ## Next
