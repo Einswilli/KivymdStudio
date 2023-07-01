@@ -246,7 +246,7 @@ But the emulator does not work very well under windows for the moment.I will fix
     - [x] Stack Overflow integration(done)
     - [ ] Settings
     - [x] MDIcons Picker (done)
-    - [ ] Color Picker 
+    - [x] Color Picker 
     - [ ] PyLint integration
     - [ ] Git Integration
     - [ ] Plugin Manager
