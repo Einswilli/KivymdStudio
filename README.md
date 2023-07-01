@@ -254,6 +254,7 @@ But the emulator does not work very well under windows for the moment.I will fix
     - [ ] Project Deps Manager (Integration with pip)
     - [ ] Virtualenv Manager
 
+## Showcase
 
 ![Showcase](Screenshots/kvscode_showcase.mp4)
 
