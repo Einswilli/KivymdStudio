@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
+import QtQuick.Dialogs 1.0
 //import '../Js/highlightcolor.js' as Logic
 // import '../Js/prism.js' as PrismJS
 
@@ -427,6 +428,7 @@ Item{
         onEntered: {
             opts.visible= true
             icon_.visible=true
+            colorp_.visible=true
         }
         onExited: {
             //opts.visible=false
@@ -435,6 +437,7 @@ Item{
         onClicked: {
             opts.visible=false
             icon_.visible=false
+            colorp_.visible=false
         }
     }
 
@@ -550,6 +553,47 @@ Item{
         }
     }
 
+    //COLORPICKER
+    Rectangle{
+        id:colorp_
+        width: 40
+        height: 40
+        clip:true
+        visible:false
+        anchors.right:parent.right
+        anchors.top:icon_.bottom
+        anchors.margins:20
+        border.color:'#2E2F30'
+        border.width:1
+        color:appcolor
+
+        Rectangle{
+            height:parent.height
+            width:height
+            color:'transparent'
+            anchors.verticalCenter: parent.verticalCenter
+
+            TextIcon{
+                id:col_
+                _size:17
+                text: icons['format-color-fill']
+                anchors.fill: parent
+                color:'#AAAAAA'
+            }
+        }
+
+        MouseArea{
+            hoverEnabled:true
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+
+
+            onClicked:{
+                colorpiker.visible=!colorpiker.visible
+            }
+        }
+    }
+
     //ICONPICKER
     Rectangle{
         id:picker_
@@ -570,6 +614,26 @@ Item{
                 editor.insert(editor.cursorPosition,name)
                 picker_.visible=false
             }
+        }
+    }
+
+    ColorDialog{
+        id:colorpiker
+        //color: color
+        currentColor: "#ABCDEF"
+        // modality: Qt: : WindowModality
+        showAlphaChannel: true
+        //title: string
+        //visible: bool
+
+        onAccepted:{
+            // console.log(color)
+            editor.insert(editor.cursorPosition,color)
+            colorpiker.close()
+        }
+
+        onRejected:{
+            colorpiker.close()
         }
     }
     
