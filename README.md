@@ -255,6 +255,9 @@ But the emulator does not work very well under windows for the moment.I will fix
     - [ ] Virtualenv Manager
 
 
+![Showcase](Screenshots/kvscode_showcase.mp4)
+
+
 ## Next
     
     - Chat with GPT 4 (User must use his own Openai APIKEY)
