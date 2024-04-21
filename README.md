@@ -1,3 +1,4 @@
+<a name="readme-top"></a>
 <p align="center">
 <img src="assets/images/kv.png?raw=true" height="60"><br>
 A kivyMD development studio
@@ -8,6 +9,10 @@ A kivyMD development studio
 I would like to thank all those who liked it and want to contribute, as well as those who sent me insults, as it made me realize the value they attach to this project...
 
 Now, I will make improvements and dedicate at least three evenings out of seven to push bug fixes.</p>
+
+
+## Project Demo
+[Project Demo Video](https://github.com/Einswilli/KivimdStudio/Screenshots/kvscode_showcase.mp4)
 
 
 ## Prerequisites 
@@ -38,6 +43,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 | | |
 |---|---|
 |![Image 1](Screenshots/33.png)|![Image 1](Screenshots/32.png)|
+|![Image 1](Screenshots/37.png)|![Image 1](Screenshots/39.png)|
 |![Image 1](Screenshots/26.png)|![Image 1](Screenshots/27.png)|
 |![Image 1](Screenshots/28.png)|![Image 1](Screenshots/20.png)|
 |![Image 1](Screenshots/24.png)|![Image 1](Screenshots/21.png)|
@@ -76,6 +82,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
  ## Quick Start
 
+```qml
     #:import hex kivy.utils.get_color_from_hex
 
     <ButtonGris@Button>
@@ -220,8 +227,14 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
             ButtonOrange:
                 text: '='
                 on_press: input.text=str(eval(input.text))
+```
 
 
+<p align="right" style="font-size: 14px; color: #555; margin-top: 20px;">
+    <a href="#readme-top" style="text-decoration: none; color: #007bff; font-weight: bold;">
+        ↑ Back to Top ↑
+    </a>
+</p>
 
 ## NOTE
 
@@ -230,12 +243,16 @@ The problem with the launch of the studio under windows is fixed in this update.
 But the emulator does not work very well under windows for the moment.I will fix it in the next version of the emulator.
 
 
+<p align="right" style="font-size: 14px; color: #555; margin-top: 20px;">
+    <a href="#readme-top" style="text-decoration: none; color: #007bff; font-weight: bold;">
+        ↑ Back to Top ↑
+    </a>
+</p>
 
 
+## To do list
 
-## To do make_list
-
-    - [x] File Explorer (TreeView) (done)
+    [x] File Explorer (TreeView) (done)
     - [x] Project creator(done)
     - [x] Auto Completion in CodeEditor(done)
     - [x] Auto Indentation in OdeEditor(done)
@@ -301,6 +318,13 @@ But the emulator does not work very well under windows for the moment.I will fix
 If you encounter an issue or have an idea for a new feature, feel free to open an issue in this repository. We are always open to suggestions and will do our best to address them promptly.
 
 We greatly appreciate all contributions, and thank you in advance for your participation in the project!
+
+
+<p align="right" style="font-size: 14px; color: #555; margin-top: 20px;">
+    <a href="#readme-top" style="text-decoration: none; color: #007bff; font-weight: bold;">
+        ↑ Back to Top ↑
+    </a>
+</p>
 
 
 ## Donate
