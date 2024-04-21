@@ -208,6 +208,7 @@ class Studio(QObject):
             height = root.winfo_screenheight()
             #print(width,height)
             self.screeninfo.emit([width,height])
+            root.destroy()
             return f'{width},{height}'
         except:return'1200,800'
         

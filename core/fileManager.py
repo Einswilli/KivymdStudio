@@ -1,4 +1,4 @@
-import os
+import os,glob
 from .dbManager import *
 from stackapi import StackAPI
 import simplejson as Json
@@ -97,5 +97,9 @@ class FileManager(QObject):
             'fname':str(d[1])
         }
 
-    def process_search(self,text):
-        pass
+    def process_search(self,pattern):
+
+        #
+        files = glob.glob(pattern,recursive=True)
+        for file in files:
+            print(file)
