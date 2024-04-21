@@ -12,7 +12,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
 
 ## Project Demo
-[Project Demo Video](https://github.com/Einswilli/KivimdStudio/Screenshots/kvscode_showcase.mp4)
+[Project Demo Video](https://github.com/Einswilli/KivimdStudio/blob/master/Screenshots/kvscode_showcase.mp4)
 
 
 ## Prerequisites 
@@ -252,7 +252,7 @@ But the emulator does not work very well under windows for the moment.I will fix
 
 ## To do list
 
-    [x] File Explorer (TreeView) (done)
+    - [x] File Explorer (TreeView) (done)
     - [x] Project creator(done)
     - [x] Auto Completion in CodeEditor(done)
     - [x] Auto Indentation in OdeEditor(done)
