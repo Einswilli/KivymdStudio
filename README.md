@@ -12,11 +12,11 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
 
 ## Project Demo
-<!-- [Project Demo Video](Screenshots/kvscode_showcase.mp4) -->
-<video width="320" height="240" controls>
-    <source src="https://github.com/Einswilli/KivymdStudio/blob/master/Screenshots/kvscode_showcase.mp4" type="video/mp4">
-    Votre navigateur ne prend pas en charge la balise vidéo.
-</video>
+[Project Demo Video](https://github.com/Einswilli/KivymdStudio/assets/61468993/4250448d-f545-4d4e-87b9-32942defb13f)
+
+
+
+
 
 
 ## Prerequisites 
