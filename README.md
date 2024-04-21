@@ -12,7 +12,7 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 
 
 ## Project Demo
-[Project Demo Video](https://github.com/Einswilli/KivimdStudio/blob/master/Screenshots/kvscode_showcase.mp4)
+[Project Demo Video](Screenshots/kvscode_showcase.mp4)
 
 
 ## Prerequisites 
