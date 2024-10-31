@@ -1,5 +1,10 @@
 import shutil,os,glob,sys,pathlib
 import simplejson as Json
+from jedi import Script
+import inspect, jedi
+
+# Preload jedimodules
+jedi.preload_module()
 
 PATHS={
     'BASE_PATH':f'{pathlib.Path.home()}/.KvStudio/',
@@ -216,20 +221,9 @@ words=[
 ]
 
 def filter(name,mode,code,line,pos,module,sig):
-    # if mode in (' ',',','@','\t','\u21E5','\u2029'):
-    #     sig.emit(Json.dumps([
-    #         {
-    #             'name':w.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>'),
-    #             'text':w,
-    #             'doc':'',
-    #             'icon':'cube-outline' if not w.startswith('__') and not  w.endswith('__') else 'code-braces-box',
-    #             'icon_color':'#9477E4' if not w.startswith('__') and not  w.endswith('__') else '#81C6F5'
-    #         }for w in sorted(words) if w.startswith(name)] if name!='' else [],indent=4))
-    # elif mode =='.':
+    ''' Get code suggestions using jedi '''
 
     if code not in('',' ',None):
-        from jedi import Script
-        import inspect
 
         try:
             s=Script(code.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'),path=module)

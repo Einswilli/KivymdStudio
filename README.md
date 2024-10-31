@@ -15,10 +15,6 @@ Now, I will make improvements and dedicate at least three evenings out of seven 
 [Project Demo Video](https://github.com/Einswilli/KivymdStudio/assets/61468993/4250448d-f545-4d4e-87b9-32942defb13f)
 
 
-
-
-
-
 ## Prerequisites 
  - Python3.9
     - See [installation](#Installation) for OS specifics 

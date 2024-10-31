@@ -2119,6 +2119,23 @@ ApplicationWindow {
             text:'TERMINAL'
             font.pixelSize:15
             color:'white'
+            visible:false
+        }
+
+        Rectangle{
+            // y:xyw.height+15
+            // width:parent.width-2
+            // height:parent.height//-xyw.height-20
+            color:parent.color
+            anchors.fill: parent
+            anchors.margins: 4
+            anchors.horizontalCenter: parent.horizontalCenter
+            
+            TerminalContainer{
+                height:parent.height
+                width:parent.width
+                // anchors.fill: parent
+            }
         }
 
         //CLOSER
@@ -2189,20 +2206,6 @@ ApplicationWindow {
                         terminal.height=(body.height/3)+50
                     }
                 }
-            }
-        }
-
-        Rectangle{
-            y:xyw.height+15
-            width:parent.width-2
-            height:parent.height-xyw.height-20
-            color:parent.color
-            anchors.horizontalCenter: parent.horizontalCenter
-            
-            Terminal{
-                height:parent.height
-                width:parent.width
-                // anchors.fill: parent
             }
         }
 
