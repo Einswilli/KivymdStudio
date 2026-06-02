@@ -1,0 +1,69 @@
+[project]
+name = "ember"
+version = "2.0.0"
+description = "A modern, extensible, AI-powered code editor built with Qt/QML and Rust"
+readme = "README.md"
+authors = [
+    { name = "#Einswilli", email = "wilfriedgoeh@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    # Core UI
+    "pyside6>=6.11.0",
+    "qasync>=0.28.0",
+    # Data (Rust-powered ORM)
+    "ryx>=0.1.4",
+    # Rust-powered tooling
+    "ruff>=0.8.0",
+    "orjson>=3.10.0",
+    # Completion & Analysis
+    "lsprotocol>=2024.0.0",
+    # AI Providers
+    "openai>=2.0.0",
+    "httpx>=0.28.0",
+    # Utilities
+    "aiofiles>=24.0.0",
+    "platformdirs>=4.0.0",
+    "watchdog>=6.0.0",
+    "rich>=15.0.0",
+    "pydantic>=2.0.0",
+    "pyperclip>=1.11.0",
+    # Legacy (transitional)
+    "ansi2html>=1.9.2",
+    "plyer>=2.1.0",
+    "pygments>=2.20.0",
+    "stackapi>=0.3.1",
+    "falcorn",
+    "ty>=0.0.43",
+]
+
+[project.optional-dependencies]
+backend = [
+    "batya>=0.1.0",
+    # "falcorn>=0.1.3",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[build-system]
+requires = ["maturin>=1.8.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+manifest-path = "ferrite/Cargo.toml"
+module-name = "ember.ferrite"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.uv.sources]
+ryx = { path = "../Ryx/ryx-python" }
+batya = { path = "../Batya/python" }
+falcorn = { path = "../Falcorn/falcorn-python" }
