@@ -3,11 +3,11 @@ import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
-import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.15
 import Qt.labs.folderlistmodel 2.15
 import QtQml.Models 2.2
 import "settings"
+import "components"
 // import QtApplicationManager 2.0
 //import QtQuick.Controls 1.4 as OV
 //import DotPy.Core 1.0
@@ -22,7 +22,7 @@ ApplicationWindow {
     height: 700
     visible: true
     color: "#1F1F20"
-    title: qsTr("Kivymd Studio Code")
+    title: qsTr("Ember")
 
     QtObject{
         id:obj
@@ -33,9 +33,19 @@ ApplicationWindow {
             return JSON.parse(JSON.stringify(dic))
         }
     }
-    function openProject(value){
-        fm.folder=value
-        fm.show()
+    function openFileAfterDialog() {
+        var path = openFileAfterDialog()
+        if (!path) return
+        var text = EditorVM.openfile(path)
+        var titre = EditorVM.get_filename(path)
+        cde = text
+        lnk = path
+        codetab.insertTab(codetab.currentIndex+1, titre, cb)
+    }
+    function openFolderAfterDialog() {
+        var path = openFolderAfterDialog()
+        if (!path) return
+        FileManagerBackend.save_to_history(path)
     }
 
     Connections{
@@ -146,6 +156,10 @@ ApplicationWindow {
 
     //SHORTCUTS
     Shortcut {
+        sequence: "Ctrl+Shift+P"
+        onActivated: commandPalette.open()
+    }
+    Shortcut {
         sequence: "Ctrl+T"
         onActivated: terminal.visible=true
     }
@@ -164,7 +178,7 @@ ApplicationWindow {
         sequence: "Ctrl+O"
         onActivated: {
             //console.log('open file')
-            opfile.open()
+            openFileAfterDialog()
         }
     }
     Shortcut {
@@ -178,7 +192,7 @@ ApplicationWindow {
         sequence: "Alt+Ctrl+K"
         onActivated: {
             //console.log('open folder')
-            opfold.open()
+            openFolderAfterDialog()
         }
     }
     Shortcut {
@@ -951,7 +965,7 @@ ApplicationWindow {
                 onClicked:{
                     //fileop.visible=true
                     //console.log('install plugin')
-                    plugdialog.open()
+                    openFolderAfterDialog()
                 }
             }
             MenuItem{
@@ -1163,7 +1177,7 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 onClicked:{
-                    opfile.open()
+                    openFileAfterDialog()
                 }
             }
             MenuItem{
@@ -1203,7 +1217,7 @@ ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 onClicked:{
-                    opfold.open()
+                    openFolderAfterDialog()
                 }
             }
             MenuItem{
@@ -1577,96 +1591,7 @@ ApplicationWindow {
         TabView{
             id:codetab
             anchors.fill: parent
-            style: TabViewStyle {
-                frameOverlap: 0
-                tab: Rectangle {
-                    color: styleData.selected ? barfonce :barclaire
-                    // border.color:  barclaire
-                    implicitWidth: Math.max(childrenRect.width + 20, 140)
-                    implicitHeight: 20
-                    width:120
-                    height:40
-                    radius: 2
-
-                    Text {
-                        id: text
-                        x:33
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: styleData.title
-                        font.pointSize:12
-                        color: styleData.selected ? "white" : '#A4A5A7'
-                    }
-                    
-                    Image{
-                        id:fileimage
-                        height:20
-                        width:20
-                        x:8
-                        y:10
-                        source: '' 
-                    }
-
-                    Component.onCompleted:{
-                        var ext=styleData.title.substr(-3,3)
-                        //console.log(ext)
-                        if (ext=='.kv'){
-                            fileimage.source='../assets/images/kivy.png'
-                        }
-                        else if(ext=='.py'){
-                            fileimage.source='../assets/images/py.png'
-                        }else if(ext=='ome'){
-                            fileimage.source='../assets/images/coding.png'
-                        }else if(ext=='cpp'){
-                            fileimage.source='../assets/images/cpp.png'
-                        }else if(ext=='.js'){
-                            fileimage.source='../assets/images/js.png'
-                        }else if(ext=='.md'){
-                            fileimage.source='../assets/images/md.png'
-                        }else if(ext=='ngs'){
-                            fileimage.source='../assets/icons/param.png'
-                        }
-                    }
-
-                    Rectangle{
-                        anchors.right:parent.right
-                        anchors.margins: 8
-                        y:10
-                        width:15
-                        height:15
-                        radius:3
-                        color:barfonce
-
-                        Text{
-                            text:qsTr('×')
-                            font.pointSize:13
-                            color:'white'
-                            anchors.centerIn: parent
-                        }
-                        MouseArea{
-                            anchors.fill: parent
-                            hoverEnabled:true
-                            onEntered:{
-                                parent.color=hovercolor
-                            }
-                            onExited:{
-                                parent.color=barfonce
-                            }
-                            onClicked:{
-                                // parent.styleData.selected
-                                codetab.rmTab(styleData.index)
-                            }
-                        }
-                    }
-                    Rectangle{
-                        width:1
-                        color:'#0A0A0A'
-                        height:parent.height
-                        anchors.right:parent.right
-                    }
-                }
-                frame: Rectangle { color: root.color ; clip:true}
-                tabsMovable: true
-            }
+            
             
             Tab{
                 title: 'Wellcome'
@@ -2671,82 +2596,11 @@ ApplicationWindow {
         }
     }
 
-    FileDialog{
-        id:opfile
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: false
-        selectMultiple: false
-        //selectedNameFilter: string
-        //shortcuts: Object
-        //sidebarVisible: bool
-        title: 'Open file'
-        //visible: bool
-        onAccepted:{
-            var text=backend.openfile(fileUrl)
-            var titre=backend.get_filename(fileUrl)
-            cde=text
-            lnk=fileUrl.toString()
-            codetab.insertTab(codetab.currentIndex+1, titre,cb)
-            //root.setcode(text)
-        }
-    }
+    
 
-    FileDialog{
-        id:opfold
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: true
-        selectMultiple: true
-        //selectedNameFilter: string
-        //shortcuts: Object
-        //sidebarVisible: bool
-        title: 'Open folder'
-        //visible: bool
-        onAccepted:{
-            var text=opfold.fileUrl
-            //console.log(text.toString())//.substr(6,text.length-6))
-            //tmod.clear()
-            fm.folder=text.toString()//.substr(6,text.length-6)
-            fm.show()
-            FileManagerBackend.save_to_history(text)
-        }
-    }
+    
 
-    FileDialog{
-        id:plugdialog
-        defaultSuffix: '*.py'
-        //fileUrl: url
-        //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: true
-        selectMultiple: true
-        //selectedNameFilter: string
-        //shortcuts: Object
-        sidebarVisible: true
-        title: 'Choose Plugin folder to install'
-        //visible: bool
-        onAccepted:{
-            var text=fileUrl
-            //console.log(text.toString())//.substr(6,text.length-6))
-            loading.visible=true
-            timer.running=true
-            var r=backend.installPlugin(text);
-        }
-    }
+    
 
     Dialog{
         id:newproj
@@ -2909,5 +2763,40 @@ ApplicationWindow {
                 anchors.fill:parent
             }
         }
+    }
+
+    // ── Command Palette ──────────────────────────────────
+    CommandPalette {
+        id: commandPalette
+        onCommandSelected: function(cmdId) {
+            console.log("Command:", cmdId)
+            // Dispatch to appropriate ViewModel
+            if (cmdId === "file.open")       root.openFileAfterDialog()
+            if (cmdId === "file.open_folder") root.openFolderAfterDialog()
+            if (cmdId === "file.new")        fileop.visible = true
+            if (cmdId === "file.save")       { /* triggered by shortcut */ }
+            if (cmdId === "view.terminal")   terminal.visible = !terminal.visible
+            if (cmdId === "view.sidebar")    leftbar.visible = !leftbar.visible
+            if (cmdId === "settings.open")   {
+                if (codetab.contains("Settings") === false) {
+                    codetab.insertTab(codetab.currentIndex+1, "Settings", settingcomponent)
+                }
+            }
+            if (cmdId === "ai.explain")      ChatVM.explainCode("", SettingsVM.currentTheme)
+        }
+    }
+
+    // ── Status Bar ───────────────────────────────────────
+    StatusBar {
+        id: statusBar
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        language: StatusVM ? StatusVM.language : "Python"
+        encoding: StatusVM ? StatusVM.encoding : "UTF-8"
+        cursorLine: 1
+        cursorCol: 1
+        errorCount: 0
+        warningCount: 0
     }
 }

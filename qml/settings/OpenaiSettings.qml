@@ -1,9 +1,5 @@
 import QtQuick 2.15
-import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-import QtCharts 2.15
-import QtQuick.Layouts 1.0
 import '../'
 
 Item{
@@ -145,8 +141,8 @@ Item{
                             backcolor:'#292828'
                             plhc:'#CCCCCC'
                             plhtext:'text-davinci-003'
-                            valid:RegExpValidator{
-                                regExp: /^([a-zA-Z1-9._\-]+)$/
+                            valid: RegularExpressionValidator {
+                                regularExpression: /^([a-zA-Z1-9._\-]+)$/
                             }
                         }
                     }
@@ -181,8 +177,8 @@ Item{
                             backcolor:'#292828'
                             plhc:'#CCCCCC'
                             plhtext:'2000'
-                            valid:RegExpValidator{
-                                regExp: /^([1-9]+)$/
+                            valid: RegularExpressionValidator {
+                                regularExpression: /^([1-9][0-9]*)$/
                             }
                         }
                     }
@@ -217,8 +213,8 @@ Item{
                             backcolor:'#292828'
                             plhc:'#CCCCCC'
                             plhtext:'0.5'
-                            valid:RegExpValidator{
-                                regExp: /^([0-9.]+)$/
+                            valid: RegularExpressionValidator {
+                                regularExpression: /^([0-9.]+)$/
                             }
                         }
                     }
@@ -253,8 +249,8 @@ Item{
                             backcolor:'#292828'
                             plhc:'#CCCCCC'
                             plhtext:'4'
-                            valid:RegExpValidator{
-                                regExp: /^([1-9]+)$/
+                            valid: RegularExpressionValidator {
+                                regularExpression: /^([1-9][0-9]*)$/
                             }
                         }
                     }

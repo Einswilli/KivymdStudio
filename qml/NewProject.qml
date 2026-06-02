@@ -2,10 +2,10 @@ import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Dialogs 1.2
+// removed Qt5 import
+import QtQuick.Dialogs
 import QtCharts 2.15
-import QtQuick.Layouts 1.0
+import QtQuick.Layouts 1.15
 
 Item{
     id:root
@@ -662,16 +662,16 @@ Item{
         defaultSuffix: '*.py'
         //fileUrl: url
         //fileUrls: list<url>
-        folder: shortcuts.home
-        //modality: Qt: : WindowModality
-        nameFilters: ["All files (*)"]
-        selectExisting: true
-        selectFolder: true
-        selectMultiple: true
-        //selectedNameFilter: string
-        //shortcuts: Object
-        sidebarVisible: true
-        title: 'Choose folder to save the project'
+        // // folder: (Qt6)
+        //// modality: (Qt6 removed) // Qt: : WindowModality
+        // nameFilters: (Qt6 removed) // ["All files (*)"]
+        // // // selectExisting: (Qt6)
+        // // // selectFolder: (Qt6)
+        // // // selectMultiple: (Qt6)
+        //// // // selectedNameFilter: (Qt6)
+        //// shortcuts: (Qt6 removed) // Object
+        // // // sidebarVisible: (Qt6)
+        // title: (Qt6 removed) // 'Choose folder to save the project'
         //visible: bool
         onAccepted:{
             pathfield.text=fileUrl

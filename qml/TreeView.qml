@@ -1,7 +1,7 @@
 import QtQuick 2.4
 import QtQuick.Controls 1.4
-import QtQuick.Controls.Private 1.0
-import QtQuick.Controls.Styles 1.2
+// removed Qt5 import
+// removed Qt5 import
 import QtQml.Models 2.2
 
 BasicTableView {

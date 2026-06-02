@@ -69,7 +69,7 @@ Item{
                         anchors.fill:parent
                         autoScroll: true
                         color:'white'
-                        font.family:'monospace'
+                        font.family:'Menlo'
                         selectByMouse: true
                         font.pointSize:12
                         padding :5
