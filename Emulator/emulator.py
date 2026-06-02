@@ -3,7 +3,8 @@ from kivymd.app import MDApp
 from kivy.core.window import Window
 from kivy.lang.builder import Builder
 
-import os, sys
+import os
+import sys
 import traceback
 from threading import Thread
 from functools import partial
@@ -15,25 +16,16 @@ from kivy.lang import Builder
 from kivy.clock import mainthread
 from kivy.resources import resource_add_path, resource_remove_path
 # from kivystudio.components.emulator_area import emulator_area
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.behaviors import ToggleButtonBehavior
-from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import IconLeftWidget, IconRightWidget, OneLineListItem,ThreeLineListItem,OneLineAvatarIconListItem
+from kivymd.uix.list import OneLineListItem
 from kivymd.uix.list import MDList
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.dialog import MDDialog
 #from kivy.lang import Builder
-from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock
-import os
 from plyer import filechooser,battery
-from datetime import datetime
 from time import *
 from kivy.config import Config
-import simplejson as Json
 import shutil
 
 Window.size=(310,640)

@@ -1,6 +1,6 @@
 from stackapi import StackAPI
 import simplejson as Json
-from PySide2.QtCore import QObject, Signal, Slot,QRunnable,QThreadPool
+from PySide6.QtCore import QObject, Signal, Slot,QRunnable,QThreadPool
 
 
 ####

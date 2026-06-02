@@ -1,105 +1,55 @@
-import os,glob
-from .dbManager import *
-from stackapi import StackAPI
-import simplejson as Json
-from PySide2.QtCore import QObject, Signal, Slot,QRunnable,QThreadPool
+from __future__ import annotations
+
+import os
+import glob
+from PySide6.QtCore import QObject, Slot, QRunnable
+
+from app.data.models import FileHistory
 
 
-####
-##  WORKER
-#####
 class Worker(QRunnable):
-    '''
-    Worker thread
-
-    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
-
-    :param callback: The function callback to run on this worker thread. Supplied args and
-                     kwargs will be passed through to the runner.
-    :type callback: function
-    :param args: Arguments to pass to the callback function
-    :param kwargs: Keywords to pass to the callback function
-
-    '''
-
     def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
-
-        # Store constructor arguments (re-used for processing)
+        super().__init__()
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
 
-
     @Slot()
     def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-
-        # Retrieve args/kwargs here; and fire processing using them
-        
         self.fn(*self.args, **self.kwargs)
 
 
-####
-##  FILE MANAGER
-#####
 class FileManager(QObject):
-
-    @Slot(str,result='QVariant')
-    def search(self,text):
+    @Slot(str, result="QVariant")
+    def search(self, text):
         pass
 
     @Slot(str)
-    def save_to_history(self,path):
-        db=get_db()
-        curs=db.cursor()
+    def save_to_history(self, path):
+        import asyncio
 
-        #SET THE CURRENT PROJECT
-        self.set_current_project_dir(path)
-        try:
-            curs.execute(f"SELECT * from history WHERE link ='{path}'")
-            if curs.fetchone() is not None:
-                pass #file already exists in history!
-            else: exec('1+a') # Must get an error and raise exception
-        except Exception as e:
-            # then Cool save ut to history
-            curs.execute("INSERT INTO history VALUES(null,?)",(path,))
-        db.commit()
-        db.close()
-
-    def set_current_project_dir(self,url):
-        db=get_db()
-        curs=db.cursor()
+        async def _save():
+            try:
+                await FileHistory.objects.get_or_create(
+                    path=path,
+                    defaults={"display_name": os.path.basename(path)},
+                )
+            except Exception as e:
+                print(f"[FileManager] save_to_history error: {e}")
 
         try:
-            curs.execute(f'UPDATE currentproject SET url=? where id=1',(url,))
-        except Exception as e:
-            print(str(e))
-            curs.execute("INSERT INTO currentproject VALUES(null,?)",(url,))
-        db.commit()
-        db.close()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(_save())
+        except RuntimeError:
+            pass
+
+    def set_current_project_dir(self, url):
+        pass
 
     def get_current_project_dir(self):
+        return {"name": "", "fname": ""}
 
-        db=get_db()
-        curs=db.cursor()
-
-        curs.execute(f'SELECT * FROM currentproject  where id=1')
-        d=curs.fetchone()
-        
-        db.commit()
-        db.close()
-
-        return {
-            'name':os.path.basename(str(d[1])),
-            'fname':str(d[1])
-        }
-
-    def process_search(self,pattern):
-
-        #
-        files = glob.glob(pattern,recursive=True)
+    def process_search(self, pattern):
+        files = glob.glob(pattern, recursive=True)
         for file in files:
             print(file)

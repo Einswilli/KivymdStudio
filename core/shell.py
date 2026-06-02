@@ -1,14 +1,12 @@
-import os,sys,getpass,socket,re
+import os
+import getpass
+import socket
 import selectors
 import subprocess
 import threading
 from ansi2html import Ansi2HTMLConverter
-from pygments import highlight
-from pygments.formatters import HtmlFormatter
-from pygments.lexers import BashLexer
-from pygments.styles import get_style_by_name
-from colorama import init, Fore, Style
-from PySide2.QtCore import QObject, Signal, Slot, QProcess
+from colorama import init
+from PySide6.QtCore import QObject, Signal, Slot
 
 # Init Colorama
 init()
