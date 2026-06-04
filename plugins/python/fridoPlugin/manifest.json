@@ -1,0 +1,45 @@
+{
+  "name": "frido-demo",
+  "display_name": "Frido Demo",
+  "version": "1.1.0",
+  "author": "frido",
+  "description": "Example plugin demonstrating the Ember extension API — reacts to file saves.",
+  "icon": "Dot.png",
+  "entry": "fri.py",
+  "qml": "frido.qml",
+  "license": "MIT",
+  "keywords": ["demo", "example"],
+  "min_app_version": "2.0.0",
+  "lifecycle": {
+    "on_activate": "hello",
+    "on_deactivate": "deactivate"
+  },
+  "permissions": [
+    "editor:read",
+    "file:read"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "fridoDemo.hello",
+        "title": "Frido: Say Hello"
+      }
+    ],
+    "menus": [
+      {
+        "menu": "editor/context",
+        "command": "fridoDemo.hello",
+        "group": "1_navigation"
+      }
+    ],
+    "views": [
+      {
+        "id": "fridoDemo.sidebar",
+        "location": "sidebar",
+        "component": "frido.qml",
+        "title": "Frido Panel"
+      }
+    ]
+  },
+  "dependencies": {}
+}
