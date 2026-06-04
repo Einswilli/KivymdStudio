@@ -1,0 +1,23 @@
+{
+  "name": "ember-one-dark-theme",
+  "display_name": "Ember One Dark Theme",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "One Dark inspired appearance provider for Ember colors and editor token colors.",
+  "icon": "assets/icons/theme.svg",
+  "license": "MIT",
+  "keywords": ["theme", "dark", "one-dark", "appearance"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "themes": [
+      {
+        "id": "one-dark",
+        "label": "One Dark",
+        "path": "themes/one-dark.json"
+      }
+    ]
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ember-inline-diagnostics",
+  "display_name": "Ember Inline Diagnostics",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Inline diagnostic ghost text provider for editor lines.",
+  "icon": "assets/icons/diagnostics.svg",
+  "license": "MIT",
+  "keywords": ["editor", "diagnostics", "decorations"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": ["editor:read", "diagnostics:read"],
+  "contributes": {
+    "editorDecorations": [
+      {
+        "id": "ember.inlineDiagnostics",
+        "type": "inlineGhostText",
+        "source": "diagnostics",
+        "label": "Inline diagnostic messages"
+      }
+    ]
+  },
+  "dependencies": {}
+}

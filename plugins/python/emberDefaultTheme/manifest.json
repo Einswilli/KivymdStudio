@@ -1,0 +1,41 @@
+{
+  "name": "ember-default-theme",
+  "display_name": "Ember Default Theme",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Default Ember workbench theme, editor token colors and file icon associations.",
+  "icon": "assets/icons/theme.svg",
+  "license": "MIT",
+  "keywords": ["theme", "icons", "default"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "themes": [
+      {
+        "id": "ember-dark",
+        "label": "Ember Dark",
+        "path": "themes/ember-dark.json"
+      }
+    ],
+    "icons": [
+      { "id": "file-python", "path": "assets/icons/python.svg" },
+      { "id": "file-rust", "path": "assets/icons/rust.svg" },
+      { "id": "file-json", "path": "assets/icons/json.svg" },
+      { "id": "file-qml", "path": "assets/icons/qml.svg" },
+      { "id": "file-markdown", "path": "assets/icons/markdown.svg" },
+      { "id": "layout-sidebar-left", "path": "assets/icons/layout-sidebar-left.svg" },
+      { "id": "panel-bottom", "path": "assets/icons/layout-panel-bottom.svg" },
+      { "id": "panel-right", "path": "assets/icons/layout-panel-right.svg" }
+    ],
+    "fileIcons": [
+      { "pattern": ".py", "icon": "file-python" },
+      { "pattern": ".pyi", "icon": "file-python" },
+      { "pattern": ".rs", "icon": "file-rust" },
+      { "pattern": ".json", "icon": "file-json" },
+      { "pattern": ".qml", "icon": "file-qml" },
+      { "pattern": ".md", "icon": "file-markdown" }
+    ]
+  },
+  "dependencies": {}
+}

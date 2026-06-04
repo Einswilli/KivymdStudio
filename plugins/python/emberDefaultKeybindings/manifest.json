@@ -1,0 +1,32 @@
+{
+  "name": "ember-default-keybindings",
+  "display_name": "Ember Default Keybindings",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Default Ember keyboard shortcut provider.",
+  "icon": "assets/icons/keybindings.svg",
+  "license": "MIT",
+  "keywords": ["keybindings", "shortcuts", "core"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "keybindings": [
+      { "key": "Ctrl+Shift+P", "command": "view.command_palette", "when": "global" },
+      { "key": "Ctrl+O", "command": "file.open", "when": "global" },
+      { "key": "Ctrl+N", "command": "file.new", "when": "global" },
+      { "key": "Ctrl+K", "command": "file.open_folder", "when": "global" },
+      { "key": "Ctrl+S", "command": "file.save", "when": "editorFocus" },
+      { "key": "Ctrl+W", "command": "file.close", "when": "editorFocus" },
+      { "key": "Ctrl+B", "command": "view.sidebar", "when": "global" },
+      { "key": "Ctrl+,", "command": "settings.open", "when": "global" },
+      { "key": "Ctrl+J", "command": "view.terminal", "when": "global" },
+      { "key": "Ctrl+Shift+E", "command": "view.explorer", "when": "global" },
+      { "key": "Ctrl+Shift+F", "command": "view.search", "when": "global" },
+      { "key": "Ctrl+Shift+G", "command": "view.scm", "when": "global" },
+      { "key": "Ctrl+=", "command": "view.zoom_in", "when": "global" },
+      { "key": "Ctrl+-", "command": "view.zoom_out", "when": "global" }
+    ]
+  },
+  "dependencies": {}
+}

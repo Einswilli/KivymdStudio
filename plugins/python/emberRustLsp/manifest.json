@@ -1,0 +1,102 @@
+{
+  "name": "ember-rust-lsp",
+  "display_name": "Ember Rust LSP",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Proprietary Rust language provider powered by rust-analyzer.",
+  "license": "MIT",
+  "keywords": [
+    "lsp",
+    "rust",
+    "rust-analyzer",
+    "language"
+  ],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "lspProviders": [
+      {
+        "id": "rust.rust-analyzer",
+        "label": "rust-analyzer",
+        "language": "rust",
+        "description": "Rust hover, completion, diagnostics, symbols and code actions.",
+        "command": "rust-analyzer",
+        "args": [],
+        "fileExtensions": [
+          ".rs"
+        ],
+        "rootPatterns": [
+          "Cargo.toml",
+          "rust-project.json",
+          ".git"
+        ],
+        "capabilities": [
+          "hover",
+          "completion",
+          "diagnostics",
+          "symbols",
+          "codeActions",
+          "formatting"
+        ],
+        "defaults": {
+          "enabled": true,
+          "priority": 10,
+          "timeout": 8.0
+        },
+        "install": {
+          "strategy": "systemCommand",
+          "command": "rustup",
+          "args": [
+            "component",
+            "add",
+            "rust-analyzer"
+          ],
+          "requiresApproval": true,
+          "platforms": [
+            "darwin",
+            "linux",
+            "windows"
+          ],
+          "description": "Install rust-analyzer through rustup."
+        }
+      }
+    ],
+    "fileFormatters": [
+      {
+        "id": "rust.rustfmt",
+        "label": "rustfmt",
+        "description": "Format Rust files with rustfmt.",
+        "languages": [
+          "rust"
+        ],
+        "extensions": [
+          ".rs"
+        ],
+        "command": "rustfmt",
+        "args": [
+          "{file}"
+        ],
+        "priority": 900,
+        "permissions": [],
+        "install": {
+          "strategy": "systemCommand",
+          "command": "rustup",
+          "args": [
+            "component",
+            "add",
+            "rustfmt"
+          ],
+          "requiresApproval": true,
+          "platforms": [
+            "darwin",
+            "linux",
+            "windows"
+          ],
+          "description": "Install rustfmt through rustup."
+        }
+      }
+    ]
+  },
+  "dependencies": {}
+}

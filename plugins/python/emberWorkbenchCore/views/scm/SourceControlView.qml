@@ -1,0 +1,43 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
+import "../../../../../qml/components"
+
+Rectangle {
+    id: root
+
+    property var theme: DesignTokens.darkTheme
+    property var panel: ({})
+
+    color: theme.sidebar || "#252526"
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 16
+        spacing: 10
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            Icon { icon: "git-branch"; size: 16; color: theme.accent || "#007ACC" }
+            Text {
+                text: "Source Control"
+                color: theme.text || "#CCCCCC"
+                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                font.pointSize: 12
+                font.weight: Font.DemiBold
+            }
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: "No source control provider is active yet."
+            color: theme.textDim || "#858585"
+            wrapMode: Text.Wrap
+            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+            font.pointSize: 10
+        }
+
+        Item { Layout.fillHeight: true }
+    }
+}
