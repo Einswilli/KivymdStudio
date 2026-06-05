@@ -1,0 +1,6 @@
+ProblemsPanel 1.0 ProblemsPanel.qml
+OutputPanel 1.0 OutputPanel.qml
+ConsolePanel 1.0 ConsolePanel.qml
+ActionsPanel 1.0 ActionsPanel.qml
+PanelLogHeader 1.0 PanelLogHeader.qml
+PluginPanelHost 1.0 PluginPanelHost.qml

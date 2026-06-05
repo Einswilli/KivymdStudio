@@ -1,0 +1,5 @@
+ExplorerFallback 1.0 ExplorerFallback.qml
+SearchFallback 1.0 SearchFallback.qml
+SourceControlFallback 1.0 SourceControlFallback.qml
+DebugFallback 1.0 DebugFallback.qml
+ExtensionsFallback 1.0 ExtensionsFallback.qml
