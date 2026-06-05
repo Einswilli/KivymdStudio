@@ -1,0 +1,16 @@
+CommandPalette 1.0 CommandPalette.qml
+singleton DesignTokens 1.0 DesignTokens.qml
+singleton IconRegistry 1.0 IconRegistry.qml
+DockPanel 1.0 DockPanel.qml
+StatusBar 1.0 StatusBar.qml
+NotificationHost 1.0 NotificationHost.qml
+WelcomeScreen 1.0 WelcomeScreen.qml
+Icon 1.0 Icon.qml
+ActivityBar 1.0 ActivityBar.qml
+ProjectSwitcher 1.0 ProjectSwitcher.qml
+ExtensionsPanel 1.0 ExtensionsPanel.qml
+UiIconButton 1.0 UiIconButton.qml
+ActionButton 1.0 ActionButton.qml
+UiMenuButton 1.0 UiMenuButton.qml
+UiPanelTab 1.0 UiPanelTab.qml
+UiSplitHandle 1.0 UiSplitHandle.qml
