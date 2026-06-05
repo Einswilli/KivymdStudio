@@ -1,163 +1,236 @@
 import QtQuick 2.15
-import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-import QtCharts 2.15
 import QtQuick.Layouts 1.0
 
-Item{
-    id:root
+/*
+ * ChatView — AI Chat panel with context awareness.
+ *
+ * Bound to ChatVM:
+ *   ChatVM.sendMessage(text)
+ *   ChatVM.messages       → message list
+ *   ChatVM.isStreaming     → loading indicator
+ *   ChatVM.contextPreview  → shows current file context
+ *
+ * AI Actions (right-click or toolbar):
+ *   ChatVM.explainCode(code, language)
+ *   ChatVM.refactorCode(code, language)
+ *   ChatVM.generateTests(code, language)
+ */
+
+Item {
+    id: root
     anchors.fill: parent
+    clip: true
 
-    Column{
-        anchors.fill:parent
-        anchors.margins: 10
-        spacing: 5
+    property string currentCode: ""
+    property string currentLanguage: "python"
 
-        Rectangle{
-            height: root.height*.08
-            width: parent.width
-            color:'transparent'
+    // ── Layout ───────────────────────────────────────────
 
-            Row{
-                anchors.fill:parent
-                anchors.margins: 5
-                spacing:10
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
 
-                Rectangle{
-                    height:parent.height
-                    width:height
-                    color:'transparent'
+        // Header
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
+            color: "#2D2D30"
 
-                    Image{
-                        anchors.fill:parent
-                        anchors.margins: 5
-                        source:'../assets/icons/chatgpt.png'
-                        fillMode:Image.PreserveAspectFit
-                    }
-                }
-
-                Rectangle{
-                    radius:8
-                    color:'transparent'
-                    height:parent.height
-                    width:parent.width-height-10
-                    border{
-                        width:0
-                        color:'#DDDDDD'
-                    }
-
-                    Text{
-                        text:'Hi, welcome to KivyMDStudio'
-                        color:'#FFFFFF'
-                        font.pointSize:10
-                    
-                        anchors.centerIn: parent
-                    }
-                }
-            }
-        }
-
-        Rectangle{
-            height: root.height*.76
-            width: parent.width
-            color:'transparent'
-
-            ScrollView{
+            RowLayout {
                 anchors.fill: parent
-                clip:true
+                anchors.margins: 8
+                spacing: 8
+
+                Text {
+                    text: "Ember AI"
+                    color: "#FFFFFF"
+                    font.bold: true
+                    font.pointSize: 12
+                    Layout.fillWidth: true
+                }
+
+                // Context indicator
+                Rectangle {
+                    visible: ChatVM ? ChatVM.contextPreview.length > 0 : false
+                    Layout.preferredWidth: ctxLabel.implicitWidth + 16
+                    Layout.preferredHeight: 24
+                    radius: 4
+                    color: "#3A3D41"
+
+                    Text {
+                        id: ctxLabel
+                        anchors.centerIn: parent
+                        text: "Context: " + (ChatVM ? ChatVM.contextPreview.substring(0, 30) : "")
+                        color: "#888"
+                        font.pointSize: 9
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            var code = currentCode || ""
+                            ChatVM.setContext(code)
+                        }
+                    }
+                }
+
+                // AI Action buttons
+                ToolButton {
+                    text: "Explain"
+                    onClicked: {
+                        ChatVM.explainCode(root.currentCode, root.currentLanguage)
+                    }
+                }
+                ToolButton {
+                    text: "Refactor"
+                    onClicked: {
+                        ChatVM.refactorCode(root.currentCode, root.currentLanguage)
+                    }
+                }
+                ToolButton {
+                    text: "Tests"
+                    onClicked: {
+                        ChatVM.generateTests(root.currentCode, root.currentLanguage)
+                    }
+                }
+
+                // Clear
+                ToolButton {
+                    text: "Clear"
+                    onClicked: { ChatVM.clearMessages() }
+                }
             }
         }
 
-        Rectangle{
-            height: root.height*.12
-            width: parent.width
-            color:'transparent'
+        // Message list
+        ListView {
+            id: messageList
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            spacing: 8
+            boundsBehavior: Flickable.StopAtBounds
 
-            Row{
-                anchors.fill:parent
-                spacing: 10
+            model: ChatVM ? ChatVM.messages : []
 
-                // INPUT FIELD
-                ScrollView{
-                    id:sc
-                    height: parent.height
-                    width: parent.width*.84
-                    clip:true
+            delegate: Rectangle {
+                width: messageList.width - 16
+                anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
+                height: msgContent.implicitHeight + 20
+                color: modelData.role === "user" ? "#2A2D2E" : "transparent"
+                radius: 8
 
-                    Column{
-                        id:col
-                        height:childrenRect.height
-                        width:childrenRect.width
-                        Rectangle{
-                            id:rect
-                            height: sc.height
-                            width: sc.width-5//*.84
-                            color:'#292828'
-                            radius: 8
-                            // clip:true
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 4
 
-                            TextInput{
-                                id:question
-                                anchors.fill:parent
-                                autoScroll: true
-                                color:'white'
-                                font.family:'monospace'
-                                selectByMouse: true
-                                font.pointSize:12
-                                padding :5
-                                // placeholderText:'Text...'
-                                //topPadding:2
-                                wrapMode: Text.WordWrap
-                                enabled:true
-                                focus: true
-                                mouseSelectionMode:TextEdit.SelectCharacters
-                                // background:Rectangle{
-                                //     anchors.fill: parent
-                                //     color:'#292828'
-                                //     radius: 8
-                                // }
+                    Text {
+                        text: modelData.role === "user" ? "You" : "AI"
+                        color: modelData.role === "user" ? "#61AFEF" : "#98C379"
+                        font.bold: true
+                        font.pointSize: 10
+                    }
 
-                                onTextChanged: {
-                                    var delta=sc.height-contentHeight
-                                    rect.height=Math.max(sc.height,contentHeight)
-                                    // delta>0?0:Math.abs(delta)+10
-                                    sc.contentItem.contentY = parent.height - sc.height;
-                                    //Math.max(sc.height,Math.min(sc.height,contentHeight))
-                                }
+                    Text {
+                        id: msgContent
+                        width: parent.width
+                        text: modelData.content
+                        color: "#D4D4D4"
+                        font.pointSize: 11
+                        wrapMode: Text.WordWrap
+                        textFormat: Text.PlainText
+                    }
+                }
+            }
+
+            // Auto-scroll
+            onCountChanged: {
+                if (messageList.count > 0) {
+                    messageList.positionViewAtEnd()
+                }
+            }
+
+            ScrollBar.vertical: ScrollBar {
+                width: 8
+                policy: ScrollBar.AsNeeded
+                contentItem: Rectangle {
+                    implicitWidth: 6
+                    radius: 3
+                    color: "#424242"
+                }
+            }
+        }
+
+        // Streaming indicator
+        Rectangle {
+            visible: ChatVM ? ChatVM.isStreaming : false
+            Layout.fillWidth: true
+            Layout.preferredHeight: 28
+            color: "#1E1E1E"
+
+            Row {
+                anchors.centerIn: parent
+                spacing: 8
+
+                BusyIndicator {
+                    running: true
+                    width: 16
+                    height: 16
+                }
+                Text {
+                    text: "AI is thinking..."
+                    color: "#888"
+                    font.pointSize: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+        }
+
+        // Input area
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 50
+            color: "#252526"
+            border.color: "#3E3E42"
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 6
+                spacing: 8
+
+                TextArea {
+                    id: inputField
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    placeholderText: "Ask Ember AI..."
+                    placeholderTextColor: "#666"
+                    color: "#D4D4D4"
+                    font.pointSize: 11
+                    wrapMode: TextArea.Wrap
+                    background: Rectangle { color: "transparent" }
+
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Return && !(event.modifiers & Qt.ShiftModifier)) {
+                            event.accepted = true
+                            if (inputField.text.trim().length > 0) {
+                                ChatVM.sendMessage(inputField.text)
+                                inputField.text = ""
                             }
                         }
-                        Rectangle{
-                            height:20
-                            width:parent.width
-                            color:'transparent'
-                        }
-                    }
-                    ScrollBar.vertical{
-                        width: 15
-                        size:parent.height/(question.contentHeight+10)
-                        policy:ScrollBar.AlwaysOn
                     }
                 }
 
-                //BUTTON
-                Rectangle{
-                    height: parent.height
-                    width: parent.width*.14
-                    color:'transparent'
-
-                    Rectangle{
-                        id:send
-                        anchors.fill:parent
-                        anchors.margins:5
-                        color:'transparent'
-                        
-                        Image{
-                            height:25
-                            width:25
-                            source:'../assets/icons/send.png'
-                            anchors.centerIn: parent
-                        }
+                Button {
+                    text: "Send"
+                    enabled: inputField.text.trim().length > 0
+                    onClicked: {
+                        ChatVM.sendMessage(inputField.text)
+                        inputField.text = ""
                     }
                 }
             }
