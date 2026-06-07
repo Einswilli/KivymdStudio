@@ -17,6 +17,7 @@ class SettingsViewModel(QObject):
     fontChanged = Signal(str, int)
     editorMetricsChanged = Signal()
     workbenchChanged = Signal()
+    terminalChanged = Signal()
     keybindingsChanged = Signal()
     configChanged = Signal("QVariantMap")
     aiModelsChanged = Signal(str, "QVariantList")
@@ -73,6 +74,16 @@ class SettingsViewModel(QObject):
         self._files_show_hidden = bool(self._get("files.showHidden", False))
         self._files_confirm_delete = bool(self._get("files.confirmDelete", True))
         self._files_exclude = list(self._get("files.exclude", []) or [])
+        self._terminal_shell = str(self._get("terminal.shell", ""))
+        self._terminal_cwd_mode = str(self._get("terminal.cwdMode", "project"))
+        self._terminal_font_family = self._clean_font_family(
+            str(self._get("terminal.fontFamily", "Menlo")),
+            "Menlo",
+        )
+        self._terminal_font_size = int(self._get("terminal.fontSize", 12))
+        self._terminal_cursor_style = str(self._get("terminal.cursorStyle", "block"))
+        self._terminal_scrollback = int(self._get("terminal.scrollback", 3000))
+        self._terminal_restore_sessions = bool(self._get("terminal.restoreSessions", True))
         self._default_formatter_by_language = dict(
             self._get("files.defaultFormatterByLanguage", {}) or {}
         )
@@ -275,6 +286,20 @@ class SettingsViewModel(QObject):
             self._get("files.confirmDelete", self._files_confirm_delete)
         )
         self._files_exclude = list(self._get("files.exclude", self._files_exclude) or [])
+        self._terminal_shell = str(self._get("terminal.shell", self._terminal_shell))
+        self._terminal_cwd_mode = str(self._get("terminal.cwdMode", self._terminal_cwd_mode))
+        self._terminal_font_family = self._clean_font_family(
+            str(self._get("terminal.fontFamily", self._terminal_font_family)),
+            "Menlo",
+        )
+        self._terminal_font_size = int(self._get("terminal.fontSize", self._terminal_font_size))
+        self._terminal_cursor_style = str(
+            self._get("terminal.cursorStyle", self._terminal_cursor_style)
+        )
+        self._terminal_scrollback = int(self._get("terminal.scrollback", self._terminal_scrollback))
+        self._terminal_restore_sessions = bool(
+            self._get("terminal.restoreSessions", self._terminal_restore_sessions)
+        )
         self._default_formatter_by_language = dict(
             self._get("files.defaultFormatterByLanguage", self._default_formatter_by_language) or {}
         )
@@ -343,6 +368,7 @@ class SettingsViewModel(QObject):
         self.themeChanged.emit(self._theme_colors)
         self.fontChanged.emit(self._font_family, self._font_size)
         self.editorMetricsChanged.emit()
+        self.terminalChanged.emit()
         self.workbenchChanged.emit()
         self.keybindingsChanged.emit()
 
@@ -1678,7 +1704,102 @@ class SettingsViewModel(QObject):
     def extensionsMarketplaceLocalSourcesJson(self) -> str:
         return json.dumps(self._extensions_marketplace_local_sources, indent=2)
 
+    # ── Terminal ─────────────────────────────────────────
+
+    @Slot("QVariantMap")
+    def setTerminalProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "shell" in values:
+            self._terminal_shell = str(values.get("shell") or "").strip()
+        if "cwdMode" in values:
+            cwd_mode = str(values.get("cwdMode") or "project")
+            self._terminal_cwd_mode = cwd_mode if cwd_mode in {"project", "home", "process"} else "project"
+        if "fontFamily" in values:
+            self._terminal_font_family = self._clean_font_family(
+                str(values.get("fontFamily") or self._terminal_font_family),
+                "Menlo",
+            )
+        if "fontSize" in values:
+            self._terminal_font_size = max(9, min(28, int(values.get("fontSize") or self._terminal_font_size)))
+        if "cursorStyle" in values:
+            cursor_style = str(values.get("cursorStyle") or "block")
+            self._terminal_cursor_style = cursor_style if cursor_style in {"block", "bar", "underline"} else "block"
+        if "scrollback" in values:
+            self._terminal_scrollback = max(500, min(50000, int(values.get("scrollback") or self._terminal_scrollback)))
+        if "restoreSessions" in values:
+            self._terminal_restore_sessions = bool(values.get("restoreSessions"))
+        self._config = self._settings.save_global({
+            "terminal": {
+                "shell": self._terminal_shell,
+                "cwdMode": self._terminal_cwd_mode,
+                "fontFamily": self._terminal_font_family,
+                "fontSize": self._terminal_font_size,
+                "cursorStyle": self._terminal_cursor_style,
+                "scrollback": self._terminal_scrollback,
+                "restoreSessions": self._terminal_restore_sessions,
+            }
+        })
+        self.reload()
+
+    @Property(str, notify=terminalChanged)
+    def terminalShell(self) -> str:
+        return self._terminal_shell
+
+    @Property(str, notify=terminalChanged)
+    def terminalCwdMode(self) -> str:
+        return self._terminal_cwd_mode
+
+    @Property(str, notify=terminalChanged)
+    def terminalFontFamily(self) -> str:
+        return self._terminal_font_family
+
+    @Property(int, notify=terminalChanged)
+    def terminalFontSize(self) -> int:
+        return self._terminal_font_size
+
+    @Property(str, notify=terminalChanged)
+    def terminalCursorStyle(self) -> str:
+        return self._terminal_cursor_style
+
+    @Property(int, notify=terminalChanged)
+    def terminalScrollback(self) -> int:
+        return self._terminal_scrollback
+
+    @Property(bool, notify=terminalChanged)
+    def terminalRestoreSessions(self) -> bool:
+        return self._terminal_restore_sessions
+
     # ── Workbench layout ─────────────────────────────────
+
+    @Slot("QVariantMap")
+    def setWorkbenchProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "activityBarVisible" in values:
+            self._activity_bar_visible = bool(values.get("activityBarVisible"))
+        if "sidebarVisible" in values:
+            self._sidebar_visible = bool(values.get("sidebarVisible"))
+        if "panelVisible" in values:
+            self._panel_visible = bool(values.get("panelVisible"))
+        if "rightPanelVisible" in values:
+            self._right_panel_visible = bool(values.get("rightPanelVisible"))
+        if "sidebarWidth" in values:
+            self._sidebar_width = max(180, min(520, int(values.get("sidebarWidth") or self._sidebar_width)))
+        if "panelHeight" in values:
+            self._panel_height = max(120, min(500, int(values.get("panelHeight") or self._panel_height)))
+        if "rightPanelWidth" in values:
+            self._right_panel_width = max(180, min(520, int(values.get("rightPanelWidth") or self._right_panel_width)))
+        self._config = self._settings.save_global({
+            "workbench": {
+                "activityBar": {"visible": self._activity_bar_visible},
+                "sidebar": {"visible": self._sidebar_visible, "width": self._sidebar_width},
+                "panel": {"visible": self._panel_visible, "height": self._panel_height},
+                "rightPanel": {
+                    "visible": self._right_panel_visible,
+                    "width": self._right_panel_width,
+                },
+            }
+        })
+        self.reload()
 
     @Slot(bool)
     def setActivityBarVisible(self, value: bool) -> None:
