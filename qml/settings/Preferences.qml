@@ -234,12 +234,17 @@ Item {
     }
 
     function actionShortcut(actionId) {
+        var binding = root.actionBinding(actionId)
+        return binding.key || ""
+    }
+
+    function actionBinding(actionId) {
         var bindings = (typeof PluginVM !== "undefined" && PluginVM) ? PluginVM.getResolvedKeybindings() : []
         for (var i = 0; i < bindings.length; i++) {
             if ((bindings[i].command || "") === actionId && (bindings[i].active === undefined || bindings[i].active))
-                return bindings[i].key || ""
+                return bindings[i]
         }
-        return ""
+        return ({ key: "", conflict: false, conflicts: [] })
     }
 
     function notify(level, title, message) {
@@ -2665,7 +2670,13 @@ Item {
                         source: modelData.source || "core"
                         description: modelData.description || ""
                         requiresPayload: modelData.requiresPayload || false
+                        permissions: modelData.permissions || []
+                        requiresPermission: modelData.requiresPermission || false
+                        safeToRun: modelData.safeToRun !== false
+                        exposable: modelData.exposable !== false
                         shortcut: root.actionShortcut(modelData.id || "")
+                        conflict: root.actionBinding(modelData.id || "").conflict || false
+                        conflicts: root.actionBinding(modelData.id || "").conflicts || []
                         running: (typeof ActionVM !== "undefined" && ActionVM) ? ActionVM.isRunning(modelData.id || "") : false
                     }
                 }
@@ -3509,16 +3520,23 @@ Item {
         property string source: ""
         property string description: ""
         property string shortcut: ""
+        property bool conflict: false
+        property var conflicts: []
         property bool requiresPayload: false
+        property var permissions: []
+        property bool requiresPermission: false
+        property bool safeToRun: true
+        property bool exposable: true
         property bool running: false
 
         Layout.fillWidth: true
-        implicitHeight: 76
+        implicitHeight: conflict || requiresPermission || !exposable || !safeToRun ? 104 : 76
         radius: DesignTokens.metrics.radiusMd
         color: actionMouse.containsMouse ? root.cardHover : "transparent"
         border.width: 1
-        border.color: actionMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.24)
-                                                : Qt.rgba(root.border.r, root.border.g, root.border.b, 0.42)
+        border.color: conflict ? root.warning
+                               : actionMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.24)
+                                                           : Qt.rgba(root.border.r, root.border.g, root.border.b, 0.42)
 
         RowLayout {
             anchors.fill: parent
@@ -3573,6 +3591,15 @@ Item {
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: conflict
+                    text: "Shortcut conflict: " + conflicts.join(" | ")
+                    color: root.warning
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
             }
 
             ColumnLayout {
@@ -3622,8 +3649,21 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: (shortcut.length > 0 ? shortcut + " · " : "") + (requiresPayload ? "Context payload required" : "Palette executable")
-                    color: requiresPayload ? root.warning : root.success
+                    text: (shortcut.length > 0 ? shortcut + " · " : "")
+                          + (requiresPayload ? "Context payload required" : "Palette executable")
+                          + (requiresPermission ? " · Requires permission" : "")
+                          + (!exposable ? " · Not agent-exposable" : "")
+                    color: !safeToRun ? root.error : (requiresPayload || requiresPermission || !exposable ? root.warning : root.success)
+                    font.pixelSize: 10
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: permissions.length > 0
+                    text: "Permissions: " + permissions.join(", ")
+                    color: root.muted
                     font.pixelSize: 10
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
