@@ -20,7 +20,7 @@ Popup {
     signal actionSelected(string actionId)
 
     width: 500
-    height: Math.min(380, listView.contentHeight + inputField.height + 20)
+    height: Math.min(420, listView.contentHeight + inputField.height + 24)
     x: (parent ? parent.width - width : 0) / 2
     y: 80
     padding: 8
@@ -49,7 +49,7 @@ Popup {
             id: inputField
             width: parent.width
             height: 36
-            placeholderText: "Type a command..."
+            placeholderText: "Type a command or action..."
             placeholderTextColor: root.theme.textDim || "#666"
             color: root.theme.text || "#D4D4D4"
             font.pointSize: 13
@@ -90,7 +90,7 @@ Popup {
 
             delegate: Rectangle {
                 width: listView.width
-                height: 40
+                height: 46
                 color: listView.currentIndex === index ? (root.theme.hover || "#094771") : "transparent"
                 radius: 4
 
@@ -122,13 +122,28 @@ Popup {
                         }
                     }
 
-                    Text {
-                        text: modelData.title
-                        color: root.theme.text || "#D4D4D4"
-                        font.pointSize: 12
+                    Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: listView.width - 200
-                        elide: Text.ElideRight
+                        width: listView.width - 222
+                        spacing: 2
+
+                        Text {
+                            width: parent.width
+                            text: modelData.title
+                            color: modelData.safeToRun === false ? (root.theme.error || "#EF4444") : (root.theme.text || "#D4D4D4")
+                            font.pointSize: 12
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: modelData.kind === "action"
+                                  ? ((modelData.requiresPermission ? "Requires permission · " : "") + (modelData.exposable ? "Agent-exposable" : "Local only"))
+                                  : (modelData.category || "Command")
+                            color: modelData.requiresPermission ? (root.theme.warning || "#F59E0B") : (root.theme.textDim || "#888")
+                            font.pointSize: 9
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Item { width: 1; height: 1 }
@@ -198,7 +213,10 @@ Popup {
                     "title": action.title || action.id || "",
                     "category": action.category || "Action",
                     "keybinding": "",
-                    "source": action.source || "action"
+                    "source": action.source || "action",
+                    "requiresPermission": action.requiresPermission || false,
+                    "safeToRun": action.safeToRun !== false,
+                    "exposable": action.exposable !== false
                 })
             }
         }
