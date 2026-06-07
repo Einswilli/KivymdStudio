@@ -1,122 +1,11 @@
-import shutil,os,glob,sys,pathlib
+import pathlib
 import simplejson as Json
-from jedi import Script
-import inspect, jedi
 
-# Preload jedimodules
-jedi.preload_module()
+from app.core.settings import PATHS, TEMPLATES as _TEMPLATES
+from app.services.language_detection import detect_language
+from app.services.language_service import FerriteLanguageService, text_position
 
-PATHS={
-    'BASE_PATH':f'{pathlib.Path.home()}/.KvStudio/',
-    'PLUGINS_PATH':f'{pathlib.Path.home()}/.KvStudio/plugins/',
-    'LOGS_PATH':f'{pathlib.Path.home()}/.KvStudio/logs/',
-    'CONFIG_PATH':f'{pathlib.Path.home()}/.KvStudio/configs/',
-    'CONFIG_FILE':f'{pathlib.Path.home()}/.KvStudio/configs/studio.conf',
-    'THEME_CONFIG':f'{pathlib.Path.home()}/.KvStudio/configs/theme.json',
-    'STUDIO_PROJECTS_PATH':f'{pathlib.Path.home()}/KvStudio_Projects/'
-}
-
-TEMPLATES={
-    'Empty':'',
-    'Backdrop':"""
-ScreenManager:
-    id:screen_manager
-    Screen:
-        MDBackdrop:
-            title: "Backdrop Activity"
-            header_text: "Menu:"
-
-            MDBackdropBackLayer:
-
-                MDBoxLayout:
-                    orientation:'vertical'
-                    md_bg_color:hex('#f3f4f6')
-
-            MDBackdropFrontLayer:
-
-                MDBoxLayout:
-                    orientation:'vertical'
-                    md_bg_color:hex('#2e2b2b')
-""",
-    'Tabs':"""
-<Tab@MDFloatLayout+MDTabsBase>:
-	text:''																															
-	MDLabel:
-		text: "TabTwo Content"
-		halign: "center"
-
-ScreenManager:
-    id:screen_manager
-    Screen:
-        MDBoxLayout:
-            orientation: "vertical"
-
-            MDToolbar:
-                title: "Bottom-Nav"
-                right_action_items: [["dots-vertical", lambda x: x]]
-
-            MDBottomNavigation:
-
-                Tab:
-					text: "TabOne"
-					content_text:'TabOne'
-				Tab:
-					text: "TabTwo"
-					content_text:'TabTwo'
-				Tab:
-					text: "TabTree"
-					content_text:'TabTree'
-""",
-    'NavigationDrawer':"""
-ScreenManager:
-	id:screen_manager
-	Screen:
-		MDBoxLayout:
-			orientation: "vertical"
-
-			MDToolbar:
-				title: "Nav-Drawer"
-				left_action_items: [["menu", lambda x: nav_drawer.set_state()]]
-				right_action_items: [["dots-vertical", lambda x: x]]
-
-			Widget:
-
-		MDNavigationDrawer:
-			id:nav_drawer
-			MDBoxLayout:
-				orientation:'vertical'
-				md_bg_color:hex('#f3f4f6')
-""",
-    'BottomNavigation':"""
-ScreenManager:
-    id:scree_manager
-    Screen:
-        MDBoxLayout:
-            orientation: "vertical"
-
-            MDToolbar:
-                title: "Bottom-Navigation"
-                right_action_items: [["dots-vertical", lambda x: x]]
-
-            MDBottomNavigation:
-
-                MDBottomNavigationItem:
-                    name: "one"
-                    text: "One"
-                    icon: "numeric-1"
-
-                MDBottomNavigationItem:
-                    name: "two"
-                    text: "Two"
-                    icon: "numeric-2"
-
-                MDBottomNavigationItem:
-                    name: "three"
-                    text: "Three"
-                    icon: "numeric-3"
-"""
-
-}
+TEMPLATES = _TEMPLATES
 
 THEMES=[
     {
@@ -221,55 +110,45 @@ words=[
 ]
 
 def filter(name,mode,code,line,pos,module,sig):
-    ''' Get code suggestions using jedi '''
+    '''Get code suggestions from Ferrite-backed language service.'''
 
     if code not in('',' ',None):
 
         try:
-            s=Script(code.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n'),path=module)
-            print(module)
+            normalized_code = str(code).replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n')
+            service = FerriteLanguageService()
+            language = detect_language(module or "")
+            completions = service._complete_sync(
+                normalized_code,
+                text_position(normalized_code, int(pos or 0)),
+                module or "",
+                language,
+            )
             results = []
-            col=len(str(code)[:pos].splitlines()[-1])# if len(str(code)[:pos].splitlines())>0 else 0
-            line=len(str(code)[:pos].splitlines())
-            # s.
-            for c in s.complete(line,col):
+            for c in completions:
                 d={}
-                doc=''
                 icon=''
-                color=''
-                d['name']=c.name.replace(name,f'<span style="color:aqua;"><b>{name}</b></span>')
-                d['text']=c.name
-                if c.type in ['function', 'class', 'instance']:
-                    doc = c.docstring().replace("(self,", "(")
-                d['doc']=doc
-                if c.type in['class', 'instance']:
+                d['name']=c["name"].replace(name,f'<span style="color:aqua;"><b>{name}</b></span>')
+                d['text']=c["name"]
+                d['doc']=c.get("description", "")
+                if c["type"] in['class', 'struct', 'enum', 'trait']:
                     icon='cube-outline'
-                    color='#9477E4'
-                elif c.type=='function':
+                elif c["type"] in ['function', 'method']:
                     icon='code-braces'
-                    color='#E4D077'
-                elif c.type=='keyword':
+                elif c["type"]=='keyword':
                     icon='cube-outline'
-                    color='#81C6F5'
-                elif c.type=='builtin':
+                elif c["type"]=='builtin':
                     icon='code-braces-box-outline'
-                    color='#E4D077'
-                elif c.type in['module','snippet']:
+                elif c["type"] in['module','snippet']:
                     icon='puzzle-outline'
-                    color='#2F917B'
-                elif c.type in['param','attribute']:
+                elif c["type"] in['param','attribute']:
                     icon='history'
-                    color='#81C6F5'
-                elif c.type in['property','path']:
+                elif c["type"] in['property','path']:
                     icon='bolt'
-                    color='#2F917B'
                 else:
                     icon='ghost'
-                    color='#E2E0E6'
                 d['icon']=icon
-                d['icon_color']=color
-                # if doc.startswith("{}(".format(c.name)):
-                #     continue
+                d['icon_color']=c.get("color", "#E2E0E6")
                 results.append(d)
             
             sig.emit(Json.dumps(results,indent=4))
@@ -287,7 +166,7 @@ def add_directives(d):
                         words.append(n)
         elif isinstance(i,str):
             if i!='':
-                if not n in words:
+                if n not in words:
                     words.append(i)
 
 def get_active_theme():

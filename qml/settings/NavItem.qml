@@ -1,75 +1,53 @@
 import QtQuick 2.15
-import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-import QtCharts 2.15
-import QtQuick.Layouts 1.0
-import '../'
 
-Item{
-    id:root
-    anchors.fill:parent
+Item {
+    id: root
 
-    property bool active:false
-    property string label:'My navItem'
-    property string _color:'#EEEFFF'
-    property string icon:'cog-outline'
+    property bool active: false
+    property string label: "My navItem"
+    property color accentColor: "#EEEFFF"
+    property string iconChar: ""
+    property string icon: ""
 
-    
     signal tapped()
 
-    Rectangle{
-        height:30
-        width:parent.width*.75
-        color:'transparent'
+    Rectangle {
+        height: 30
+        width: parent.width * 0.75
+        color: active ? Qt.rgba(1,1,1,0.08) : "transparent"
+        radius: 4
         anchors.centerIn: parent
 
-        Row{
-            anchors.fill:parent
-            spacing:10
+        Row {
+            spacing: 10
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
 
-            Rectangle{
-                height:parent.height
-                width:height
-                color:'transparent'
-                anchors.verticalCenter: parent.verticalCenter
-
-                TextIcon{
-                    id:ico_
-                    _size:17
-                    text: icons[icon]
-                    anchors.fill: parent
-                    color:active?_color:'#AAAAAA'
-                }
+            Text {
+                text: root.iconChar
+                font.pointSize: 13
+                color: root.active ? root.accentColor : "#AAAAAA"
+                width: 20
+                height: 20
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
             }
 
-            Text{
-                id:lab
-                text:label
-                font.pointSize:11
-                color:active?_color:'#AAAAAA'
-                anchors.verticalCenter: parent.verticalCenter
+            Text {
+                text: root.label
+                font.pointSize: 11
+                color: root.active ? root.accentColor : "#AAAAAA"
+                verticalAlignment: Text.AlignVCenter
             }
+        }
 
-            MouseArea{
-                anchors.fill:parent
-                hoverEnabled:true
-
-                onEntered:{
-                    ico_.scale=1.1
-                    lab.scale=1.1
-                }
-
-                onExited:{
-                    ico_.scale=1
-                    lab.scale=1
-                }
-
-                onClicked:{
-                    active=true
-                    root.tapped()
-                }
-            }
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.tapped()
         }
     }
 }
