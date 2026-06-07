@@ -73,7 +73,7 @@ Item{
                 font.family: "Courier New"
                 textFormat: TextEdit.RichText
                 font.pointSize: 9
-                text: "<span style='color:grey'>Thanks for using KivyMDStudio...<span/><br>"
+                text: "<span style='color:grey'>Ember Terminal — Ready<span/><br>"
                 color:'white'
                 selectByMouse: true
                 selectionColor: 'teal'
