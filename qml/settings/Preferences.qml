@@ -1409,9 +1409,116 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:layout", "Applying layout sizes…", "Layout sizes applied.", function() {
-                            SettingsVM.setSidebarWidth(sidebarWidthSpin.value)
-                            SettingsVM.setPanelHeight(panelHeightSpin.value)
-                            SettingsVM.setRightPanelWidth(rightPanelWidthSpin.value)
+                            SettingsVM.setWorkbenchProfile({
+                                "activityBarVisible": root.hasSettings ? SettingsVM.activityBarVisible : true,
+                                "sidebarVisible": root.hasSettings ? SettingsVM.sidebarVisible : true,
+                                "panelVisible": root.hasSettings ? SettingsVM.panelVisible : false,
+                                "rightPanelVisible": root.hasSettings ? SettingsVM.rightPanelVisible : false,
+                                "sidebarWidth": sidebarWidthSpin.value,
+                                "panelHeight": panelHeightSpin.value,
+                                "rightPanelWidth": rightPanelWidthSpin.value
+                            })
+                        })
+                    }
+                }
+            }
+
+            SectionCard {
+                title: "Terminal"
+                subtitle: "PTY shell, startup directory, session restore and rendering."
+
+                SettingRow {
+                    title: "Shell"
+                    description: "Absolute shell path. Empty uses the system default shell."
+                    SettingTextField {
+                        id: terminalShellInput
+                        Layout.preferredWidth: 300
+                        text: root.hasSettings ? SettingsVM.terminalShell : ""
+                        placeholderText: "/bin/zsh"
+                    }
+                }
+
+                SettingRow {
+                    title: "Startup directory"
+                    description: "Where new terminal sessions start."
+                    SettingComboBox {
+                        id: terminalCwdModeCombo
+                        Layout.preferredWidth: 180
+                        model: ["project", "home", "process"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalCwdMode)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Restore sessions"
+                    description: "Recreate terminal sessions for the current workspace."
+                    SettingSwitch {
+                        id: terminalRestoreSwitch
+                        checked: root.hasSettings ? SettingsVM.terminalRestoreSessions : true
+                    }
+                }
+
+                SettingRow {
+                    title: "Terminal font"
+                    description: "Separate from editor and UI fonts."
+                    SettingComboBox {
+                        id: terminalFontCombo
+                        Layout.preferredWidth: 220
+                        model: root.fontFamilyOptions()
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalFontFamily)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Terminal font size"
+                    description: "Terminal cell text size in points."
+                    SettingSpinBox {
+                        id: terminalFontSizeSpin
+                        from: 9
+                        to: 28
+                        value: root.hasSettings ? SettingsVM.terminalFontSize : 12
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Cursor style"
+                    description: "Visual cursor shape for the terminal surface."
+                    SettingComboBox {
+                        id: terminalCursorStyleCombo
+                        Layout.preferredWidth: 180
+                        model: ["block", "bar", "underline"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalCursorStyle)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Scrollback"
+                    description: "Maximum rendered terminal history lines."
+                    SettingSpinBox {
+                        id: terminalScrollbackSpin
+                        from: 500
+                        to: 50000
+                        stepSize: 500
+                        value: root.hasSettings ? SettingsVM.terminalScrollback : 3000
+                        editable: true
+                    }
+                }
+
+                SettingButton {
+                    text: "Apply terminal"
+                    onClicked: {
+                        if (!root.hasSettings) return
+                        root.runSettingAction("settings:terminal", "Applying terminal settings…", "Terminal settings applied.", function() {
+                            SettingsVM.setTerminalProfile({
+                                "shell": terminalShellInput.text,
+                                "cwdMode": terminalCwdModeCombo.currentText,
+                                "restoreSessions": terminalRestoreSwitch.checked,
+                                "fontFamily": terminalFontCombo.currentText,
+                                "fontSize": terminalFontSizeSpin.value,
+                                "cursorStyle": terminalCursorStyleCombo.currentText,
+                                "scrollback": terminalScrollbackSpin.value
+                            })
                         })
                     }
                 }
