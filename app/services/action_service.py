@@ -21,6 +21,9 @@ class ActionDefinition:
     busy_label: str = "Working…"
     notify: bool = True
     requires_payload: bool = False
+    permissions: tuple[str, ...] = ()
+    safe_to_run: bool = True
+    exposable: bool = True
     handler: ActionHandler | None = field(default=None, repr=False)
 
 
@@ -62,6 +65,10 @@ class ActionService:
                 "busyLabel": action.busy_label,
                 "notify": action.notify,
                 "requiresPayload": action.requires_payload,
+                "permissions": list(action.permissions),
+                "requiresPermission": bool(action.permissions),
+                "safeToRun": action.safe_to_run,
+                "exposable": action.exposable,
             }
             for action in sorted(self._actions.values(), key=lambda item: (item.category, item.title))
         ]
@@ -86,6 +93,11 @@ class ActionService:
             result = self._result(action_id, payload, "error", f"Unknown action: {action_id}")
             self._append_history(result)
             await self._emit("action:error", result=result)
+            return result
+        if not action.safe_to_run:
+            result = self._result(action_id, payload, "error", f"Action is not marked safe to run: {action_id}")
+            self._append_history(result)
+            await self._emit("action:error", action=action_id, payload=payload, result=result)
             return result
 
         started_at = time()
@@ -147,6 +159,25 @@ class ActionService:
             return value
         return ""
 
+    @classmethod
+    def _redact_payload(cls, payload: Any) -> Any:
+        sensitive = ("key", "token", "secret", "password", "authorization", "credential")
+        if isinstance(payload, list):
+            return [cls._redact_payload(item) for item in payload]
+        if not isinstance(payload, dict):
+            return payload
+
+        redacted = {}
+        for key, value in (payload or {}).items():
+            lowered = str(key).lower()
+            if any(marker in lowered for marker in sensitive):
+                redacted[key] = "<redacted>"
+            elif isinstance(value, (dict, list)):
+                redacted[key] = cls._redact_payload(value)
+            else:
+                redacted[key] = value
+        return redacted
+
     @staticmethod
     def _result(
         action_id: str,
@@ -162,7 +193,7 @@ class ActionService:
             "state": state,
             "ok": state == "success",
             "message": message,
-            "payload": payload,
+            "payload": ActionService._redact_payload(payload),
             "value": value,
             "startedAt": started_at or now,
             "finishedAt": now,

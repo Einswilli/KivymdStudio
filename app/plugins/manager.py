@@ -883,6 +883,7 @@ class PluginManager:
             required_permissions = action.permissions or []
             if required_permissions and not set(required_permissions).issubset(set(manifest.permissions)):
                 continue
+            exposable = self._is_agent_exposable_permissions(required_permissions) and not bool(action.requiresPayload)
             action_id = action.id
             self._contributed_actions[action_id] = {
                 "plugin": name,
@@ -895,6 +896,9 @@ class PluginManager:
                 "keybinding": action.keybinding,
                 "requiresPayload": bool(action.requiresPayload),
                 "permissions": required_permissions,
+                "requiresPermission": bool(required_permissions),
+                "safeToRun": True,
+                "exposable": exposable,
             }
             if action.keybinding:
                 self._contributed_keybindings.setdefault(name, []).append({
@@ -914,6 +918,9 @@ class PluginManager:
                     busy_label=f"Running {action.title}…",
                     notify=True,
                     requires_payload=bool(action.requiresPayload),
+                    permissions=tuple(required_permissions),
+                    safe_to_run=True,
+                    exposable=exposable,
                     handler=self._make_action_handler(name, action.command),
                 ))
 
@@ -1128,6 +1135,17 @@ class PluginManager:
             return await api.commands.execute(command_id, payload or {})
 
         return _run
+
+    @staticmethod
+    def _is_agent_exposable_permissions(permissions: list[str] | tuple[str, ...]) -> bool:
+        sensitive = {
+            "editor:write",
+            "file:write",
+            "terminal:exec",
+            "settings:write",
+            "network:access",
+        }
+        return not bool(set(permissions or ()) & sensitive)
 
     @staticmethod
     def _permission_setting_key(name: str) -> str:
