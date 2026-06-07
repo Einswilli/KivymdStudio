@@ -650,16 +650,7 @@ class SettingsViewModel(QObject):
 
     @Slot(str)
     def setRulersCsv(self, value: str) -> None:
-        rulers: list[int] = []
-        for item in str(value or "").split(","):
-            item = item.strip()
-            if not item:
-                continue
-            try:
-                rulers.append(max(1, min(240, int(item))))
-            except ValueError:
-                continue
-        self._rulers = sorted(dict.fromkeys(rulers))
+        self._rulers = self._parse_rulers_csv(value)
         self._config = self._settings.save_global({"editor": {"rulers": self._rulers}})
         self.reload()
 
@@ -778,6 +769,96 @@ class SettingsViewModel(QObject):
     @Property(int, notify=editorMetricsChanged)
     def symbolsDelayMs(self) -> int:
         return self._symbols_delay_ms
+
+    @Slot("QVariantMap")
+    def setEditorProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "fontFamily" in values:
+            self._font_family = self._clean_font_family(str(values.get("fontFamily")), "Menlo")
+        if "fontSize" in values:
+            self._font_size = max(9, min(28, int(values.get("fontSize") or self._font_size)))
+        if "lineSpacing" in values:
+            self._editor_line_spacing = max(2, min(16, int(values.get("lineSpacing") or self._editor_line_spacing)))
+        if "tabSize" in values:
+            self._tab_size = max(1, min(12, int(values.get("tabSize") or self._tab_size)))
+        if "wordWrap" in values:
+            self._word_wrap = bool(values.get("wordWrap"))
+        if "rulersCsv" in values:
+            self._rulers = self._parse_rulers_csv(str(values.get("rulersCsv") or ""))
+        if "hoverDelayMs" in values:
+            self._hover_delay_ms = max(100, min(3000, int(values.get("hoverDelayMs") or self._hover_delay_ms)))
+        if "autoSaveEnabled" in values:
+            self._auto_save_enabled = bool(values.get("autoSaveEnabled"))
+        if "autoSaveDelayMs" in values:
+            self._auto_save_delay_ms = max(250, min(10000, int(values.get("autoSaveDelayMs") or self._auto_save_delay_ms)))
+        if "trimTrailingWhitespace" in values:
+            self._trim_trailing_whitespace = bool(values.get("trimTrailingWhitespace"))
+        if "insertFinalNewline" in values:
+            self._insert_final_newline = bool(values.get("insertFinalNewline"))
+        if "formatOnSave" in values:
+            self._format_on_save = bool(values.get("formatOnSave"))
+        if "suggestionsAuto" in values:
+            self._suggestions_auto = bool(values.get("suggestionsAuto"))
+        if "suggestionsDelayMs" in values:
+            self._suggestions_delay_ms = max(0, min(2000, int(values.get("suggestionsDelayMs") or self._suggestions_delay_ms)))
+        if "suggestionsDetailsOnSpace" in values:
+            self._suggestions_details_on_space = bool(values.get("suggestionsDetailsOnSpace"))
+        if "diagnosticsDelayMs" in values:
+            self._diagnostics_delay_ms = max(0, min(5000, int(values.get("diagnosticsDelayMs") or self._diagnostics_delay_ms)))
+        if "symbolsDelayMs" in values:
+            self._symbols_delay_ms = max(100, min(5000, int(values.get("symbolsDelayMs") or self._symbols_delay_ms)))
+        if "minimapEnabled" in values:
+            self._minimap_enabled = bool(values.get("minimapEnabled"))
+        if "minimapWidth" in values:
+            self._minimap_width = max(48, min(180, int(values.get("minimapWidth") or self._minimap_width)))
+        if "minimapDiagnostics" in values:
+            self._minimap_diagnostics = bool(values.get("minimapDiagnostics"))
+
+        self._config = self._settings.save_global({
+            "editor": {
+                "fontFamily": self._font_family,
+                "fontSize": self._font_size,
+                "lineSpacing": self._editor_line_spacing,
+                "tabSize": self._tab_size,
+                "wordWrap": self._word_wrap,
+                "autoSave": {
+                    "enabled": self._auto_save_enabled,
+                    "delayMs": self._auto_save_delay_ms,
+                },
+                "trimTrailingWhitespace": self._trim_trailing_whitespace,
+                "insertFinalNewline": self._insert_final_newline,
+                "rulers": self._rulers,
+                "hoverDelayMs": self._hover_delay_ms,
+                "minimap": {
+                    "enabled": self._minimap_enabled,
+                    "width": self._minimap_width,
+                    "diagnostics": self._minimap_diagnostics,
+                },
+                "suggestions": {
+                    "auto": self._suggestions_auto,
+                    "delayMs": self._suggestions_delay_ms,
+                    "detailsOnSpace": self._suggestions_details_on_space,
+                },
+                "diagnostics": {"delayMs": self._diagnostics_delay_ms},
+                "symbols": {"delayMs": self._symbols_delay_ms},
+            },
+            "files": {"formatOnSave": self._format_on_save},
+            "language": {"formatOnSave": self._format_on_save},
+        })
+        self.reload()
+
+    @staticmethod
+    def _parse_rulers_csv(value: str) -> list[int]:
+        rulers: list[int] = []
+        for item in str(value or "").split(","):
+            item = item.strip()
+            if not item:
+                continue
+            try:
+                rulers.append(max(1, min(240, int(item))))
+            except ValueError:
+                continue
+        return sorted(dict.fromkeys(rulers))
 
     @Slot(bool)
     def setLspEnabled(self, value: bool) -> None:
