@@ -24,6 +24,7 @@ Item {
     readonly property int tabSize: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.tabSize : 4
     readonly property bool autoSaveEnabled: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.autoSaveEnabled : false
     readonly property int autoSaveDelayMs: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.autoSaveDelayMs : 1200
+    readonly property bool wordWrapEnabled: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.wordWrap : false
     readonly property real lineHeight: lineMetrics.height + lineSpacing
     readonly property real charWidth: Math.max(1, lineMetrics.advanceWidth || lineMetrics.width || 7.2)
     readonly property font editorFont: Qt.font({
@@ -71,6 +72,7 @@ Item {
     property bool inlineDiagnosticsEnabled: false
 
     onWidthChanged: _updateContentWidth()
+    onWordWrapEnabledChanged: _updateContentWidth()
     onVisibleChanged: if (!visible) resetTransientUi()
     onActiveFocusChanged: if (!activeFocus) suggestionBox.close()
     onAutoSaveDelayMsChanged: autoSaveTimer.interval = Math.max(250, autoSaveDelayMs)
@@ -316,7 +318,9 @@ Item {
     }
 
     function _updateContentWidth() {
-        root._contentWidth = Math.max(scrollView.width, root._longestLineWidth())
+        root._contentWidth = root.wordWrapEnabled ? Math.max(scrollView.width, width - (minimap.visible ? minimap.width : 0)) : Math.max(scrollView.width, root._longestLineWidth())
+        if (root.wordWrapEnabled)
+            lineView.contentX = 0
     }
 
     function _scrollTo(x, y) {
@@ -615,7 +619,7 @@ Item {
             anchors.right: vScroll.left
             anchors.bottom: parent.bottom
             orientation: Qt.Horizontal
-            policy: lineView.contentWidth > lineView.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            policy: !root.wordWrapEnabled && lineView.contentWidth > lineView.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
             size: lineView.contentWidth > 0 ? Math.min(1, lineView.width / lineView.contentWidth) : 1
             position: lineView.contentWidth > lineView.width ? lineView.contentX / (lineView.contentWidth - lineView.width) * (1 - size) : 0
             onPositionChanged: {
