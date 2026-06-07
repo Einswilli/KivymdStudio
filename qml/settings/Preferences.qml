@@ -996,8 +996,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:typography", "Applying editor typography…", "Editor typography applied.", function() {
-                            SettingsVM.setFont(fontFamilyCombo.currentText, fontSizeSpin.value)
-                            SettingsVM.setEditorLineSpacing(lineSpacingSpin.value)
+                            SettingsVM.setEditorProfile({
+                                "fontFamily": fontFamilyCombo.currentText,
+                                "fontSize": fontSizeSpin.value,
+                                "lineSpacing": lineSpacingSpin.value
+                            })
                         })
                     }
                 }
@@ -1061,9 +1064,12 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:editing", "Applying editing settings…", "Editing settings applied.", function() {
-                            SettingsVM.setTabSize(tabSizeSpin.value)
-                            SettingsVM.setHoverDelayMs(hoverDelaySpin.value)
-                            SettingsVM.setRulersCsv(rulersInput.text)
+                            SettingsVM.setEditorProfile({
+                                "tabSize": tabSizeSpin.value,
+                                "hoverDelayMs": hoverDelaySpin.value,
+                                "wordWrap": root.hasSettings ? SettingsVM.wordWrap : false,
+                                "rulersCsv": rulersInput.text
+                            })
                         })
                     }
                 }
@@ -1125,12 +1131,27 @@ Item {
                     }
                 }
 
+                SettingRow {
+                    title: "Format on save"
+                    description: "Run the configured formatter before writing files."
+                    SettingSwitch {
+                        id: formatOnSaveSwitch
+                        checked: root.hasSettings ? SettingsVM.formatOnSave : false
+                    }
+                }
+
                 SettingButton {
                     text: "Apply save behavior"
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:save-behavior", "Applying save behavior…", "Save behavior applied.", function() {
-                            SettingsVM.setAutoSaveDelayMs(autoSaveDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "autoSaveEnabled": root.hasSettings ? SettingsVM.autoSaveEnabled : false,
+                                "autoSaveDelayMs": autoSaveDelaySpin.value,
+                                "trimTrailingWhitespace": root.hasSettings ? SettingsVM.trimTrailingWhitespace : true,
+                                "insertFinalNewline": root.hasSettings ? SettingsVM.insertFinalNewline : true,
+                                "formatOnSave": formatOnSaveSwitch.checked
+                            })
                         })
                     }
                 }
@@ -1176,7 +1197,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:suggestions", "Applying suggestion settings…", "Suggestion settings applied.", function() {
-                            SettingsVM.setSuggestionsDelayMs(suggestionsDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "suggestionsAuto": root.hasSettings ? SettingsVM.suggestionsAuto : true,
+                                "suggestionsDelayMs": suggestionsDelaySpin.value,
+                                "suggestionsDetailsOnSpace": root.hasSettings ? SettingsVM.suggestionsDetailsOnSpace : true
+                            })
                         })
                     }
                 }
@@ -1217,8 +1242,10 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:diagnostics", "Applying diagnostics timing…", "Diagnostics timing applied.", function() {
-                            SettingsVM.setDiagnosticsDelayMs(diagnosticsDelaySpin.value)
-                            SettingsVM.setSymbolsDelayMs(symbolsDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "diagnosticsDelayMs": diagnosticsDelaySpin.value,
+                                "symbolsDelayMs": symbolsDelaySpin.value
+                            })
                         })
                     }
                 }
@@ -1264,7 +1291,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:minimap", "Applying minimap settings…", "Minimap settings applied.", function() {
-                            SettingsVM.setMinimapWidth(minimapWidthSpin.value)
+                            SettingsVM.setEditorProfile({
+                                "minimapEnabled": root.hasSettings ? SettingsVM.minimapEnabled : true,
+                                "minimapWidth": minimapWidthSpin.value,
+                                "minimapDiagnostics": root.hasSettings ? SettingsVM.minimapDiagnostics : true
+                            })
                         })
                     }
                 }
