@@ -112,7 +112,11 @@ ApplicationWindow {
                                                                         function onProjectChanged(project)
                                                                         { root.currentProject = project || ({}) }
                                                                             function onFolderChanged(path)
-                                                                            { root.currentFolder = path || "" }
+                                                                            {
+                                                                                root.currentFolder = path || ""
+                                                                                if (typeof TerminalVM !== "undefined" && TerminalVM)
+                                                                                    TerminalVM.set_cwd(root.currentFolder)
+                                                                            }
                                                                                 function onWorkspaceRestored(path)
                                                                                 {
                                                                                     root.currentFolder = path || ""
