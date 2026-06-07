@@ -1,85 +1,72 @@
 import QtQuick 2.15
-import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-import QtCharts 2.15
-import QtQuick.Layouts 1.0
-import "../"
 
-Item{
-    id:root
-    anchors.fill:parent
+Item {
+    id: root
 
-    property string helper:'Helper text'
+    property string helper: "Helper text"
     property alias selected: check.checked
+    property color activeColor: "#EEEFFF"
 
-    Rectangle{
-        // height:50
-        // width:parent.width
-        anchors.fill:parent
-        color:'transparent'
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
 
-        Row{
-            anchors.fill:parent
-            spacing:20
+        Row {
+            anchors.fill: parent
+            spacing: 20
 
-            //CHECKBOX
-            Rectangle{
-                width:parent.width*.25-10
-                height:parent.height
-                color:'transparent'
+            Rectangle {
+                width: parent.width * 0.25 - 10
+                height: parent.height
+                color: "transparent"
 
-                //CHECKBOX
-                CheckBox{
-                    id:check
+                CheckBox {
+                    id: check
                     height: 20
-                    width: (parent.width)-25
+                    width: parent.width - 25
                     checked: true
-                    anchors.verticalCenter:parent.verticalCenter
-                    indicator: Row{
-                        height:parent.height
+                    anchors.verticalCenter: parent.verticalCenter
+                    indicator: Row {
+                        height: parent.height
                         spacing: 8
-                        width:(parent.width/3)-5
-                        Rectangle{
+                        width: (parent.width / 3) - 5
+                        Rectangle {
                             height: 25
                             width: 25
-                            radius:5
-                            color:'#2E2F30'
-                            anchors.verticalCenter:parent.verticalCenter
-                            
-                            TextIcon{
-                                id:ico_
-                                _size:17
-                                text: icons["check"]
-                                anchors.fill: parent
-                                color:active?_color:'#AAAAAA'
-                                visible:check.checked
+                            radius: 5
+                            color: "#2E2F30"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                text: "✓"
+                                color: root.activeColor
+                                font.pointSize: 14
+                                anchors.centerIn: parent
+                                visible: check.checked
                             }
                         }
-                        Text{
-                            text:!check.checked?'NO':'YES'
-                            font.pointSize:12
-                            color:'#DDDDDD'
-                            anchors.verticalCenter:parent.verticalCenter
+                        Text {
+                            text: check.checked ? "YES" : "NO"
+                            font.pointSize: 12
+                            color: "#DDDDDD"
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                 }
             }
 
-            //HELPER MESSAGE
-            Rectangle{
-                width:parent.width*.25-10
-                height:parent.height
-                color:'transparent'
-                Text{
-                    text:helper
-                    // font.bold:true
-                    font.pointSize:10
-                    color:'#AAAAAA'
-                    wrapMode:Text.WordWrap
+            Rectangle {
+                width: parent.width * 0.25 - 10
+                height: parent.height
+                color: "transparent"
+                Text {
+                    text: helper
+                    font.pointSize: 10
+                    color: "#AAAAAA"
+                    wrapMode: Text.WordWrap
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.left:parent.left
-                    anchors.margins:10
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
                 }
             }
         }

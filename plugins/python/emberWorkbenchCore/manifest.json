@@ -1,0 +1,227 @@
+{
+  "name": "ember-workbench-core",
+  "display_name": "Ember Workbench Core",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Official Ember workbench sidebar views: explorer, search, source control, debug and extensions.",
+  "icon": "assets/icons/workbench.svg",
+  "entry": "backend.py",
+  "license": "MIT",
+  "keywords": [
+    "workbench",
+    "sidebar",
+    "core",
+    "views"
+  ],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [
+    "file:read",
+    "file:write",
+    "project:read"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "emberWorkbench.search.copyRelativePath",
+        "title": "Copy Search Result Relative Path"
+      },
+      {
+        "id": "emberWorkbench.file.copyRelativePath",
+        "title": "Copy Relative Path",
+        "icon": "copy"
+      },
+      {
+        "id": "emberWorkbench.file.copyName",
+        "title": "Copy Name",
+        "icon": "copy"
+      },
+      {
+        "id": "emberWorkbench.file.copyPythonImportPath",
+        "title": "Copy Python Import Path",
+        "icon": "python"
+      }
+    ],
+    "searchResultActions": [
+      {
+        "id": "emberWorkbench.search.copyRelativePath",
+        "title": "Copy Relative Path",
+        "command": "emberWorkbench.search.copyRelativePath",
+        "icon": "copy",
+        "group": "100_navigation",
+        "providers": [
+          "*"
+        ],
+        "languages": [
+          "*"
+        ]
+      }
+    ],
+    "searchProviders": [
+      {
+        "id": "ember.search.python",
+        "label": "Ember Python Search",
+        "description": "Official Ember workspace text search provider.",
+        "providerType": "python",
+        "capabilities": [
+          "text",
+          "workspace",
+          "cancel"
+        ],
+        "defaults": {
+          "maxResults": 500,
+          "maxFileSize": 512000,
+          "exclude": [
+            ".git",
+            ".venv",
+            "node_modules",
+            "target",
+            "dist",
+            "build"
+          ]
+        }
+      }
+    ],
+    "views": [
+      {
+        "id": "emberWorkbench.explorer",
+        "replaces": "core.explorer",
+        "location": "sidebar",
+        "component": "views/explorer/ExplorerView.qml",
+        "title": "Explorer",
+        "label": "EXPLORER",
+        "icon": "folder",
+        "order": 100
+      },
+      {
+        "id": "emberWorkbench.search",
+        "replaces": "core.search",
+        "location": "sidebar",
+        "component": "views/search/SearchView.qml",
+        "title": "Search",
+        "label": "SEARCH",
+        "icon": "search",
+        "order": 200
+      },
+      {
+        "id": "emberWorkbench.scm",
+        "replaces": "core.scm",
+        "location": "sidebar",
+        "component": "views/scm/SourceControlView.qml",
+        "title": "Source Control",
+        "label": "SOURCE CONTROL",
+        "icon": "git-branch",
+        "order": 300
+      },
+      {
+        "id": "emberWorkbench.debug",
+        "replaces": "core.debug",
+        "location": "sidebar",
+        "component": "views/debug/DebugView.qml",
+        "title": "Run and Debug",
+        "label": "RUN",
+        "icon": "debug",
+        "order": 400
+      },
+      {
+        "id": "emberWorkbench.extensions",
+        "replaces": "core.extensions",
+        "location": "sidebar",
+        "component": "views/extensions/ExtensionsView.qml",
+        "title": "Extensions",
+        "label": "EXTENSIONS",
+        "icon": "extensions",
+        "order": 500
+      }
+    ],
+    "fileActions": [
+      {
+        "id": "emberWorkbench.file.copyRelativePath",
+        "title": "Copy Relative Path",
+        "command": "emberWorkbench.file.copyRelativePath",
+        "icon": "copy",
+        "group": "100_navigation",
+        "appliesTo": [
+          "file",
+          "folder"
+        ],
+        "permissions": [
+          "file:read"
+        ]
+      },
+      {
+        "id": "emberWorkbench.file.copyName",
+        "title": "Copy Name",
+        "command": "emberWorkbench.file.copyName",
+        "icon": "copy",
+        "group": "100_navigation",
+        "appliesTo": [
+          "file",
+          "folder"
+        ],
+        "permissions": [
+          "file:read"
+        ]
+      },
+      {
+        "id": "emberWorkbench.file.copyPythonImportPath",
+        "title": "Copy Python Import Path",
+        "command": "emberWorkbench.file.copyPythonImportPath",
+        "icon": "python",
+        "group": "200_language",
+        "when": "isFile and ext == .py",
+        "appliesTo": [
+          "file"
+        ],
+        "permissions": [
+          "file:read"
+        ]
+      }
+    ],
+    "fileDecorations": [
+      {
+        "id": "emberWorkbench.file.envBadge",
+        "title": "Environment file",
+        "badge": "ENV",
+        "color": "#22C55E",
+        "tooltip": "Environment configuration file",
+        "group": "100_metadata",
+        "when": "isFile and matches(.env)",
+        "appliesTo": [
+          "file"
+        ],
+        "permissions": [
+          "file:read"
+        ]
+      },
+      {
+        "id": "emberWorkbench.folder.gitBadge",
+        "title": "Git repository metadata",
+        "icon": "git-branch",
+        "color": "#F97316",
+        "tooltip": "Git metadata folder",
+        "group": "100_metadata",
+        "when": "isFolder and name == .git",
+        "appliesTo": [
+          "folder"
+        ],
+        "permissions": [
+          "project:read"
+        ]
+      }
+    ],
+    "fileIconOverrides": [
+      {
+        "id": "emberWorkbench.file.envIcon",
+        "pattern": ".env",
+        "icon": "tune",
+        "appliesTo": [
+          "file"
+        ],
+        "priority": 800,
+        "when": "isFile"
+      }
+    ]
+  },
+  "dependencies": {}
+}

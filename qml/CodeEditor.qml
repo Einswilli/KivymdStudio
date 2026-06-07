@@ -4,7 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 import QtCharts 2.15
 import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs
 //import '../Js/highlightcolor.js' as Logic
 // import '../Js/prism.js' as PrismJS
 
@@ -152,7 +152,7 @@ Item{
                 color:'white'
                 mouseSelectionMode:TextEdit.SelectCharacters
                 font.pointSize:12
-                font.family:'monospace'
+                font.family:'Menlo'
                 selectByMouse: true
                 selectionColor: '#254655C5'//'#1C98E0'
                 tabStopDistance: 40
@@ -620,9 +620,9 @@ Item{
     ColorDialog{
         id:colorpiker
         //color: color
-        currentColor: "#ABCDEF"
-        // modality: Qt: : WindowModality
-        showAlphaChannel: true
+        // currentColor: (Qt6)
+        // // modality: Qt (Qt6 removed): : WindowModality
+        // showAlphaChannel: true (Qt6 removed)
         //title: string
         //visible: bool
 

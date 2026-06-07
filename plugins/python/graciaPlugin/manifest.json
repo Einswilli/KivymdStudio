@@ -1,0 +1,45 @@
+{
+  "name": "gracia-demo",
+  "display_name": "Gracia Demo",
+  "version": "1.0.0",
+  "author": "gracia",
+  "description": "Another example plugin for the Ember extension system.",
+  "icon": "Dot.png",
+  "entry": "gra.py",
+  "qml": "gracia.qml",
+  "license": "MIT",
+  "keywords": ["demo", "example"],
+  "min_app_version": "2.0.0",
+  "lifecycle": {
+    "on_activate": "activate",
+    "on_deactivate": "deactivate"
+  },
+  "permissions": [
+    "editor:read",
+    "file:read"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "graciaDemo.greet",
+        "title": "Gracia: Greet"
+      }
+    ],
+    "menus": [
+      {
+        "menu": "editor/context",
+        "command": "graciaDemo.greet",
+        "group": "1_navigation"
+      }
+    ],
+    "views": [
+      {
+        "id": "graciaDemo.sidebar",
+        "location": "sidebar",
+        "component": "gracia.qml",
+        "title": "Gracia Panel"
+      }
+    ]
+  },
+  "dependencies": {}
+}

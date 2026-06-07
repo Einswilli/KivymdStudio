@@ -1,0 +1,23 @@
+{
+  "name": "ember-light-theme",
+  "display_name": "Ember Light Theme",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Clean light appearance provider for Ember colors and editor token colors.",
+  "icon": "assets/icons/theme.svg",
+  "license": "MIT",
+  "keywords": ["theme", "light", "appearance"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "themes": [
+      {
+        "id": "ember-light",
+        "label": "Ember Light",
+        "path": "themes/ember-light.json"
+      }
+    ]
+  },
+  "dependencies": {}
+}

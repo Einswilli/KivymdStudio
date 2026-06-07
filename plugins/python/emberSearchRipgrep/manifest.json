@@ -1,0 +1,40 @@
+{
+  "name": "ember-search-ripgrep",
+  "display_name": "Ember Ripgrep Search",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "High-performance workspace search provider powered by ripgrep.",
+  "icon": "assets/icons/ripgrep.svg",
+  "license": "MIT",
+  "keywords": ["search", "ripgrep", "workspace", "performance"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "searchProviders": [
+      {
+        "id": "ember.search.ripgrep",
+        "label": "Ripgrep",
+        "description": "Fast regex/text workspace search using rg --json.",
+        "providerType": "ripgrep",
+        "command": "rg",
+        "args": [],
+        "capabilities": ["text", "regex", "workspace", "cancel", "ignore"],
+        "defaults": {
+          "maxResults": 1000,
+          "maxFileSize": 1048576,
+          "exclude": [".git", ".venv", "node_modules", "target", "dist", "build"]
+        },
+        "install": {
+          "strategy": "systemCommand",
+          "command": "brew",
+          "args": ["install", "ripgrep"],
+          "requiresApproval": true,
+          "platforms": ["darwin"],
+          "description": "Install ripgrep with Homebrew."
+        }
+      }
+    ]
+  },
+  "dependencies": {}
+}

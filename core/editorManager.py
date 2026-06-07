@@ -1,22 +1,17 @@
-import subprocess
-from PySide2.QtCore import QObject, Signal, Slot,QRunnable,QThreadPool
+from PySide6.QtCore import QObject, Signal, Slot,QRunnable,QThreadPool
 
 from pygments import highlight
 from pygments.lexers.python import PythonLexer
 from pygments.lexers import load_lexer_from_file
-from pygments.lexers.special import TextLexer
 from pygments.formatters.html import HtmlFormatter
 from pygments.styles import get_style_by_name
 
 from rich.console import Console
 from rich.syntax import Syntax
-import pyperclip
 from flake8.api import legacy
 from flake8 import *
-from autopep8 import fix_code
-import simplejson as Json
 
-import locale, sys,utils
+import utils
 
 class Worker(QRunnable):
     '''
@@ -56,7 +51,6 @@ class EditorManager(QObject):
     suggestions=Signal(str,name='suggestions')
 
     def detect_lang(self,code):
-        import re
         defs=code.count('def ')
         classes=code.count('class ')
         if defs>1 or classes>1:

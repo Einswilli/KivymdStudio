@@ -1,0 +1,9 @@
+CodeEditor 1.0 CodeEditor.qml
+EditorTab 1.0 EditorTab.qml
+EditorWorkspace 1.0 EditorWorkspace.qml
+LineNumbers 1.0 LineNumbers.qml
+InlineSuggestion 1.0 InlineSuggestion.qml
+SuggestionBox 1.0 SuggestionBox.qml
+MiniMap 1.0 MiniMap.qml
+DiagnosticsOverlay 1.0 DiagnosticsOverlay.qml
+TokenLine 1.0 TokenLine.qml

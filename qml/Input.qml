@@ -1,7 +1,5 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.4
-import QtQuick.Controls.Styles 1.4
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 
 Item{
@@ -18,8 +16,8 @@ Item{
     property bool ispass:false
     property alias txt:field.text
     property int rad:field.width/2
-    property var valid:RegExpValidator{
-        regExp: /^([a-zA-Z0-9_@.éè \-]+)$/
+    property var valid: RegularExpressionValidator {
+        regularExpression: /^([a-zA-Z0-9_@.éè \-]+)$/
     }
     //anchors.horizontalCenter: parent.horizontalCenter
 

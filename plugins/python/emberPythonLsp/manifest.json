@@ -1,0 +1,116 @@
+{
+  "name": "ember-python-lsp",
+  "display_name": "Ember Python LSP",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Proprietary Python language providers for ty and ruff.",
+  "license": "MIT",
+  "keywords": [
+    "lsp",
+    "python",
+    "ty",
+    "ruff",
+    "language"
+  ],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "lspProviders": [
+      {
+        "id": "python.ty",
+        "label": "ty",
+        "language": "python",
+        "description": "Fast Python type checking, hover, completion and symbol provider.",
+        "command": "ty",
+        "args": [
+          "server"
+        ],
+        "fileExtensions": [
+          ".py",
+          ".pyi"
+        ],
+        "rootPatterns": [
+          "pyproject.toml",
+          "uv.lock",
+          ".git",
+          "Pipfile",
+          "requirements.txt"
+        ],
+        "capabilities": [
+          "hover",
+          "completion",
+          "diagnostics",
+          "symbols"
+        ],
+        "defaults": {
+          "enabled": true,
+          "priority": 10
+        }
+      },
+      {
+        "id": "python.ruff",
+        "label": "ruff",
+        "language": "python",
+        "description": "Python diagnostics, formatting and quick-fix provider.",
+        "command": "ruff",
+        "args": [
+          "server"
+        ],
+        "fileExtensions": [
+          ".py",
+          ".pyi"
+        ],
+        "rootPatterns": [
+          "pyproject.toml",
+          "ruff.toml",
+          ".git",
+          "Pipfile",
+          "requirements.txt"
+        ],
+        "capabilities": [
+          "diagnostics",
+          "codeActions",
+          "formatting"
+        ],
+        "defaults": {
+          "enabled": true,
+          "priority": 20
+        }
+      }
+    ],
+    "fileFormatters": [
+      {
+        "id": "python.ruff-format",
+        "label": "ruff format",
+        "description": "Format Python files with ruff format.",
+        "languages": [
+          "python"
+        ],
+        "extensions": [
+          ".py",
+          ".pyi"
+        ],
+        "command": "ruff",
+        "args": [
+          "format",
+          "{file}"
+        ],
+        "priority": 900,
+        "permissions": [],
+        "install": {
+          "strategy": "pythonTool",
+          "command": "uv",
+          "args": [
+            "tool",
+            "install",
+            "ruff"
+          ],
+          "requiresApproval": true,
+          "description": "Install ruff with uv tool install."
+        }
+      }
+    ]
+  },
+  "dependencies": {}
+}

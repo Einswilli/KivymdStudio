@@ -1,0 +1,54 @@
+{
+  "name": "ember-font-pack",
+  "display_name": "Ember Font Pack",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "System font provider for Fira Code, Monaco and JetBrains Mono.",
+  "icon": "assets/icons/font.svg",
+  "license": "MIT",
+  "keywords": ["fonts", "appearance", "typography"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "fonts": [
+      {
+        "id": "ui-arial",
+        "label": "Arial",
+        "family": "Arial",
+        "target": "ui",
+        "fallbacks": ["Helvetica Neue", "Helvetica", "Arial"],
+        "license": "system"
+      },
+      {
+        "id": "fira-code",
+        "label": "Fira Code",
+        "family": "Fira Code",
+        "target": "editor",
+        "fallbacks": ["JetBrains Mono", "Menlo", "Monaco", "Courier New"],
+        "path": "assets/fonts/FiraCode-Regular.ttf",
+        "downloadUrl": "https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip",
+        "license": "OFL-1.1"
+      },
+      {
+        "id": "monaco",
+        "label": "Monaco",
+        "family": "Monaco",
+        "target": "editor",
+        "fallbacks": ["Menlo", "Courier New"],
+        "license": "system"
+      },
+      {
+        "id": "jetbrains-mono",
+        "label": "JetBrains Mono",
+        "family": "JetBrains Mono",
+        "target": "editor",
+        "fallbacks": ["Fira Code", "Menlo", "Monaco", "Courier New"],
+        "path": "assets/fonts/JetBrainsMono-Regular.ttf",
+        "downloadUrl": "https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip",
+        "license": "OFL-1.1"
+      }
+    ]
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,10 @@
+[urls]
+default = "sqlite://studio.sqlite3?mode=rwc"
+logs = "sqlite://logs.db?mode=rwc"
+
+[pool]
+max_conn = 12
+min_conn = 2
+connect_timeout = 30
+idle_timeout = 600
+max_lifetime = 1800

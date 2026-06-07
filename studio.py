@@ -1,508 +1,140 @@
-# This Python file uses the following encoding: utf-8
-from importlib.resources import path
-import logging
-from pathlib import Path
-import pathlib
-import shutil
+"""
+Ember — A modern, extensible, AI-powered code editor.
+Entry point for the Qt/QML application.
+"""
+
+from __future__ import annotations
+
 import sys
-import subprocess
-# from Terminal import*
-from core.shell import *
-import getpass
-import socket
-import glob,schedule
-from time import time
-import platform
-#import execjs
-#import tree
-#from Emulator.emulator import Emulator
-from core.editorManager import EditorManager
-from core.stackOverflow import StackManager
-from core.fileManager import FileManager
-from core.dbManager import get_db
-import locale, sys,utils
-
-
-# from PySide6.QtGui import QGuiApplication
-# from PySide6.QtQml import QQmlApplicationEngine,QmlElement
-from PySide2.QtGui import QGuiApplication
-from PySide2.QtQml import QQmlApplicationEngine,QQmlContext
-from PySide2.QtCore import *
-from PySide2.QtGui import *
-from PySide2.QtWidgets import *
-#from PyQt5 import QtCore, QtGui, QtWidgets
-from PySide2.QtQml import qmlRegisterType                                            
-
-import simplejson as Json
-from plyer import notification
-import datetime
-import sys,os,requests,tempfile
-import sqlite3
-
+import os
+import asyncio
 from pathlib import Path
-# from PySide6.QtQuickControls2 import QQuickStyle
-from watchdog.observers import Observer
-from watchdog.events import LoggingEventHandler
-
-QML_IMPORT_NAME = "io.qt.textproperties"
-QML_IMPORT_MAJOR_VERSION = 1
-
-
-class DisplayablePath(object):
-    display_filename_prefix_middle = '├─'
-    display_filename_prefix_last = '└─'
-    display_parent_prefix_middle = '  '
-    display_parent_prefix_last = '│ '
-
-    def __init__(self, path, parent_path, is_last):
-        self.path = Path(str(path))
-        self.parent = parent_path
-        self.is_last = is_last
-        if self.parent:
-            self.depth = self.parent.depth + 1
-        else:
-            self.depth = 0
-
-    @property
-    def displayname(self):
-        if self.path.is_dir():
-            return self.path.name + '/'
-        return self.path.name
-
-    @classmethod
-    def make_tree(cls, root, parent=None, is_last=False, criteria=None):
-        root = Path(str(root))
-        criteria = criteria or cls._default_criteria
-
-        displayable_root = cls(root, parent, is_last)
-        yield displayable_root
-
-        children = sorted(list(path
-                               for path in root.iterdir()
-                               if criteria(path)),
-                          key=lambda s: str(s).lower())
-        count = 1
-        for path in children:
-            is_last = count == len(children)
-            if path.is_dir():
-                yield from cls.make_tree(path,
-                                         parent=displayable_root,
-                                         is_last=is_last,
-                                         criteria=criteria)
-            else:
-                yield cls(path, displayable_root, is_last)
-            count += 1
-
-    @classmethod
-    def _default_criteria(cls, path):
-        return True
-
-    @property
-    def displayname(self):
-        if self.path.is_dir():
-            return self.path.name + '/'
-        return self.path.name
-
-    def displayable(self):
-        if self.parent is None:
-            return self.displayname
-
-        _filename_prefix = (self.display_filename_prefix_last
-                            if self.is_last
-                            else self.display_filename_prefix_middle)
-
-        parts = ['{!s} {!s}'.format(_filename_prefix,
-                                    self.displayname)]
-
-        parent = self.parent
-        while parent and parent.parent is not None:
-            parts.append(self.display_parent_prefix_middle
-                         if parent.is_last
-                         else self.display_parent_prefix_last)
-            parent = parent.parent
-
-        return ''.join(reversed(parts))
-
-DEFAULT_TTY_CMD = ['/bin/bash']
-DEFAULT_COLS = 80
-DEFAULT_ROWS = 25
-
-# The character to use as a reference point when converting between pixel and
-# character cell dimensions in the presence of a non-fixed-width font
-REFERENCE_CHAR = 'W'
-
-class changeHandler(LoggingEventHandler):
-        
-    def on_modified(self, event,callback):
-        callback()
-
-####
-##  WORKER
-#####
-class Worker(QRunnable):
-    '''
-    Worker thread
-
-    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
-
-    :param callback: The function callback to run on this worker thread. Supplied args and
-                     kwargs will be passed through to the runner.
-    :type callback: function
-    :param args: Arguments to pass to the callback function
-    :param kwargs: Keywords to pass to the callback function
-
-    '''
-
-    def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
-
-        # Store constructor arguments (re-used for processing)
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-
-
-    @Slot()
-    def run(self):
-        '''
-        Initialise the runner function with passed args, kwargs.
-        '''
-
-        # Retrieve args/kwargs here; and fire processing using them
-        
-        self.fn(*self.args, **self.kwargs)
-
-
-####
-##  STUDIO
-#####
-class Studio(QObject):
-
-    def __init__(self):
-        QObject.__init__(self)
-    folderOpen=Signal(dict)
-    fileOpen=Signal(dict)
-    colorhighlight=Signal(str)
-    screeninfo=Signal(dict)
-    terminalReady=Signal(str)
-    highlighting=Signal(str,name='highlighting')
-    termstdout=Signal(str,name='termstdout')
-    #logevent=Signal(dict,name='logEvent')
-    
-    @Slot(result='QString')
-    def getScreen(self):
-
-        """this function is used to get the screen geometry like width and the height
-
-        Returns:
-            str: a str format of the screen geometry
-        """
-        # screen=QGuiApplication.primaryScreen()
-        # x=screen.size.width()
-        # y=screen.size.height()
-        try:
-            import tkinter as tk
-
-            root = tk.Tk()
-            width = root.winfo_screenwidth()
-            height = root.winfo_screenheight()
-            #print(width,height)
-            self.screeninfo.emit([width,height])
-            root.destroy()
-            return f'{width},{height}'
-        except:return'1200,800'
-        
-
-    @Slot(result='QString')
-    def load_icons(self):
-        return Json.dumps(utils.md_icons)
-
-    @Slot(str,str)
-    def newfile(self,filename,fpath):
-        """this is used to create a new file in a given path
-
-        Args:
-            filename str: the file name
-            fpath str: the file path
-        """
-        p=str(fpath)[8:] if 'windows' in platform.system().lower() else str(fpath)[7:]
-        link=os.path.join(p,str(filename))
-        #print(fpath)
-        try:
-            with open(link,'x')as f:
-                f.write('')
-        except Exception as e:
-            print(e)
-        #os.system(f'touch {link}')
-        #print('cool!')
-
-
-    @Slot(str,result='QString')
-    def openfile(self,path):
-        """this fonction is used to open a file from a given path,save it to the history and returns the file content
-
-        Args:
-            path str: the file path 
-
-        Returns:
-            str: the file content
-        """
-        code=''
-        # curs,conn=self.connect_To_Db()
-        # print(path)
-        
-        try:
-            if not path.startswith('file://'):
-                # self.save_to_history(path)
-                p=path[1:].replace('/','\\') if 'windows' in platform.system().lower() else path
-            else:
-                p=path[8:].replace('/','\\') if 'windows' in platform.system().lower() else path[7:] 
-            with open(p,'r') as f:
-                code=f.read()
-                #self.richcolor(code)
-            return EditorManager().colorify(code)
-            #.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))#self.richcolor(code)# cod
-        except Exception as e:
-            print('EXCEPTION OPENNING FILE: '+str(e))
-            return f'Error when trying to open the file: {path}\n may be the file extention is not supported '
-
-    @Slot(str,result='QString')
-    def get_filename(self,path):
-        """this function is used to get the file name from a given path
-
-        Args:
-            path str: the file path
-
-        Returns:
-            str: the file name
-        """
-        # if 'windows' in platform.system().lower():
-        #     filename=str(path).split('\\')[-1]
-        # else:
-        filename=str(path).split('/')[-1]
-        return filename
-
-    @Slot(str,str,result='QVariant')
-    def newfolder(self,foldername,path_):
-        """This function is used to create a new folder in a directory
-
-        Args:
-            foldername str  : the new folder name
-            path_ str       : the directory path
-        """
-        p=str(path_)[8:] if 'windows' in platform.system().lower() else str(path_)[7:]
-        os.mkdir(os.path.join(p,foldername))
-        #os.system(f'mkdir {os.path.join(str(path_)[7:],foldername)}')
-        #os.makedirs(foldername)
-        #pass
-
-    @Slot(str,str,str)
-    def savefile(self,p,fname,contenu):
-        """
-        Function for saving file
-
-        Argv:
-            p         : the file path
-            fname     : the file name
-            contenue  : the file content
-        """
-
-        if str(p).endswith(fname):
-            idx=str(p).index(fname)
-            p=p[8:idx] if 'windows' in platform.system().lower() else p[7:idx]
-        #print(p,fname,contenu)
-        with open(os.path.join(p,fname),'w') as f:
-            f.write(contenu.replace('\u2029','\n').replace('\u21E5','\t').replace('â€©','\n').replace('    ','\t'))
-            f.close()
-
-    @Slot(result='QVariant')
-    def recents(self):
-        curs,conn=self.connect_To_Db()
-        lst=[]
-        try:
-            curs.execute('SELECT * FROM history')
-            lst=[{'name':os.path.basename(i[1]),'link':i[1]} for i in curs.fetchall()]
-        except Exception as e:print('ERROR'+e)
-        #self.loadPlugins()
-        conn.close()
-        return Json.dumps(lst, indent=4)
-
-    #@Slot(str)
-    def save_to_history(self,path_):
-        """This function is called when we re trying to save a given file path to the history
-
-        Args:
-            path_ str: the file path
-
-        """
-        curs,conn=self.connect_To_Db()
-        try:
-            try:
-                #print(path_)
-                curs.execute(f"SELECT * from history WHERE link ='{path_}'")
-                if curs.fetchone() is not None:
-                    pass #file already exists in history!
-                else: exec('1+a') # Must get an error and raise exception
-            except Exception as e:
-                # then Cool save ut to history
-                curs.execute("INSERT INTO history VALUES(null,?)",(path_,))
-                conn.commit()
-                conn.close()
-        except:pass
-    
-    @Slot(str,result='QVariant')
-    def openfolder(self,path_):
-        """
-        Open folder fuction
-
-        Returns:
-            a JSON encoded list of the folder
-        """
-        #print(path_)
-        paths = DisplayablePath.make_tree(Path(path_[6:]))
-        ls=[{'filename':str(path.displayable())} for path in paths]
-        
-        
-        return Json.dumps(ls , indent=4)
-
-    def get_log_file(self):
-        m=str(datetime.date.today().month)
-        d=str(datetime.date.today().day)
-        i=0
-        if len(m)==1:
-            m=f'0{m}'
-        if len(d)==1:
-            d=f'0{d}'
-        pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i+1}.txt'
-        while os.path.exists(pth):
-            i+=1
-            pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i+1}.txt'
-        return f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{m}-{d}_{i}.txt'
-        
-    @Slot()
-    def emulator(self):
-        """ This function will be used to start the kivy emulator"""
-
-        e=subprocess.Popen([sys.executable,'Emulator/emulator.py'])
-        
-
-    @Slot(result='QVariant')
-    def emulationLog(self):
-        #pth=f'{pathlib.Path.home()}/.kivy/logs/kivy_{str(datetime.date.today().year)[-2:]}-{str(datetime.date.today().month)}-{str(datetime.date.today().day)}_{i}.txt'
-        with open(self.get_log_file(),'r')as log:
-            m=log.readlines()
-        if m!=[]:
-            l=[{
-                'msg':ms
-            } for ms in m]
-            #print(l)
-            #self.logevent.emit(l)
-            return Json.dumps(l,indent=4)
-            # os.system('python Emulator/emulator.py &')
-
-    @Slot(result='QString')
-    def terminal(self):
-        
-        # subprocess.Popen(cmd,  # nosec
-        #     stdin=pty_s, stdout=pty_s, stderr=pty_s,
-        #     env=child_env,
-        #     preexec_fn=os.setsid)
-        return f'{getpass.getuser()}@{socket.gethostname()}:'
-
-    @Slot(result='QString')
-    def get_default_proj_dir(self):
-        return utils.get_studio_projects()
-
-    def tree_to_dict(self,path_):
-        '''' transforming the directory tree in dictionnary '''
-
-        for root, dirs, files in os.walk(path_[6:]):
-            tree = {d: self.tree_to_dict(os.path.join(root, d)) for d in dirs}
-            lst=[{'itemName': str(f)} for f in files]
-            return  tree,lst
-
-    def connect_To_Db(self):
-        connection=get_db()
-        curs=connection.cursor()
-        return curs,connection
-
-    @Slot(result='QVariant')
-    def loadPlugins(self):
-        """
-        Simple plugin loader.
-
-        Returns:
-            list: the plugins list(type,icon,display_view,template_path)
-        """
-        #program directory
-        cd=os.path.dirname(os.path.abspath(__file__))
-        #plugins directory
-        pd= utils.PATHS['PLUGINS_PATH']#os.fspath(Path(__file__).resolve().parent / "plugins/python")
-        #Getting Plugins list
-        pluglist=glob.glob(os.path.join(pd,'*Plugin'))
-        l=[]
-        
-        for plugin in pluglist:
-            plug=glob.glob(plugin)[0]#,r'^[a-zA-Z0-9_]+Plugin.py$')
-            #print(plug)
-            for p in glob.glob(os.path.join(plug,'*Plugin.py')):
-                module=p.split("/")[-1].split(".")[0]
-
-                if module=='__init__':
-                    continue
-                #print(f'importing module {module}')
-                #print(p.split("/")[-2].split(".")[0])
-                try:
-                    import importlib
-                    s=importlib.import_module(f'{pd.replace("/",".")[1:]}.{p.split("/")[-2].split(".")[0]}.{module}')
-                    #exec(f'from plugins.python.{p.split("/")[-2].split(".")[0]}.{module} import *')
-                    #print(s.CONFIG)
-                    # with open(os.path.join(pd,os.path.join(f'{p.split("/")[-2].split(".")[0]}',f"{s.CONFIG['template']}"))) as f:
-                    s.CONFIG.update({'template':f'{pd}/{p.split("/")[-2].split(".")[0]}/{s.CONFIG["template"]}'})
-                    print(s.CONFIG)
-                    l.append(s.CONFIG)
-                    importlib.import_module(f'{pd.replace("/",".")[1:]}.{p.split("/")[-2].split(".")[0]}.{s.CONFIG["backend"].split(".")[0]}')
-                except Exception as e:
-                    print(e)
-                #module=os.path.splitext()
-
-        return Json.dumps(l,indent=4)
-
-    @Slot(str,result='QVariant')
-    def installPlugin(self,link):
-
-        origin=r''+link[7:]
-        target=utils.PATHS['PLUGINS_PATH']#r''+os.fspath(Path(__file__).resolve().parent / "plugins/python")
-
-        shutil.copytree(origin,os.path.join(target,f'{origin.split("/")[-1]}'))
-        
-        return Json.dumps({'msg':'SUCCESS:'},indent=4)
-
-    @Slot(str,str,str,bool,bool,bool,bool,str,result='QString')
-    def newProject(self,n,p,t,a,l,e,g,pt):
-        from core import projectCreator
-        return projectCreator.newProject(n,p,t,a,l,e,g,pt)
-
-    def run(self):
-
-        app = QGuiApplication(sys.argv)
-        #QQuickStyle.setStyle("Material")
-        engine = QQmlApplicationEngine()
-        #qmlRegisterType(FolderTree,'DotPy.Core' , 1, 0, 'Terminal')
-        studio=Studio()
-        cmder=CommandManager()
-        editor=EditorManager()
-        filemanager=FileManager()
-        stack=StackManager()
-        engine.rootContext().setContextProperty('backend',studio)
-        engine.rootContext().setContextProperty('CommandManager',cmder)
-        engine.rootContext().setContextProperty('EditorManager',editor)
-        engine.rootContext().setContextProperty('FileManagerBackend',filemanager)
-        engine.rootContext().setContextProperty('StackManager',stack)
-        # engine.load(os.path.join(os.path.dirname(__file__), "studio.qml"))
-        engine.load(os.fspath(Path(__file__).resolve().parent / "qml/studio.qml"))
-        if not engine.rootObjects():
-            sys.exit(-1)
-        sys.exit(app.exec_())
-
-Studio().run()
+
+os.environ["QT_QUICK_CONTROLS_STYLE"] = "Fusion"
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
+from qasync import QEventLoop
+
+from app.core.di import ServiceProvider
+from app.data.models import init_database
+from app.editor.document import EditorDocument
+from app.plugins.manager import PluginManager
+from app.api.server import EmbeddedServer
+
+
+def _ensure_dirs():
+    from app.core.settings import PATHS
+
+    for p in PATHS.values():
+        if not p.endswith((".json", ".db", ".conf")) and not os.path.exists(p):
+            os.makedirs(p, exist_ok=True)
+    proj = PATHS["PROJECTS"]
+    if not os.path.exists(proj):
+        os.makedirs(proj, exist_ok=True)
+
+
+async def _startup():
+    print("[Ember] Starting up...")
+    _ensure_dirs()
+    try:
+        await init_database()
+        print("[Ember] Database initialized.")
+    except Exception as e:
+        print(f"[Ember] Database init skipped: {e}")
+
+
+def main():
+    app = QApplication(sys.argv)
+    app.setApplicationName("Ember")
+    app.setApplicationVersion("2.0.0")
+
+    qmlRegisterType(EditorDocument, "Ember.Editor", 1, 0, "EditorDocument")
+
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_startup())
+
+    provider = ServiceProvider()
+
+    # ── Plugin System v2 ──────────────────────────────────
+    plugin_manager = PluginManager(provider.command_vm)
+    plugin_manager.create_api(
+        editor_vm=provider.editor_vm,
+        file_vm=provider.file_vm,
+        project_vm=provider.project_vm,
+        terminal_vm=provider.terminal_vm,
+        event_bus=provider.events,
+        notification_vm=provider.notification_vm,
+        action_service=provider.action_service,
+    )
+    provider.plugin_vm.set_manager(plugin_manager)
+    provider.panel_vm.set_manager(plugin_manager)
+    provider.search_vm.set_plugin_manager(plugin_manager)
+    plugin_manager.set_settings_service(provider.settings_vm.settings_service)
+    plugin_manager.set_notification_vm(provider.notification_vm)
+    plugin_manager.set_action_service(provider.action_service)
+
+    # ── Discover & activate plugins ────────────────────────
+    loop.run_until_complete(plugin_manager.discover_all())
+    loop.run_until_complete(plugin_manager.activate_all())
+    provider.plugin_vm.refresh_from_manager()
+    provider.panel_vm.refresh()
+    providers = provider.settings_vm.getAppearanceProviders()
+    font_provider = providers.get("fonts", "core")
+    loaded_fonts = plugin_manager.load_fonts_for(font_provider)
+    if loaded_fonts:
+        print(f"[Ember] Loaded font provider '{font_provider}': {', '.join(loaded_fonts)}")
+
+    # ── Marketplace API (Batya + Falcorn) ──────────────────
+    # NOTE: Falcorn worker spawn tries to resolve 'app_module' as a file path.
+    # Disabled until Falcorn config is corrected to use inline ASGI app.
+    # marketplace = EmbeddedServer(host="127.0.0.1", port=9865)
+    # loop.run_until_complete(marketplace.start())
+    print("[Ember] Marketplace server disabled (Falcorn config pending).")
+
+    engine = QQmlApplicationEngine()
+
+    qml_path = os.fspath(Path(__file__).resolve().parent / "qml" / "main.qml")
+
+    engine.addImportPath(os.path.join(os.path.dirname(qml_path), "settings"))
+
+    ctx = engine.rootContext()
+
+    ctx.setContextProperty("EditorVM", provider.editor_vm)
+    ctx.setContextProperty("FileVM", provider.file_vm)
+    ctx.setContextProperty("ProjectVM", provider.project_vm)
+    ctx.setContextProperty("TerminalVM", provider.terminal_vm)
+    ctx.setContextProperty("PluginVM", provider.plugin_vm)
+    ctx.setContextProperty("StatusVM", provider.status_vm)
+    ctx.setContextProperty("NotificationVM", provider.notification_vm)
+    ctx.setContextProperty("SettingsVM", provider.settings_vm)
+    ctx.setContextProperty("UiVM", provider.ui_vm)
+    ctx.setContextProperty("ChatVM", provider.chat_vm)
+    ctx.setContextProperty("CommandVM", provider.command_vm)
+    ctx.setContextProperty("ActionVM", provider.action_vm)
+    ctx.setContextProperty("PanelVM", provider.panel_vm)
+    ctx.setContextProperty("SearchVM", provider.search_vm)
+
+    # Add components dir to import path
+    engine.addImportPath(os.path.join(os.path.dirname(qml_path), "components"))
+    engine.addImportPath(os.path.join(os.path.dirname(qml_path), "editor"))
+    engine.addImportPath(os.path.join(os.path.dirname(qml_path), "settings"))
+
+    # Use the new clean main.qml
+    main_qml = os.path.join(os.path.dirname(qml_path), "main.qml")
+    if os.path.exists(main_qml):
+        qml_path = main_qml
+        print("[Ember] Loading main.qml")
+
+    engine.load(qml_path)
+
+    if not engine.rootObjects():
+        sys.exit(-1)
+
+    with loop:
+        loop.run_forever()
+
+
+if __name__ == "__main__":
+    main()
