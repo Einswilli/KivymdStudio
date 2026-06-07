@@ -240,10 +240,17 @@ Item {
 
     function actionBinding(actionId) {
         var bindings = (typeof PluginVM !== "undefined" && PluginVM) ? PluginVM.getResolvedKeybindings() : []
+        var inactiveMatch = null
         for (var i = 0; i < bindings.length; i++) {
-            if ((bindings[i].command || "") === actionId && (bindings[i].active === undefined || bindings[i].active))
-                return bindings[i]
+            if ((bindings[i].command || "") === actionId) {
+                if (bindings[i].active === undefined || bindings[i].active)
+                    return bindings[i]
+                if (inactiveMatch === null)
+                    inactiveMatch = bindings[i]
+            }
         }
+        if (inactiveMatch !== null)
+            return inactiveMatch
         return ({ key: "", conflict: false, conflicts: [] })
     }
 
@@ -2678,6 +2685,12 @@ Item {
                         conflict: root.actionBinding(modelData.id || "").conflict || false
                         conflicts: root.actionBinding(modelData.id || "").conflicts || []
                         running: (typeof ActionVM !== "undefined" && ActionVM) ? ActionVM.isRunning(modelData.id || "") : false
+                        onResolveConflictRequested: {
+                            if (!root.hasSettings || shortcut.length === 0)
+                                return
+                            SettingsVM.setKeybindingOverride(shortcut, actionId, "global", false)
+                            root.notify("success", "Shortcut conflict resolved", shortcut + " now runs " + actionId + ".")
+                        }
                     }
                 }
             }
@@ -3528,6 +3541,7 @@ Item {
         property bool safeToRun: true
         property bool exposable: true
         property bool running: false
+        signal resolveConflictRequested()
 
         Layout.fillWidth: true
         implicitHeight: conflict || requiresPermission || !exposable || !safeToRun ? 104 : 76
@@ -3674,6 +3688,12 @@ Item {
                     spacing: 6
 
                     Item { Layout.fillWidth: true }
+
+                    SettingButton {
+                        visible: conflict && shortcut.length > 0
+                        text: "Resolve"
+                        onClicked: resolveConflictRequested()
+                    }
 
                     SettingButton {
                         visible: !requiresPayload
