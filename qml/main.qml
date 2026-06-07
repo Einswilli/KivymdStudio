@@ -64,6 +64,8 @@ ApplicationWindow {
                                                             property bool pendingQuickFix: false
                                                             property string pendingRevealPath: ""
                                                             property int pendingRevealAttempts: 0
+                                                            property string pendingSensitiveActionId: ""
+                                                            property var pendingSensitiveAction: ({})
 
                                                                 property int _dragFrom: -1
 
@@ -505,6 +507,38 @@ if (typeof UiVM !== "undefined" && UiVM)
     UiVM.dispatchShortcut(commandId, sequence || "")
 }
 
+function _actionById(actionId) {
+    var actions = (typeof ActionVM !== "undefined" && ActionVM) ? ActionVM.actions : []
+    for (var i = 0; actions && i < actions.length; i++) {
+        if ((actions[i].id || "") === actionId)
+            return actions[i]
+    }
+    return null
+}
+
+function _runActionWithPolicy(actionId, payload) {
+    if (!ActionVM || !actionId)
+        return false
+    var action = _actionById(actionId)
+    if (!action)
+        return false
+    if (action.safeToRun === false) {
+        if (NotificationVM)
+            NotificationVM.error("Action blocked", "This action is not marked safe to run.")
+        return true
+    }
+    var permissions = action.permissions || []
+    if (permissions.length > 0 && actionId !== root.pendingSensitiveActionId) {
+        root.pendingSensitiveActionId = actionId
+        root.pendingSensitiveAction = action
+        sensitiveActionDialog.open()
+        return true
+    }
+    root.pendingSensitiveActionId = ""
+    root.pendingSensitiveAction = ({})
+    return ActionVM.runAction(actionId, payload || ({}))
+}
+
 function _runShortcut(sequence, fallbackCommand) {
 var commandId = _resolveShortcut(sequence, fallbackCommand)
 _executeShortcutCommand(commandId, sequence)
@@ -519,6 +553,8 @@ function _executeShortcutCommand(commandId, sequence) {
 if (!commandId || commandId.length === 0)
     return
 _dispatchShortcut(commandId, sequence || "")
+if (_runActionWithPolicy(commandId, ({})))
+    return
 switch (commandId) {
     case "view.command_palette": commandPalette.open(); break
     case "file.open": _openFile(); break
@@ -1167,8 +1203,7 @@ Instantiator {
             commands: CommandVM ? CommandVM.commands : []
             actions: ActionVM ? ActionVM.actions : []
             onActionSelected: function(actionId) {
-                if (ActionVM)
-                    ActionVM.runAction(actionId)
+                root._runActionWithPolicy(actionId, ({}))
             }
             onCommandSelected: function(cmdId) {
             _dispatchShortcut(cmdId, "")
@@ -1187,6 +1222,95 @@ Instantiator {
                 case "view.terminal": root._toggleTerminalPanel(); break
                 case "settings.open": _addTab("Settings", "settings"); break
             }
+    }
+}
+
+Dialog {
+    id: sensitiveActionDialog
+    modal: true
+    width: Math.min(460, root.width - 48)
+    x: Math.max(24, (root.width - width) / 2)
+    y: 110
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    title: "Confirm plugin action"
+
+    background: Rectangle {
+        color: root.theme.panel || root.theme.toastBg || "#1F232A"
+        border.color: root.theme.border || "#343C4A"
+        border.width: 1
+        radius: 14
+    }
+
+    contentItem: ColumnLayout {
+        spacing: 14
+
+        Text {
+            Layout.fillWidth: true
+            text: root.pendingSensitiveAction.title || root.pendingSensitiveActionId
+            color: root.theme.textStrong || "#F9FAFB"
+            font.family: root.uiFont.family
+            font.pointSize: 13
+            font.bold: true
+            elide: Text.ElideRight
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: "This action requests elevated plugin permissions. Run it only if you trust the provider."
+            color: root.theme.text || "#CBD5E1"
+            font.family: root.uiFont.family
+            font.pointSize: 10
+            wrapMode: Text.WordWrap
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 36
+            radius: 10
+            color: root.theme.inputBg || "#111827"
+            border.width: 1
+            border.color: root.theme.warning || "#F59E0B"
+
+            Text {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                verticalAlignment: Text.AlignVCenter
+                text: "Permissions: " + ((root.pendingSensitiveAction.permissions || []).join(", ") || "none")
+                color: root.theme.warning || "#F59E0B"
+                font.family: root.uiFont.family
+                font.pointSize: 10
+                elide: Text.ElideRight
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Item { Layout.fillWidth: true }
+
+            Button {
+                text: "Cancel"
+                onClicked: {
+                    root.pendingSensitiveActionId = ""
+                    root.pendingSensitiveAction = ({})
+                    sensitiveActionDialog.close()
+                }
+            }
+
+            Button {
+                text: "Run action"
+                highlighted: true
+                onClicked: {
+                    var actionId = root.pendingSensitiveActionId
+                    root.pendingSensitiveActionId = ""
+                    root.pendingSensitiveAction = ({})
+                    sensitiveActionDialog.close()
+                    if (ActionVM)
+                        ActionVM.runAction(actionId, ({}))
+                }
+            }
+        }
     }
 }
 
