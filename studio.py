@@ -80,6 +80,7 @@ def main():
     loop.run_until_complete(plugin_manager.activate_all())
     provider.plugin_vm.refresh_from_manager()
     provider.panel_vm.refresh()
+    provider.search_vm.applySettings(provider.settings_vm.getSearchConfig())
     providers = provider.settings_vm.getAppearanceProviders()
     font_provider = providers.get("fonts", "core")
     loaded_fonts = plugin_manager.load_fonts_for(font_provider)

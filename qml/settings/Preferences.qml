@@ -38,6 +38,7 @@ Item {
         { icon: "bolt", title: "AI", component: aiPage },
         { icon: "extensions", title: "Plugins", component: pluginsPage },
         { icon: "bolt", title: "Actions", component: actionsPage },
+        { icon: "bell", title: "Notifications", component: notificationsPage },
         { icon: "settings", title: "Config", component: configPage }
     ]
     property var formatterTargets: [
@@ -1601,7 +1602,13 @@ Item {
                         onClicked: {
                             if (!root.hasSettings) return
                             root.runSettingAction("settings:files", "Applying global file settings…", "Global file settings applied.", function() {
-                                SettingsVM.setFilesExcludeCsv(filesExcludeInput.text, false)
+                                SettingsVM.setFilesProfile({
+                                    "restoreWorkspace": root.hasSettings ? SettingsVM.filesRestoreWorkspace : true,
+                                    "watcherEnabled": root.hasSettings ? SettingsVM.filesWatcherEnabled : true,
+                                    "showHidden": root.hasSettings ? SettingsVM.filesShowHidden : false,
+                                    "confirmDelete": root.hasSettings ? SettingsVM.filesConfirmDelete : true,
+                                    "excludeCsv": filesExcludeInput.text
+                                }, false)
                             })
                         }
                     }
@@ -1611,7 +1618,13 @@ Item {
                         onClicked: {
                             if (!root.hasSettings) return
                             root.runSettingAction("settings:files-project", "Applying project file settings…", "Project file settings applied.", function() {
-                                SettingsVM.setFilesExcludeCsv(filesExcludeInput.text, true)
+                                SettingsVM.setFilesProfile({
+                                    "restoreWorkspace": root.hasSettings ? SettingsVM.filesRestoreWorkspace : true,
+                                    "watcherEnabled": root.hasSettings ? SettingsVM.filesWatcherEnabled : true,
+                                    "showHidden": root.hasSettings ? SettingsVM.filesShowHidden : false,
+                                    "confirmDelete": root.hasSettings ? SettingsVM.filesConfirmDelete : true,
+                                    "excludeCsv": filesExcludeInput.text
+                                }, true)
                             })
                         }
                     }
@@ -2828,6 +2841,113 @@ Item {
                                 return
                             SettingsVM.setKeybindingOverride(shortcut, actionId, "global", false)
                             root.notify("success", "Shortcut conflict resolved", shortcut + " now runs " + actionId + ".")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: notificationsPage
+
+        ColumnLayout {
+            spacing: 42
+
+            SectionCard {
+                title: "Notifications"
+                subtitle: "Toast position, visibility and non-critical noise control."
+
+                SettingRow {
+                    title: "Toast position"
+                    description: "Screen corner used by notification toasts."
+                    SettingComboBox {
+                        id: notificationPositionCombo
+                        Layout.preferredWidth: 190
+                        model: ["top-right", "top-left", "bottom-right", "bottom-left"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.notificationPosition)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Default timeout"
+                    description: "Default auto-dismiss delay in milliseconds."
+                    SettingSpinBox {
+                        id: notificationTimeoutSpin
+                        from: 1000
+                        to: 30000
+                        stepSize: 250
+                        value: root.hasSettings ? SettingsVM.notificationDefaultTimeoutMs : 4200
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Max visible"
+                    description: "Maximum number of toasts shown at once."
+                    SettingSpinBox {
+                        id: notificationMaxVisibleSpin
+                        from: 1
+                        to: 12
+                        value: root.hasSettings ? SettingsVM.notificationMaxVisible : 6
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Mute non-critical"
+                    description: "Hide info and success toasts while keeping warnings and errors."
+                    SettingSwitch {
+                        id: notificationMuteSwitch
+                        checked: root.hasSettings ? SettingsVM.notificationMuteNonCritical : false
+                    }
+                }
+
+                SettingButton {
+                    text: "Apply notifications"
+                    onClicked: {
+                        if (!root.hasSettings) return
+                        root.runSettingAction("settings:notifications", "Applying notification settings…", "Notification settings applied.", function() {
+                            SettingsVM.setNotificationsProfile({
+                                "position": notificationPositionCombo.currentText,
+                                "defaultTimeoutMs": notificationTimeoutSpin.value,
+                                "maxVisible": notificationMaxVisibleSpin.value,
+                                "muteNonCritical": notificationMuteSwitch.checked,
+                                "auditRetention": auditRetentionSpin.value
+                            })
+                        })
+                    }
+                }
+            }
+
+            SectionCard {
+                title: "Action Audit"
+                subtitle: "Local action history used by the Actions panel and future agent/MCP exposure."
+
+                SettingRow {
+                    title: "Audit retention"
+                    description: "Maximum number of action results kept in memory."
+                    SettingSpinBox {
+                        id: auditRetentionSpin
+                        from: 20
+                        to: 5000
+                        stepSize: 20
+                        value: root.hasSettings ? SettingsVM.auditRetention : 200
+                        editable: true
+                    }
+                }
+
+                InfoPill {
+                    title: "History"
+                    value: (typeof ActionVM !== "undefined" && ActionVM) ? String(ActionVM.history.length) + " entries" : "Unavailable"
+                }
+
+                SettingButton {
+                    text: "Clear action history"
+                    onClicked: {
+                        if (typeof ActionVM !== "undefined" && ActionVM) {
+                            ActionVM.clearHistory()
+                            root.notify("success", "Audit cleared", "Action history cleared.")
                         }
                     }
                 }
