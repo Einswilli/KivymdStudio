@@ -84,6 +84,7 @@ Item {
     property int _findIndex: -1
     property bool _goToLinePanelVisible: false
     property string _goToLineValue: ""
+    property var _bracketHighlights: []
 
     function fontFamily(value) {
         var family = String(value || "Menlo").split(",")[0].trim()
@@ -231,6 +232,81 @@ Item {
         root.closeGoToLinePanel()
     }
 
+    function selectCurrentLine() {
+        if (root._lineItems.length === 0)
+            return
+        doc.selectLineAt(root._cursorLine)
+        root._ensureCursorVisible()
+        root.forceActiveFocus()
+    }
+
+    function _bracketInfoAt(pos) {
+        var text = doc.plainText()
+        if (pos < 0 || pos >= text.length)
+            return null
+        var ch = text.charAt(pos)
+        var open = "([{"
+        var close = ")]}"
+        var openIndex = open.indexOf(ch)
+        if (openIndex >= 0)
+            return { "pos": pos, "char": ch, "pair": close.charAt(openIndex), "direction": 1 }
+        var closeIndex = close.indexOf(ch)
+        if (closeIndex >= 0)
+            return { "pos": pos, "char": ch, "pair": open.charAt(closeIndex), "direction": -1 }
+        return null
+    }
+
+    function _findBracketPair(info) {
+        var text = doc.plainText()
+        var depth = 0
+        var index = info.pos
+        while (true) {
+            index += info.direction
+            if (index < 0 || index >= text.length)
+                return -1
+            var ch = text.charAt(index)
+            if (ch === info.char)
+                depth += 1
+            else if (ch === info.pair) {
+                if (depth === 0)
+                    return index
+                depth -= 1
+            }
+        }
+    }
+
+    function _updateBracketHighlights() {
+        var cursor = doc.cursorPosition
+        var info = root._bracketInfoAt(cursor)
+        if (!info)
+            info = root._bracketInfoAt(cursor - 1)
+        if (!info) {
+            root._bracketHighlights = []
+            return
+        }
+        var own = root._lineColFromPos(info.pos)
+        var pairPos = root._findBracketPair(info)
+        if (pairPos < 0) {
+            root._bracketHighlights = [{ "line": own.line, "col": own.col, "matched": false }]
+            return
+        }
+        var pair = root._lineColFromPos(pairPos)
+        root._bracketHighlights = [
+            { "line": own.line, "col": own.col, "matched": true },
+            { "line": pair.line, "col": pair.col, "matched": true }
+        ]
+    }
+
+    function _bracketHighlightsForLine(lineIndex) {
+        var items = []
+        for (var i = 0; i < root._bracketHighlights.length; i++) {
+            var item = root._bracketHighlights[i]
+            if (item.line === lineIndex)
+                items.push(item)
+        }
+        return items
+    }
+
     function _lineColFromPos(pos) {
         pos = Math.max(0, Math.min(pos, doc.plainText().length))
         var line = 0
@@ -248,16 +324,24 @@ Item {
     function openFindPanel(replaceMode) {
         root._replacePanelVisible = !!replaceMode
         root._findPanelVisible = true
-        if (doc.hasSelection()) {
-            var selected = doc.selectedText().replace(/\n/g, "")
-            if (selected.length > 0)
-                root._findQuery = selected
-        }
+        root._syncFindQueryFromSelection()
         root._rebuildFindMatches()
         Qt.callLater(function() {
             findInput.forceActiveFocus()
             findInput.selectAll()
         })
+    }
+
+    function _syncFindQueryFromSelection() {
+        if (!doc.hasSelection())
+            return false
+        var selected = doc.selectedText().replace(/\n/g, "")
+        if (selected.length <= 0)
+            return false
+        if (root._findQuery === selected)
+            return false
+        root._findQuery = selected
+        return true
     }
 
     function closeFindPanel() {
@@ -865,6 +949,10 @@ Item {
         return null
     }
 
+    function _isClosingPairText(text) {
+        return text === ")" || text === "]" || text === "}" || text === "\"" || text === "'" || text === "`"
+    }
+
     function _requestDefinition() {
         if (!EditorVM || root._loadingFile || !root.visible) return
         EditorVM.requestDefinition(doc.plainText(), doc.cursorPosition)
@@ -1122,6 +1210,7 @@ Item {
                 tokenColors: root.tokenColors
                 inlineDiagnostic: root._inlineDiagnosticForLine(index)
                 findHighlights: root._findHighlightsForLine(index)
+                bracketHighlights: root._bracketHighlightsForLine(index)
                 selectionStartCol: root._selectionStartCol(index)
                 selectionEndCol: root._selectionEndCol(index)
                 isActiveLine: index === root._cursorLine
@@ -2196,6 +2285,11 @@ Item {
             root._ensureCursorVisible()
             return
         }
+        if (event.key === Qt.Key_L && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            root.selectCurrentLine()
+            return
+        }
 
         if (event.matches(StandardKey.Copy)) {
             event.accepted = true; doc.copySelection(); return
@@ -2415,10 +2509,16 @@ Item {
         var text = event.text
         var textModifiers = event.modifiers & ~(Qt.ShiftModifier | Qt.KeypadModifier)
         if (text.length > 0 && text.charCodeAt(0) >= 32 && text.charCodeAt(0) !== 127 && textModifiers === Qt.NoModifier) {
-            var pair = doc.hasSelection() ? root._selectionWrapPair(text) : null
+            var pair = root._selectionWrapPair(text)
             if (pair) {
                 event.accepted = true
-                doc.wrapSelection(pair[0], pair[1])
+                if (doc.hasSelection()) doc.wrapSelection(pair[0], pair[1])
+                else doc.insertPair(pair[0], pair[1])
+                root._triggerCompletions()
+                return
+            }
+            if (root._isClosingPairText(text) && doc.skipNextIf(text)) {
+                event.accepted = true
                 root._triggerCompletions()
                 return
             }
@@ -2449,6 +2549,7 @@ Item {
             root._lines = root._lineItems.map(function(item) { return item.text || "" })
             root._rebuildLineStarts()
             root._updateContentWidth()
+            root._updateBracketHighlights()
             if (root._findPanelVisible)
                 root._rebuildFindMatches()
             lineView.contentX = keepX
@@ -2459,6 +2560,7 @@ Item {
         }
         function onCursorChanged(line, col) {
             root._cursorLine = line; root._cursorCol = col
+            root._updateBracketHighlights()
             root.cursorPositionChanged()
             suggestionBox.close()
             Qt.callLater(function() { root._ensureCursorVisible() })
@@ -2466,6 +2568,8 @@ Item {
         function onSelectionChanged() {
             root._selectionStart = doc.selectionStart
             root._selectionEnd = doc.selectionEnd
+            if (root._findPanelVisible && root._syncFindQueryFromSelection())
+                root._rebuildFindMatches()
         }
         function onTextChanged() {
             root._syncingFromDoc = true

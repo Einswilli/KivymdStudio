@@ -21,6 +21,7 @@ Item {
     property var theme: ({})
     property var inlineDiagnostic: ({})
     property var findHighlights: []
+    property var bracketHighlights: []
 
     signal tokenClicked(int start, int end, string kind, int line)
     signal tokenHovered(string kind, string text, int start, int end, int mouseX, int mouseY)
@@ -159,6 +160,25 @@ Item {
                    : (root.theme.findMatch || Qt.rgba(0.95, 0.68, 0.24, 0.18))
             border.width: modelData.current ? 1 : 0
             border.color: root.theme.warning || "#D19A66"
+        }
+    }
+
+    Repeater {
+        model: root.bracketHighlights || []
+        delegate: Rectangle {
+            required property var modelData
+            x: root.gutterWidth + root.contentPadding + Number(modelData.col || 0) * root.fontWidth
+            y: 2
+            width: Math.max(2, root.fontWidth)
+            height: parent.height - 4
+            radius: 3
+            color: modelData.matched === false
+                   ? Qt.rgba(0.88, 0.25, 0.29, 0.16)
+                   : Qt.rgba(0.38, 0.64, 1.0, 0.13)
+            border.width: 1
+            border.color: modelData.matched === false
+                          ? (root.theme.error || "#E06C75")
+                          : (root.theme.accent || "#60A5FA")
         }
     }
 
