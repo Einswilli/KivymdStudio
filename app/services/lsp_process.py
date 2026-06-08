@@ -293,6 +293,32 @@ class ExternalLSPProcess:
         result = await self._safe_request("textDocument/documentSymbol", {"textDocument": {"uri": uri}})
         return result if isinstance(result, list) else []
 
+    async def definition(self, path: str, code: str, line: int, character: int) -> list[JSON]:
+        uri = await self.open_or_update_document(path, code)
+        if not uri:
+            return []
+        result = await self._safe_request(
+            "textDocument/definition",
+            {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}},
+        )
+        if isinstance(result, list):
+            return result
+        return [result] if isinstance(result, dict) else []
+
+    async def references(self, path: str, code: str, line: int, character: int) -> list[JSON]:
+        uri = await self.open_or_update_document(path, code)
+        if not uri:
+            return []
+        result = await self._safe_request(
+            "textDocument/references",
+            {
+                "textDocument": {"uri": uri},
+                "position": {"line": line, "character": character},
+                "context": {"includeDeclaration": True},
+            },
+        )
+        return result if isinstance(result, list) else []
+
     async def diagnostics(self, path: str, code: str) -> list[JSON]:
         uri = await self.open_or_update_document(path, code)
         if not uri:

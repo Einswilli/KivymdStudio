@@ -445,6 +445,44 @@ class LanguageServiceRouter:
                 return external
         return await self._ferrite.document_symbols(code, path, language)
 
+    async def get_definition(
+        self,
+        code: str,
+        cursor_pos: int,
+        path: str = "",
+        language: str = "",
+    ) -> list[dict[str, Any]]:
+        language = language or detect_language(path)
+        position = text_position(code, cursor_pos)
+        if language == "python":
+            external = await self._python_lsp.definition(code, position, path, language)
+            if external:
+                return external
+        elif self._generic_lsp.has_providers(language):
+            external = await self._generic_lsp.definition(code, position, path, language)
+            if external:
+                return external
+        return await self._local_symbol_locations(code, position, path, language, definition_only=True)
+
+    async def get_references(
+        self,
+        code: str,
+        cursor_pos: int,
+        path: str = "",
+        language: str = "",
+    ) -> list[dict[str, Any]]:
+        language = language or detect_language(path)
+        position = text_position(code, cursor_pos)
+        if language == "python":
+            external = await self._python_lsp.references(code, position, path, language)
+            if external:
+                return external
+        elif self._generic_lsp.has_providers(language):
+            external = await self._generic_lsp.references(code, position, path, language)
+            if external:
+                return external
+        return await self._local_symbol_locations(code, position, path, language, definition_only=False)
+
     async def sync_document(
         self,
         path: str,
@@ -537,6 +575,46 @@ class LanguageServiceRouter:
         if self._generic_lsp.has_providers(language):
             return await self._generic_lsp.restart(language)
         return self.get_status(language)
+
+    async def _local_symbol_locations(
+        self,
+        code: str,
+        position: TextPosition,
+        path: str,
+        language: str,
+        definition_only: bool,
+    ) -> list[dict[str, Any]]:
+        word = _word_at(code, position.offset)
+        if not word:
+            return []
+        output: list[dict[str, Any]] = []
+        if definition_only:
+            symbols = await self._ferrite.document_symbols(code, path, language)
+            for symbol in symbols:
+                if str(symbol.get("name") or "") == word:
+                    output.append({
+                        "path": path,
+                        "line": int(symbol.get("line") or 1),
+                        "col": int(symbol.get("start") or 0),
+                        "endLine": int(symbol.get("line") or 1),
+                        "endCol": int(symbol.get("end") or symbol.get("start") or 0),
+                        "name": word,
+                    })
+                    break
+            return output
+        for match in re.finditer(rf"\b{re.escape(word)}\b", code):
+            loc = text_position(code, match.start())
+            output.append({
+                "path": path,
+                "line": loc.line,
+                "col": loc.character,
+                "endLine": loc.line,
+                "endCol": loc.character + len(word),
+                "name": word,
+            })
+            if len(output) >= 200:
+                break
+        return output
 
 
 def text_position(code: str, cursor_pos: int) -> TextPosition:

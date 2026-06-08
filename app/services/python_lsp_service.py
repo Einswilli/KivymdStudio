@@ -209,6 +209,30 @@ class PythonLSPService:
         symbols = await self._ty.document_symbols(path, code)
         return self._flatten_symbols(symbols)
 
+    async def definition(
+        self,
+        code: str,
+        position: Any,
+        path: str = "",
+        language: str = "python",
+    ) -> list[dict[str, Any]]:
+        if language != "python" or not path or "ty" not in self._active_names:
+            return []
+        locations = await self._ty.definition(path, code, position.line - 1, position.character)
+        return [self._location_item(item) for item in locations[:50]]
+
+    async def references(
+        self,
+        code: str,
+        position: Any,
+        path: str = "",
+        language: str = "python",
+    ) -> list[dict[str, Any]]:
+        if language != "python" or not path or "ty" not in self._active_names:
+            return []
+        locations = await self._ty.references(path, code, position.line - 1, position.character)
+        return [self._location_item(item) for item in locations[:200]]
+
     async def format_code(self, path: str, language: str = "python") -> str:
         return ""
 
@@ -265,6 +289,21 @@ class PythonLSPService:
             "edit": item.get("edit") or {},
             "command": item.get("command") or {},
             "raw": item,
+        }
+
+    @staticmethod
+    def _location_item(item: dict[str, Any]) -> dict[str, Any]:
+        target = item.get("targetUri") or item.get("uri") or ""
+        range_info = item.get("targetSelectionRange") or item.get("targetRange") or item.get("range") or {}
+        start = range_info.get("start") or {}
+        end = range_info.get("end") or start
+        return {
+            "path": target,
+            "uri": target,
+            "line": int(start.get("line") or 0) + 1,
+            "col": int(start.get("character") or 0),
+            "endLine": int(end.get("line") or start.get("line") or 0) + 1,
+            "endCol": int(end.get("character") or start.get("character") or 0),
         }
 
     @classmethod
