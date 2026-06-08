@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import Ember.Editor 1.0
+import "../components"
 
 Item {
     id: root
@@ -57,9 +58,17 @@ Item {
     property string _hoverSeverity: "info"
     property string _hoverMode: "symbol"
     property bool _tokenInfoHovered: false
+    property bool _hoverTokenHovered: false
     property bool _editorHovered: false
     property bool _hoverCloseRequested: false
     property var _codeActions: []
+    property var _foldedRanges: ({})
+    property var _locationResults: []
+    property string _locationPopupTitle: "Locations"
+    property var _pendingCodeAction: ({})
+    property string _codeActionPreviewTitle: ""
+    property string _codeActionPreviewMessage: ""
+    property string _codeActionPreviewText: ""
 
     function fontFamily(value) {
         var family = String(value || "Menlo").split(",")[0].trim()
@@ -95,6 +104,7 @@ Item {
         root._lineItems = doc.lines
         root._lines = root._lineItems.map(function(item) { return item.text || "" })
         root._rebuildLineStarts()
+        root._foldedRanges = {}
         root._updateContentWidth()
         lineView.contentX = 0
         lineView.contentY = 0
@@ -109,6 +119,7 @@ Item {
         tokenInfo.visible = false
         _hoverPos = -1
         _hoverCloseRequested = false
+        _hoverTokenHovered = false
         _pendingHoverHit = null
         _hoverBodyRich = false
         _hoverMode = "symbol"
@@ -149,6 +160,61 @@ Item {
 
     function _lineStart(line) {
         return _lineStarts[line] || 0
+    }
+
+    function _lineIndent(line) {
+        if (line < 0 || line >= _lineItems.length) return 0
+        var text = _lineItems[line].text || ""
+        var visual = 0
+        for (var i = 0; i < text.length; i++) {
+            var ch = text.charAt(i)
+            if (ch === " ") visual += 1
+            else if (ch === "\t") visual += root.tabSize - (visual % root.tabSize)
+            else break
+        }
+        return visual
+    }
+
+    function _isLineFolded(lineIndex) {
+        for (var key in root._foldedRanges) {
+            var range = root._foldedRanges[key]
+            if (range && lineIndex > range.start && lineIndex <= range.end)
+                return true
+        }
+        return false
+    }
+
+    function _foldRangeForLine(lineIndex) {
+        if (lineIndex < 0 || lineIndex >= _lineItems.length - 1) return null
+        var text = _lineItems[lineIndex].text || ""
+        if (text.trim().length === 0) return null
+        var indent = root._lineIndent(lineIndex)
+        var nextLine = lineIndex + 1
+        while (nextLine < _lineItems.length && ((_lineItems[nextLine].text || "").trim().length === 0))
+            nextLine++
+        if (nextLine >= _lineItems.length || root._lineIndent(nextLine) <= indent)
+            return null
+        var end = nextLine
+        for (var i = nextLine + 1; i < _lineItems.length; i++) {
+            var lineText = _lineItems[i].text || ""
+            if (lineText.trim().length > 0 && root._lineIndent(i) <= indent)
+                break
+            end = i
+        }
+        return end > lineIndex ? {"start": lineIndex, "end": end} : null
+    }
+
+    function _toggleFold(lineNumber) {
+        var lineIndex = Math.max(0, lineNumber - 1)
+        var next = {}
+        for (var key in root._foldedRanges)
+            next[key] = root._foldedRanges[key]
+        if (next[lineIndex]) delete next[lineIndex]
+        else {
+            var range = root._foldRangeForLine(lineIndex)
+            if (range) next[lineIndex] = range
+        }
+        root._foldedRanges = next
     }
 
     function _rebuildLineStarts() {
@@ -249,8 +315,8 @@ Item {
         root._hoverSeverity = "info"
         root._hoverTitle = hit.tokenText && hit.tokenText.length > 0 ? hit.tokenText : hit.kind
         root._hoverSubtitle = hit.kind + " · line " + (hit.line + 1) + ", col " + ((hit.tokenStart || hit.col) + 1)
-        root._hoverBody = root._tokenDescription(hit.kind, hit.tokenText)
-        root._hoverBodyRich = false
+        root._hoverBody = root._formatHoverBody(root._tokenDescription(hit.kind, hit.tokenText))
+        root._hoverBodyRich = true
         root._codeActions = []
         root._hoverCloseRequested = false
         root._hoverAnchorX = pos.x
@@ -411,6 +477,12 @@ Item {
         tokenInfo.visible = false
     }
 
+    function _previewCodeAction(action) {
+        if (!action || !EditorVM) return
+        root._pendingCodeAction = action
+        EditorVM.previewCodeAction(action, doc.plainText())
+    }
+
     function _requestCursorCodeActions() {
         var x = root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth - lineView.contentX + 14
         var y = (root._cursorLine + 1) * root.lineHeight - lineView.contentY + 6
@@ -455,6 +527,37 @@ Item {
         return value
     }
 
+    function _requestDefinition() {
+        if (!EditorVM || root._loadingFile || !root.visible) return
+        EditorVM.requestDefinition(doc.plainText(), doc.cursorPosition)
+    }
+
+    function _requestReferences() {
+        if (!EditorVM || root._loadingFile || !root.visible) return
+        EditorVM.requestReferences(doc.plainText(), doc.cursorPosition)
+    }
+
+    function _showLocationResults(title, items) {
+        root._locationPopupTitle = title
+        root._locationResults = items || []
+        if (root._locationResults.length > 0)
+            locationPopup.open()
+    }
+
+    function _activateLocation(item) {
+        if (!item) return
+        var targetPath = item.path || ""
+        if (EditorVM && root.filePath)
+            EditorVM.pushNavigationLocation(root.filePath, root.cursorLine, Math.max(0, root.cursorCol - 1))
+        if (targetPath.length > 0 && targetPath !== root.filePath) {
+            root.loadFile(targetPath)
+            Qt.callLater(function() { root.goToLocation(item.line || 1, item.col || 0) })
+        } else {
+            root.goToLocation(item.line || 1, item.col || 0)
+        }
+        locationPopup.close()
+    }
+
     Item {
         id: scrollView
         anchors.left: parent.left
@@ -491,7 +594,6 @@ Item {
 
             delegate: TokenLine {
                 width: lineView.contentWidth
-                height: root.lineHeight
                 lineText: modelData.text || ""
                 lineSpans: modelData.spans || []
                 lineNumber: modelData.lineNumber || index + 1
@@ -499,17 +601,23 @@ Item {
                 fontWidth: root.charWidth
                 gutterWidth: root.gutterWidth
                 contentPadding: root.contentPadding
+                horizontalOffset: lineView.contentX
                 theme: root.theme
                 tokenColors: root.tokenColors
                 inlineDiagnostic: root._inlineDiagnosticForLine(index)
                 selectionStartCol: root._selectionStartCol(index)
                 selectionEndCol: root._selectionEndCol(index)
                 isActiveLine: index === root._cursorLine
+                foldable: root._foldRangeForLine(index) !== null
+                folded: !!root._foldedRanges[index]
+                visible: !root._isLineFolded(index)
+                height: visible ? root.lineHeight : 0
                 hoverEnabled: true
 
                 onTokenHovered: function(kind, text, start, end, mx, my) {
                     // Centralized in editorHitArea to keep hover anchored to token coordinates.
                 }
+                onFoldClicked: function(line) { root._toggleFold(line) }
             }
 
             ScrollBar.vertical: ScrollBar { id: internalVBar; policy: ScrollBar.AlwaysOff }
@@ -550,6 +658,14 @@ Item {
             onPositionChanged: function(mouse) {
                 root._editorHovered = true
                 if (root._lineItems.length === 0) return
+                if (root._tokenInfoHovered) {
+                    hoverTimer.stop()
+                    root._pendingHoverHit = null
+                    root._hoverTokenHovered = false
+                    diagnosticsOverlay.hoveredDiagnostic = null
+                    diagnosticsOverlay.requestPaint()
+                    return
+                }
                 if (selecting) {
                     var hit = root._lineColFromPoint(mouse.x, mouse.y)
                     doc.moveCursorSelect(hit.pos)
@@ -560,6 +676,7 @@ Item {
                     hoverTimer.stop()
                     root._pendingHoverHit = null
                     root._hoverPos = -1
+                    root._hoverTokenHovered = true
                     root._hoverCloseRequested = false
                     diagnosticsOverlay.hoveredDiagnostic = diagnostic
                     diagnosticsOverlay.requestPaint()
@@ -575,11 +692,13 @@ Item {
                     hoverTimer.stop()
                     root._pendingHoverHit = null
                     root._hoverPos = -1
+                    root._hoverTokenHovered = false
                     root._hoverCloseRequested = true
                     hoverHideTimer.restart()
                     return
                 }
                 hoverHideTimer.stop()
+                root._hoverTokenHovered = true
                 root._hoverCloseRequested = false
                 if (root._hoverPos !== hit.pos) {
                     root._hoverPos = hit.pos
@@ -594,6 +713,7 @@ Item {
                 root._editorHovered = false
                 hoverTimer.stop()
                 root._pendingHoverHit = null
+                root._hoverTokenHovered = false
                 root._hoverCloseRequested = true
                 diagnosticsOverlay.hoveredDiagnostic = null
                 diagnosticsOverlay.requestPaint()
@@ -715,13 +835,19 @@ Item {
 
     Rectangle {
         id: cursorBlink
+        readonly property real cursorX: root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth - lineView.contentX
+        readonly property real cursorY: root._cursorLine * root.lineHeight - lineView.contentY
+        readonly property bool inViewport: cursorX >= root.gutterWidth
+                                           && cursorX <= scrollView.width
+                                           && cursorY + root.lineHeight > 0
+                                           && cursorY < scrollView.height
         width: 2; height: root.lineHeight
         color: root.theme.editorCursor || "#FFFFFF"
-        visible: root.activeFocus && _lineItems.length > 0
+        visible: root.activeFocus && _lineItems.length > 0 && inViewport
         z: 10
 
-        x: root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth - lineView.contentX
-        y: root._cursorLine * root.lineHeight - lineView.contentY
+        x: cursorX
+        y: cursorY
 
         Timer {
             interval: 500; running: cursorBlink.visible; repeat: true
@@ -742,22 +868,36 @@ Item {
         radius: 8
         width: 420
         readonly property real maxPopupHeight: 420
-        readonly property real minBodyHeight: 28
+        readonly property real minBodyHeight: 24
         readonly property real maxBodyHeight: 260
-        readonly property real chromeHeight: hoverHeader.implicitHeight + quickFixSection.implicitHeight + hoverActions.implicitHeight + 51
-        readonly property real bodyHeight: Math.min(maxBodyHeight, Math.max(minBodyHeight, hoverBodyText.contentHeight))
-        height: Math.max(112, Math.min(maxPopupHeight, chromeHeight + bodyHeight))
+        readonly property real quickFixMaxHeight: 132
+        readonly property real contentWidth: Math.max(0, width - 18)
+        readonly property real chromeHeight: hoverHeader.implicitHeight
+                                             + headerDivider.height
+                                             + (quickFixSection.visible ? Math.min(quickFixMaxHeight, quickFixSection.implicitHeight) : 0)
+                                             + hoverActions.implicitHeight
+                                             + hoverColumn.spacing * 3
+                                             + 18
+        readonly property real availableBodyHeight: Math.max(minBodyHeight, maxPopupHeight - chromeHeight)
+        readonly property real bodyHeight: Math.min(maxBodyHeight, availableBodyHeight, Math.max(minBodyHeight, hoverBodyText.contentHeight + 8))
+        height: Math.max(92, Math.min(maxPopupHeight, chromeHeight + bodyHeight))
         z: 100
 
-        HoverHandler {
-            acceptedDevices: PointerDevice.Mouse
-            onHoveredChanged: {
-                if (hovered) {
+        MouseArea {
+            id: tokenInfoHoverArea
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            hoverEnabled: true
+            z: 1000
+            onContainsMouseChanged: {
+                root._tokenInfoHovered = containsMouse
+                if (containsMouse) {
+                    hoverTimer.stop()
                     hoverHideTimer.stop()
-                    root._tokenInfoHovered = true
+                    root._hoverTokenHovered = false
+                    root._pendingHoverHit = null
                     root._hoverCloseRequested = false
-                } else {
-                    root._tokenInfoHovered = false
+                } else if (!root._hoverTokenHovered) {
                     root._hoverCloseRequested = true
                     hoverHideTimer.restart()
                 }
@@ -766,6 +906,7 @@ Item {
 
         Column {
             id: hoverColumn
+            z: 2
             anchors.fill: parent
             anchors.margins: 9
             spacing: 8
@@ -802,22 +943,29 @@ Item {
                 }
             }
 
-            Rectangle { width: parent.width; height: 1; color: root.theme.border || "#333842" }
+            Rectangle {
+                id: headerDivider
+                width: parent.width
+                height: 1
+                color: root.theme.border || "#333842"
+            }
 
             ScrollView {
                 id: hoverBodyScroll
                 width: parent.width
-                height: Math.max(tokenInfo.minBodyHeight, tokenInfo.height - tokenInfo.chromeHeight)
+                height: tokenInfo.bodyHeight
                 implicitHeight: height
                 clip: true
+                ScrollBar.vertical.policy: hoverBodyText.contentHeight > height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
 
                 TextArea {
                     id: hoverBodyText
+                    height: Math.max(tokenInfo.minBodyHeight, contentHeight + 8)
                     text: root._hoverBody
                     color: root.theme.text || "#D4D4D4"
                     font.family: root.editorFont.family
                     font.pointSize: Math.max(9, root.editorFont.pointSize - 1)
-                    textFormat: root._hoverBodyRich ? TextEdit.RichText : TextEdit.MarkdownText
+                    textFormat: root._hoverBodyRich ? TextEdit.RichText : TextEdit.PlainText
                     wrapMode: Text.WordWrap
                     readOnly: true
                     selectByMouse: true
@@ -833,6 +981,8 @@ Item {
                 id: quickFixSection
                 visible: root._codeActions && root._codeActions.length > 0
                 width: parent.width
+                height: Math.min(tokenInfo.quickFixMaxHeight, implicitHeight)
+                clip: true
                 spacing: 6
 
                 Row {
@@ -869,7 +1019,7 @@ Item {
                     spacing: 4
 
                     Repeater {
-                        model: root._codeActions && root._codeActions.length > 0 ? root._codeActions.slice(0, 5) : []
+                        model: root._codeActions && root._codeActions.length > 0 ? root._codeActions.slice(0, 3) : []
 
                         delegate: Rectangle {
                             required property var modelData
@@ -924,7 +1074,7 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: parent.disabled ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                                onClicked: if (!parent.disabled) root._applyCodeAction(modelData)
+                                onClicked: if (!parent.disabled) root._previewCodeAction(modelData)
                             }
                         }
                     }
@@ -935,6 +1085,8 @@ Item {
 
             Row {
                 id: hoverActions
+                width: parent.width
+                height: 24
                 spacing: 8
                 HoverActionButton {
                     label: "Select"
@@ -1004,6 +1156,197 @@ Item {
         }
     }
 
+    Popup {
+        id: locationPopup
+        width: 380
+        height: Math.min(320, Math.max(92, locationList.contentHeight + 52))
+        x: Math.min(root.width - width - 10, Math.max(10, root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth - lineView.contentX))
+        y: Math.min(root.height - height - 10, Math.max(10, (root._cursorLine + 1) * root.lineHeight - lineView.contentY + 8))
+        padding: 0
+        modal: false
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            color: root.theme.panel || "#252526"
+            border.color: root.theme.border || "#3A3D46"
+            border.width: 1
+            radius: 10
+        }
+
+        contentItem: Column {
+            spacing: 0
+
+            Text {
+                width: locationPopup.width
+                height: 36
+                leftPadding: 12
+                rightPadding: 12
+                text: root._locationPopupTitle + " · " + root._locationResults.length
+                color: root.theme.textStrong || "#F3F4F6"
+                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                font.pointSize: 10
+                font.weight: Font.DemiBold
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+
+            Rectangle { width: locationPopup.width; height: 1; color: root.theme.border || "#333842" }
+
+            ListView {
+                id: locationList
+                width: locationPopup.width
+                height: locationPopup.height - 37
+                clip: true
+                model: root._locationResults
+                boundsBehavior: Flickable.StopAtBounds
+
+                delegate: Rectangle {
+                    required property var modelData
+                    width: locationList.width
+                    height: 42
+                    radius: 0
+                    color: locMouse.containsMouse ? (root.theme.hover || "#2D3440") : "transparent"
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        anchors.topMargin: 5
+                        spacing: 2
+
+                        Text {
+                            width: parent.width
+                            text: modelData.name || modelData.kind || modelData.path || "location"
+                            color: root.theme.textStrong || "#F3F4F6"
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 9
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            width: parent.width
+                            text: (modelData.path || root.filePath || "") + ":" + (modelData.line || 1) + ":" + ((modelData.col || 0) + 1)
+                            color: root.theme.textDim || "#9CA3AF"
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 8
+                            elide: Text.ElideLeft
+                        }
+                    }
+
+                    MouseArea {
+                        id: locMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root._activateLocation(modelData)
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: codeActionPreviewPopup
+        width: Math.min(720, root.width - 32)
+        height: Math.min(520, root.height - 32)
+        x: Math.max(16, (root.width - width) / 2)
+        y: Math.max(16, (root.height - height) / 2)
+        modal: true
+        padding: 0
+        closePolicy: Popup.CloseOnEscape
+
+        background: Rectangle {
+            color: root.theme.panel || "#252526"
+            border.color: root.theme.border || "#3A3D46"
+            border.width: 1
+            radius: 12
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 0
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 46
+                Layout.leftMargin: 14
+                Layout.rightMargin: 10
+                spacing: 10
+
+                Icon {
+                    icon: "bolt"
+                    size: 17
+                    color: root.theme.accent || "#61AFEF"
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+                    Text {
+                        Layout.fillWidth: true
+                        text: root._codeActionPreviewTitle || "Quick Fix Preview"
+                        color: root.theme.textStrong || "#F3F4F6"
+                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                        font.pointSize: 11
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: root._codeActionPreviewMessage || ""
+                        color: root.theme.textDim || "#9CA3AF"
+                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                        font.pointSize: 8
+                        elide: Text.ElideRight
+                    }
+                }
+                HoverActionButton {
+                    label: "Close"
+                    onClicked: codeActionPreviewPopup.close()
+                }
+            }
+
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: root.theme.border || "#333842" }
+
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+
+                TextArea {
+                    text: root._codeActionPreviewText || "No preview available."
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: Text.NoWrap
+                    textFormat: TextEdit.PlainText
+                    color: root.theme.text || "#D4D4D4"
+                    selectedTextColor: "#FFFFFF"
+                    selectionColor: root.theme.selection || "#264F78"
+                    font.family: root.fontFamily((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.fontFamily : "Menlo")
+                    font.pointSize: Math.max(9, ((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.fontSize : 12) - 1)
+                    background: Rectangle { color: root.theme.bg || "#1E1E1E" }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 46
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                spacing: 8
+                Item { Layout.fillWidth: true }
+                HoverActionButton {
+                    label: "Cancel"
+                    onClicked: codeActionPreviewPopup.close()
+                }
+                HoverActionButton {
+                    label: "Apply"
+                    onClicked: {
+                        root._applyCodeAction(root._pendingCodeAction)
+                        codeActionPreviewPopup.close()
+                    }
+                }
+            }
+        }
+    }
+
     // ── Inline suggestion (ghost text) ─────────────────
 
     Text {
@@ -1036,6 +1379,7 @@ Item {
         }
         onDiagnosticExited: {
             root._hoverPos = -1
+            root._hoverTokenHovered = false
             root._hoverCloseRequested = true
             hoverHideTimer.restart()
         }
@@ -1063,6 +1407,73 @@ Item {
             event.accepted = true; doc.selectAll(); return
         }
 
+        if (event.key === Qt.Key_F12 && !(event.modifiers & Qt.ShiftModifier)) {
+            event.accepted = true
+            root._requestDefinition()
+            return
+        }
+
+        if (event.key === Qt.Key_F12 && (event.modifiers & Qt.ShiftModifier)) {
+            event.accepted = true
+            root._requestReferences()
+            return
+        }
+
+        if (event.key === Qt.Key_O && (event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier)) {
+            event.accepted = true
+            root._showLocationResults("Document symbols", root.documentSymbols)
+            if (root.documentSymbols.length === 0)
+                EditorVM.requestDocumentSymbols(doc.plainText())
+            return
+        }
+
+        if (event.key === Qt.Key_Left && (event.modifiers & Qt.AltModifier)) {
+            event.accepted = true
+            if (EditorVM) EditorVM.jumpBack()
+            return
+        }
+
+        if (event.key === Qt.Key_Right && (event.modifiers & Qt.AltModifier)) {
+            event.accepted = true
+            if (EditorVM) EditorVM.jumpForward()
+            return
+        }
+
+        if (event.key === Qt.Key_Slash && (event.modifiers & Qt.ControlModifier)) {
+            event.accepted = true
+            doc.toggleLineComment()
+            root._triggerCompletions()
+            return
+        }
+
+        if (event.key === Qt.Key_K && (event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier)) {
+            event.accepted = true
+            doc.deleteLineOrSelection()
+            root._triggerCompletions()
+            return
+        }
+
+        if (event.key === Qt.Key_Down && (event.modifiers & Qt.AltModifier) && (event.modifiers & Qt.ShiftModifier)) {
+            event.accepted = true
+            doc.duplicateLineOrSelection()
+            root._triggerCompletions()
+            return
+        }
+
+        if (event.key === Qt.Key_Up && (event.modifiers & Qt.AltModifier)) {
+            event.accepted = true
+            doc.moveLineOrSelectionUp()
+            root._triggerCompletions()
+            return
+        }
+
+        if (event.key === Qt.Key_Down && (event.modifiers & Qt.AltModifier)) {
+            event.accepted = true
+            doc.moveLineOrSelectionDown()
+            root._triggerCompletions()
+            return
+        }
+
         if (event.key === Qt.Key_Space && (event.modifiers & Qt.ControlModifier)) {
             event.accepted = true
             root._forceSuggestions()
@@ -1084,10 +1495,19 @@ Item {
             }
         }
 
+        if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))) {
+            event.accepted = true
+            doc.outdentSelectionOrLine()
+            root._triggerCompletions()
+            return
+        }
+
         if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (doc.aiSuggestion.length > 0) { doc.acceptSuggestion(); return }
-            doc.doTab()
+            if (doc.hasSelection()) doc.indentSelectionOrLine()
+            else doc.doTab()
+            root._triggerCompletions()
             return
         }
 
@@ -1178,12 +1598,17 @@ Item {
         function onLinesChanged() {
             var keepX = lineView.contentX
             var keepY = lineView.contentY
+            root._cursorLine = doc.cursorLine
+            root._cursorCol = doc.cursorColumn
+            root._selectionStart = doc.selectionStart
+            root._selectionEnd = doc.selectionEnd
             root._lineItems = doc.lines
             root._lines = root._lineItems.map(function(item) { return item.text || "" })
             root._rebuildLineStarts()
             root._updateContentWidth()
             lineView.contentX = keepX
             lineView.contentY = keepY
+            Qt.callLater(function() { root._ensureCursorVisible() })
             minimapCanvas.requestPaint()
             root._triggerLanguageFeatures()
         }
@@ -1191,7 +1616,7 @@ Item {
             root._cursorLine = line; root._cursorCol = col
             root.cursorPositionChanged()
             suggestionBox.close()
-            _ensureCursorVisible()
+            Qt.callLater(function() { root._ensureCursorVisible() })
         }
         function onSelectionChanged() {
             root._selectionStart = doc.selectionStart
@@ -1319,10 +1744,10 @@ Item {
 
     Timer {
         id: hoverHideTimer
-        interval: 700
+        interval: 1400
         repeat: false
         onTriggered: {
-            if (root._hoverCloseRequested && !root._tokenInfoHovered) {
+            if (root._hoverCloseRequested && !root._tokenInfoHovered && !root._hoverTokenHovered) {
                 tokenInfo.visible = false
                 root._hoverCloseRequested = false
                 root._hoverPos = -1
@@ -1377,6 +1802,25 @@ Item {
                 tokenInfo.visible = true
             }
         }
+        function onCodeActionPreviewReady(payload) {
+            if (!root.visible) return
+            payload = payload || ({})
+            root._pendingCodeAction = payload.action || root._pendingCodeAction
+            root._codeActionPreviewTitle = payload.title || "Quick Fix Preview"
+            root._codeActionPreviewMessage = payload.message || ""
+            root._codeActionPreviewText = payload.preview || payload.message || "No preview available."
+            codeActionPreviewPopup.open()
+        }
+        function onDefinitionReady(locations) {
+            if (!root.visible) return
+            var items = locations || []
+            if (items.length === 1) root._activateLocation(items[0])
+            else root._showLocationResults("Definitions", items)
+        }
+        function onReferencesReady(locations) {
+            if (!root.visible) return
+            root._showLocationResults("References", locations || [])
+        }
         function onCodeActionApplied(path, content) {
             if (path !== root.filePath) return
             var keepX = lineView.contentX
@@ -1420,13 +1864,18 @@ Item {
                 root._hoverBody = info.bodyHtml
                 root._hoverBodyRich = true
             } else {
-                root._hoverBodyRich = false
+                root._hoverBody = root._formatHoverBody(root._hoverBody)
+                root._hoverBodyRich = true
             }
             tokenInfo.x = Math.min(root.width - tokenInfo.width - 8, Math.max(8, root._hoverAnchorX))
             tokenInfo.y = Math.min(root.height - tokenInfo.height - 8, Math.max(8, root._hoverAnchorY))
             tokenInfo.visible = true
         }
-        function onSymbolsReady(symbols) { root.documentSymbols = symbols || [] }
+        function onSymbolsReady(symbols) {
+            root.documentSymbols = symbols || []
+            if (locationPopup.opened && root._locationPopupTitle === "Document symbols")
+                root._locationResults = root.documentSymbols
+        }
         function onFileContentReady(path, content) { root._applyLoadedFile(path, content) }
         function onFileOpenFailed(path, message) {
             if (path === root._pendingFilePath) {
