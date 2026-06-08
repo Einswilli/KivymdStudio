@@ -20,6 +20,7 @@ Item {
     property var tokenColors: defaultTokenColors
     property var theme: ({})
     property var inlineDiagnostic: ({})
+    property var findHighlights: []
 
     signal tokenClicked(int start, int end, string kind, int line)
     signal tokenHovered(string kind, string text, int start, int end, int mouseX, int mouseY)
@@ -142,6 +143,23 @@ Item {
         height: parent.height - 2
         color: root.theme.editorSelection || "#264F78"
         opacity: 0.75
+    }
+
+    Repeater {
+        model: root.findHighlights || []
+        delegate: Rectangle {
+            required property var modelData
+            x: root.gutterWidth + root.contentPadding + Number(modelData.startCol || 0) * root.fontWidth
+            y: 2
+            width: Math.max(2, (Number(modelData.endCol || 0) - Number(modelData.startCol || 0)) * root.fontWidth)
+            height: parent.height - 4
+            radius: 3
+            color: modelData.current
+                   ? (root.theme.findCurrent || Qt.rgba(0.95, 0.68, 0.24, 0.34))
+                   : (root.theme.findMatch || Qt.rgba(0.95, 0.68, 0.24, 0.18))
+            border.width: modelData.current ? 1 : 0
+            border.color: root.theme.warning || "#D19A66"
+        }
     }
 
     Row {

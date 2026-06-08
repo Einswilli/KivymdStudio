@@ -62,6 +62,9 @@ Item {
     property bool _editorHovered: false
     property bool _hoverCloseRequested: false
     property var _codeActions: []
+    property bool _autoPreviewNextCodeAction: false
+    property bool _shiftKeyDown: false
+    property bool _suppressWordNavigationEvent: false
     property var _foldedRanges: ({})
     property var _locationResults: []
     property string _locationPopupTitle: "Locations"
@@ -69,6 +72,18 @@ Item {
     property string _codeActionPreviewTitle: ""
     property string _codeActionPreviewMessage: ""
     property string _codeActionPreviewText: ""
+    property var _codeActionPickerActions: []
+    property string _codeActionPickerTitle: "Quick Fixes"
+    property string _codeActionPickerSubtitle: ""
+    property bool _findPanelVisible: false
+    property bool _replacePanelVisible: false
+    property string _findQuery: ""
+    property string _replaceQuery: ""
+    property bool _findCaseSensitive: false
+    property var _findMatches: []
+    property int _findIndex: -1
+    property bool _goToLinePanelVisible: false
+    property string _goToLineValue: ""
 
     function fontFamily(value) {
         var family = String(value || "Menlo").split(",")[0].trim()
@@ -85,6 +100,36 @@ Item {
     onVisibleChanged: if (!visible) resetTransientUi()
     onActiveFocusChanged: if (!activeFocus) suggestionBox.close()
     onAutoSaveDelayMsChanged: autoSaveTimer.interval = Math.max(250, autoSaveDelayMs)
+
+    Timer {
+        id: suppressWordNavigationTimer
+        interval: 80
+        repeat: false
+        onTriggered: root._suppressWordNavigationEvent = false
+    }
+
+    function _selectPreviousWordFromShortcut() {
+        root._suppressWordNavigationEvent = true
+        suppressWordNavigationTimer.restart()
+        doc.moveWordLeft(true)
+        Qt.callLater(function() { root._ensureCursorVisible() })
+    }
+
+    function _selectNextWordFromShortcut() {
+        root._suppressWordNavigationEvent = true
+        suppressWordNavigationTimer.restart()
+        doc.moveWordRight(true)
+        Qt.callLater(function() { root._ensureCursorVisible() })
+    }
+
+    Shortcut { sequence: StandardKey.SelectPreviousWord; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectPreviousWordFromShortcut(); onActivatedAmbiguously: root._selectPreviousWordFromShortcut() }
+    Shortcut { sequence: StandardKey.SelectNextWord; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectNextWordFromShortcut(); onActivatedAmbiguously: root._selectNextWordFromShortcut() }
+    Shortcut { sequence: "Ctrl+Shift+Left"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectPreviousWordFromShortcut(); onActivatedAmbiguously: root._selectPreviousWordFromShortcut() }
+    Shortcut { sequence: "Ctrl+Shift+Right"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectNextWordFromShortcut(); onActivatedAmbiguously: root._selectNextWordFromShortcut() }
+    Shortcut { sequence: "Meta+Shift+Left"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectPreviousWordFromShortcut(); onActivatedAmbiguously: root._selectPreviousWordFromShortcut() }
+    Shortcut { sequence: "Meta+Shift+Right"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectNextWordFromShortcut(); onActivatedAmbiguously: root._selectNextWordFromShortcut() }
+    Shortcut { sequence: "Cmd+Shift+Left"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectPreviousWordFromShortcut(); onActivatedAmbiguously: root._selectPreviousWordFromShortcut() }
+    Shortcut { sequence: "Cmd+Shift+Right"; context: Qt.WindowShortcut; enabled: root.visible; onActivated: root._selectNextWordFromShortcut(); onActivatedAmbiguously: root._selectNextWordFromShortcut() }
 
     function loadFile(path) {
         _loadingFile = true
@@ -153,8 +198,199 @@ Item {
         forceActiveFocus()
     }
 
+    function openGoToLinePanel() {
+        root._goToLineValue = String(root.cursorLine)
+        root._goToLinePanelVisible = true
+        Qt.callLater(function() {
+            goToLineInput.forceActiveFocus()
+            goToLineInput.selectAll()
+        })
+    }
+
+    function closeGoToLinePanel() {
+        root._goToLinePanelVisible = false
+        root.forceActiveFocus()
+    }
+
+    function submitGoToLine() {
+        var raw = String(root._goToLineValue || "").trim()
+        if (!raw) {
+            root.closeGoToLinePanel()
+            return
+        }
+        var parts = raw.split(":")
+        var line = parseInt(parts[0], 10)
+        var col = parts.length > 1 ? parseInt(parts[1], 10) - 1 : 0
+        if (isNaN(line))
+            line = root.cursorLine
+        if (isNaN(col))
+            col = 0
+        line = Math.max(1, Math.min(line, root._lineItems.length || 1))
+        col = Math.max(0, col)
+        root.goToLocation(line, col)
+        root.closeGoToLinePanel()
+    }
+
+    function _lineColFromPos(pos) {
+        pos = Math.max(0, Math.min(pos, doc.plainText().length))
+        var line = 0
+        for (var i = 0; i < root._lineStarts.length; i++) {
+            if (root._lineStarts[i] <= pos)
+                line = i
+            else
+                break
+        }
+        var col = pos - (root._lineStarts[line] || 0)
+        var text = root._lineItems[line] ? (root._lineItems[line].text || "") : ""
+        return { "line": line, "col": Math.max(0, Math.min(col, text.length)) }
+    }
+
+    function openFindPanel(replaceMode) {
+        root._replacePanelVisible = !!replaceMode
+        root._findPanelVisible = true
+        if (doc.hasSelection()) {
+            var selected = doc.selectedText().replace(/\n/g, "")
+            if (selected.length > 0)
+                root._findQuery = selected
+        }
+        root._rebuildFindMatches()
+        Qt.callLater(function() {
+            findInput.forceActiveFocus()
+            findInput.selectAll()
+        })
+    }
+
+    function closeFindPanel() {
+        root._findPanelVisible = false
+        root._replacePanelVisible = false
+        root._findMatches = []
+        root._findIndex = -1
+        root._requestMinimapPaint()
+        root.forceActiveFocus()
+    }
+
+    function _requestMinimapPaint() {
+        Qt.callLater(function() {
+            if (minimapCanvas)
+                minimapCanvas.requestPaint()
+        })
+    }
+
+    function _rebuildFindMatches() {
+        var query = root._findQuery || ""
+        if (!query) {
+            root._findMatches = []
+            root._findIndex = -1
+            root._requestMinimapPaint()
+            return
+        }
+        var text = doc.plainText()
+        var haystack = root._findCaseSensitive ? text : text.toLowerCase()
+        var needle = root._findCaseSensitive ? query : query.toLowerCase()
+        var results = []
+        var index = 0
+        while (needle.length > 0) {
+            index = haystack.indexOf(needle, index)
+            if (index < 0)
+                break
+            var start = root._lineColFromPos(index)
+            var end = root._lineColFromPos(index + query.length)
+            if (start.line === end.line) {
+                results.push({
+                    "start": index,
+                    "end": index + query.length,
+                    "line": start.line,
+                    "startCol": start.col,
+                    "endCol": end.col
+                })
+            }
+            index += Math.max(1, query.length)
+        }
+        root._findMatches = results
+        if (results.length === 0) {
+            root._findIndex = -1
+            root._requestMinimapPaint()
+            return
+        }
+        var cursor = doc.cursorPosition
+        var selected = 0
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].start >= cursor) {
+                selected = i
+                break
+            }
+        }
+        root._findIndex = Math.max(0, Math.min(selected, results.length - 1))
+        root._requestMinimapPaint()
+    }
+
+    function _selectFindMatch(index) {
+        if (root._findMatches.length === 0)
+            return
+        root._findIndex = (index + root._findMatches.length) % root._findMatches.length
+        var item = root._findMatches[root._findIndex]
+        doc.moveCursor(item.start)
+        doc.moveCursorSelect(item.end)
+        root._ensureCursorVisible()
+        root._requestMinimapPaint()
+        root.forceActiveFocus()
+    }
+
+    function findNext() {
+        if (!root._findPanelVisible)
+            root.openFindPanel(false)
+        root._rebuildFindMatches()
+        if (root._findMatches.length > 0)
+            root._selectFindMatch(root._findIndex + 1)
+    }
+
+    function findPrevious() {
+        root._rebuildFindMatches()
+        if (root._findMatches.length > 0)
+            root._selectFindMatch(root._findIndex - 1)
+    }
+
+    function replaceCurrentFindMatch() {
+        if (root._findMatches.length === 0 || root._findIndex < 0)
+            return
+        var item = root._findMatches[root._findIndex]
+        doc.replaceRange(item.start, item.end, root._replaceQuery)
+        root._rebuildFindMatches()
+        if (root._findMatches.length > 0)
+            root._selectFindMatch(Math.min(root._findIndex, root._findMatches.length - 1))
+    }
+
+    function replaceAllFindMatches() {
+        var count = doc.replaceAllLiteral(root._findQuery, root._replaceQuery, root._findCaseSensitive)
+        root._rebuildFindMatches()
+        if (typeof NotificationVM !== "undefined" && NotificationVM)
+            NotificationVM.success("Replace complete", count + " occurrence" + (count === 1 ? "" : "s") + " replaced.", 2400)
+    }
+
+    function _findHighlightsForLine(lineIndex) {
+        var items = []
+        for (var i = 0; i < root._findMatches.length; i++) {
+            var item = root._findMatches[i]
+            if (item.line === lineIndex) {
+                items.push({
+                    "startCol": root._visualColFromLogical(lineIndex, item.startCol),
+                    "endCol": root._visualColFromLogical(lineIndex, item.endCol),
+                    "current": i === root._findIndex
+                })
+            }
+        }
+        return items
+    }
+
     function requestQuickFixAt(line, col) {
         goToLocation(line, col)
+        root._autoPreviewNextCodeAction = false
+        Qt.callLater(function() { root._requestCursorCodeActions() })
+    }
+
+    function requestQuickFixPreviewAt(line, col) {
+        goToLocation(line, col)
+        root._autoPreviewNextCodeAction = true
         Qt.callLater(function() { root._requestCursorCodeActions() })
     }
 
@@ -278,23 +514,45 @@ Item {
         return { "valid": true, "line": hit.line, "col": hit.col, "pos": hit.pos }
     }
 
-    function _tryToggleFoldAtPoint(x, y) {
-        if (x > root.gutterWidth || root._lineItems.length === 0)
-            return false
+    function _hasModifier(modifiers, modifier) {
+        return (modifiers & modifier) !== 0
+    }
+
+    function _hasPrimaryModifier(modifiers) {
+        return root._hasModifier(modifiers, Qt.ControlModifier) || root._hasModifier(modifiers, Qt.MetaModifier)
+    }
+
+    function _hasShiftModifier(modifiers) {
+        var appModifiers = (typeof UiVM !== "undefined" && UiVM && UiVM.keyboardModifiers) ? UiVM.keyboardModifiers() : 0
+        var uiShiftDown = (typeof UiVM !== "undefined" && UiVM && UiVM.shiftKeyDown) ? UiVM.shiftKeyDown() : false
+        return root._hasModifier(modifiers, Qt.ShiftModifier)
+            || root._hasModifier(appModifiers, Qt.ShiftModifier)
+            || uiShiftDown
+            || root._shiftKeyDown
+    }
+
+    function _foldLineAtPoint(x, y) {
+        if (root._lineItems.length === 0)
+            return -1
         var line = Math.floor((y + lineView.contentY) / root.lineHeight)
         line = Math.max(0, Math.min(line, root._lineItems.length - 1))
-        if (root._foldRangeForLine(line) === null)
+        return root._foldRangeForLine(line) === null ? -1 : line
+    }
+
+    function _isFoldMarkerPoint(x, y) {
+        return x >= 0 && x <= Math.min(26, root.gutterWidth) && root._foldLineAtPoint(x, y) >= 0
+    }
+
+    function _tryToggleFoldAtPoint(x, y) {
+        if (!root._isFoldMarkerPoint(x, y))
             return false
+        var line = root._foldLineAtPoint(x, y)
         root._toggleFold(line + 1)
         return true
     }
 
     function _isFoldGutterPoint(x, y) {
-        if (x < 0 || x > root.gutterWidth || root._lineItems.length === 0)
-            return false
-        var line = Math.floor((y + lineView.contentY) / root.lineHeight)
-        line = Math.max(0, Math.min(line, root._lineItems.length - 1))
-        return root._foldRangeForLine(line) !== null
+        return root._isFoldMarkerPoint(x, y)
     }
 
     function _cursorShapeForPoint(x, y, modifiers) {
@@ -302,7 +560,7 @@ Item {
             return Qt.PointingHandCursor
         if (x <= root.gutterWidth)
             return Qt.ArrowCursor
-        if ((modifiers & Qt.ControlModifier) || (modifiers & Qt.MetaModifier))
+        if (root._hasPrimaryModifier(modifiers))
             return root._codeHitFromPoint(x, y).valid ? Qt.PointingHandCursor : Qt.IBeamCursor
         return Qt.IBeamCursor
     }
@@ -536,6 +794,23 @@ Item {
         EditorVM.previewCodeAction(action, doc.plainText())
     }
 
+    function _showCodeActionPicker(actions) {
+        var items = actions || []
+        if (items.length === 0) {
+            if (typeof NotificationVM !== "undefined" && NotificationVM)
+                NotificationVM.info("No quick fix", "No code action is available for this diagnostic.", 2600)
+            return
+        }
+        if (items.length === 1) {
+            root._previewCodeAction(items[0])
+            return
+        }
+        root._codeActionPickerActions = items
+        root._codeActionPickerTitle = items.length + " quick fixes available"
+        root._codeActionPickerSubtitle = "Choose an action to preview before applying it."
+        codeActionPickerPopup.open()
+    }
+
     function _requestCursorCodeActions() {
         var x = root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth - lineView.contentX + 14
         var y = (root._cursorLine + 1) * root.lineHeight - lineView.contentY + 6
@@ -580,6 +855,16 @@ Item {
         return value
     }
 
+    function _selectionWrapPair(text) {
+        if (text === "(") return [ "(", ")" ]
+        if (text === "[") return [ "[", "]" ]
+        if (text === "{") return [ "{", "}" ]
+        if (text === "\"") return [ "\"", "\"" ]
+        if (text === "'") return [ "'", "'" ]
+        if (text === "`") return [ "`", "`" ]
+        return null
+    }
+
     function _requestDefinition() {
         if (!EditorVM || root._loadingFile || !root.visible) return
         EditorVM.requestDefinition(doc.plainText(), doc.cursorPosition)
@@ -609,6 +894,184 @@ Item {
             root.goToLocation(item.line || 1, item.col || 0)
         }
         locationPopup.close()
+    }
+
+    Rectangle {
+        id: findPanel
+        visible: root._findPanelVisible
+        z: 80
+        width: Math.min(root.width - 28, 520)
+        height: root._replacePanelVisible ? 104 : 58
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 12
+        anchors.rightMargin: minimap.visible ? minimap.width + 12 : 12
+        radius: 12
+        color: root.theme.panel || "#252526"
+        border.color: root.theme.border || "#3A3D46"
+        border.width: 1
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 8
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                TextField {
+                    id: findInput
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    text: root._findQuery
+                    placeholderText: "Find in file"
+                    selectByMouse: true
+                    color: root.theme.textStrong || "#F3F4F6"
+                    placeholderTextColor: root.theme.textDim || "#9CA3AF"
+                    font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                    font.pointSize: 10
+                    background: Rectangle {
+                        radius: 8
+                        color: root.theme.inputBg || Qt.rgba(255, 255, 255, 0.045)
+                        border.color: findInput.activeFocus ? (root.theme.accent || "#60A5FA") : (root.theme.border || "#3A3D46")
+                    }
+                    onTextChanged: {
+                        root._findQuery = text
+                        root._rebuildFindMatches()
+                    }
+                    onAccepted: root.findNext()
+                }
+
+                Text {
+                    Layout.preferredWidth: 56
+                    text: root._findMatches.length === 0
+                          ? "0 / 0"
+                          : ((root._findIndex + 1) + " / " + root._findMatches.length)
+                    color: root.theme.textDim || "#9CA3AF"
+                    font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                    font.pointSize: 9
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                ToolButton {
+                    text: "Aa"
+                    checkable: true
+                    checked: root._findCaseSensitive
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Match case"
+                    onClicked: {
+                        root._findCaseSensitive = checked
+                        root._rebuildFindMatches()
+                    }
+                }
+
+                ToolButton { text: "↑"; onClicked: root.findPrevious(); ToolTip.visible: hovered; ToolTip.text: "Previous" }
+                ToolButton { text: "↓"; onClicked: root.findNext(); ToolTip.visible: hovered; ToolTip.text: "Next" }
+                ToolButton { text: root._replacePanelVisible ? "−" : "+"; onClicked: root._replacePanelVisible = !root._replacePanelVisible; ToolTip.visible: hovered; ToolTip.text: "Toggle replace" }
+                ToolButton { text: "×"; onClicked: root.closeFindPanel(); ToolTip.visible: hovered; ToolTip.text: "Close" }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                visible: root._replacePanelVisible
+                spacing: 8
+
+                TextField {
+                    id: replaceInput
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    text: root._replaceQuery
+                    placeholderText: "Replace"
+                    selectByMouse: true
+                    color: root.theme.textStrong || "#F3F4F6"
+                    placeholderTextColor: root.theme.textDim || "#9CA3AF"
+                    font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                    font.pointSize: 10
+                    background: Rectangle {
+                        radius: 8
+                        color: root.theme.inputBg || Qt.rgba(255, 255, 255, 0.045)
+                        border.color: replaceInput.activeFocus ? (root.theme.accent || "#60A5FA") : (root.theme.border || "#3A3D46")
+                    }
+                    onTextChanged: root._replaceQuery = text
+                    onAccepted: root.replaceCurrentFindMatch()
+                }
+
+                Button {
+                    text: "Replace"
+                    enabled: root._findMatches.length > 0
+                    onClicked: root.replaceCurrentFindMatch()
+                }
+
+                Button {
+                    text: "All"
+                    enabled: root._findMatches.length > 0
+                    onClicked: root.replaceAllFindMatches()
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: goToLinePanel
+        visible: root._goToLinePanelVisible
+        z: 82
+        width: Math.min(root.width - 28, 320)
+        height: 58
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 12
+        anchors.rightMargin: minimap.visible ? minimap.width + 12 : 12
+        radius: 12
+        color: root.theme.panel || "#252526"
+        border.color: root.theme.border || "#3A3D46"
+        border.width: 1
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 8
+
+            Text {
+                text: "Line"
+                color: root.theme.textDim || "#9CA3AF"
+                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                font.pointSize: 9
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            TextField {
+                id: goToLineInput
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                text: root._goToLineValue
+                placeholderText: "line[:column]"
+                selectByMouse: true
+                inputMethodHints: Qt.ImhPreferNumbers
+                color: root.theme.textStrong || "#F3F4F6"
+                placeholderTextColor: root.theme.textDim || "#9CA3AF"
+                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                font.pointSize: 10
+                background: Rectangle {
+                    radius: 8
+                    color: root.theme.inputBg || Qt.rgba(255, 255, 255, 0.045)
+                    border.color: goToLineInput.activeFocus ? (root.theme.accent || "#60A5FA") : (root.theme.border || "#3A3D46")
+                }
+                onTextChanged: root._goToLineValue = text
+                onAccepted: root.submitGoToLine()
+            }
+
+            ToolButton {
+                text: "Go"
+                onClicked: root.submitGoToLine()
+            }
+
+            ToolButton {
+                text: "×"
+                onClicked: root.closeGoToLinePanel()
+            }
+        }
     }
 
     Item {
@@ -658,6 +1121,7 @@ Item {
                 theme: root.theme
                 tokenColors: root.tokenColors
                 inlineDiagnostic: root._inlineDiagnosticForLine(index)
+                findHighlights: root._findHighlightsForLine(index)
                 selectionStartCol: root._selectionStartCol(index)
                 selectionEndCol: root._selectionEndCol(index)
                 isActiveLine: index === root._cursorLine
@@ -708,7 +1172,7 @@ Item {
                     selecting = false
                     return
                 }
-                if ((mouse.modifiers & Qt.ControlModifier) || (mouse.modifiers & Qt.MetaModifier)) {
+                if (root._hasPrimaryModifier(mouse.modifiers)) {
                     var codeHit = root._codeHitFromPoint(mouse.x, mouse.y)
                     if (codeHit.valid) {
                         doc.moveCursor(codeHit.pos)
@@ -721,6 +1185,15 @@ Item {
                 var hit = root._lineColFromPoint(mouse.x, mouse.y)
                 doc.moveCursor(hit.pos)
                 selecting = true
+            }
+
+            onDoubleClicked: function(mouse) {
+                root.forceActiveFocus()
+                if (root._lineItems.length === 0) return
+                var hit = root._lineColFromPoint(mouse.x, mouse.y)
+                doc.selectWordAt(hit.pos)
+                mouse.accepted = true
+                selecting = false
             }
 
             onPositionChanged: function(mouse) {
@@ -809,14 +1282,37 @@ Item {
             acceptedButtons: Qt.LeftButton
             hoverEnabled: true
             cursorShape: root._isFoldGutterPoint(mouseX, mouseY) ? Qt.PointingHandCursor : Qt.ArrowCursor
+            property bool selectingLines: false
+            property int selectionStartLine: -1
 
-            onClicked: function(mouse) {
+            function lineFromMouse(y) {
+                if (root._lineItems.length === 0)
+                    return 0
+                var line = Math.floor((y + lineView.contentY) / root.lineHeight)
+                return Math.max(0, Math.min(line, root._lineItems.length - 1))
+            }
+
+            onPressed: function(mouse) {
                 root.forceActiveFocus()
-                if (!root._tryToggleFoldAtPoint(mouse.x, mouse.y)) {
-                    var hit = root._lineColFromPoint(root.gutterWidth + root.contentPadding, mouse.y)
-                    doc.moveCursor(hit.pos)
+                if (root._tryToggleFoldAtPoint(mouse.x, mouse.y)) {
+                    selectingLines = false
+                    mouse.accepted = true
+                    return
                 }
+                selectionStartLine = lineFromMouse(mouse.y)
+                selectingLines = true
+                doc.selectLineAt(selectionStartLine)
                 mouse.accepted = true
+            }
+
+            onPositionChanged: function(mouse) {
+                if (!selectingLines)
+                    return
+                doc.selectLineRange(selectionStartLine, lineFromMouse(mouse.y))
+            }
+
+            onReleased: function(mouse) {
+                selectingLines = false
             }
 
             onWheel: function(wheel) {
@@ -888,6 +1384,18 @@ Item {
                     ctx.fillRect(0, y, w, 1)
                 }
                 ctx.globalAlpha = 1
+                if (root._findMatches && root._findMatches.length > 0) {
+                    ctx.fillStyle = root.theme.minimapFindMatch || root.theme.findCurrent || "#F2C94C"
+                    ctx.globalAlpha = 0.92
+                    for (var m = 0; m < root._findMatches.length; m++) {
+                        var match = root._findMatches[m]
+                        var matchLine = Math.max(0, Number(match.line || 0))
+                        var matchY = Math.max(0, Math.min(height - 2, matchLine / Math.max(1, root._lineItems.length) * height))
+                        var isCurrent = m === root._findIndex
+                        ctx.fillRect(width - (isCurrent ? 17 : 15), matchY, isCurrent ? 9 : 6, isCurrent ? 3 : 2)
+                    }
+                    ctx.globalAlpha = 1
+                }
                 if (((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.minimapDiagnostics : true) && root.diagnostics && root.diagnostics.length > 0) {
                     for (var i = 0; i < root.diagnostics.length; i++) {
                         var d = root.diagnostics[i]
@@ -1447,6 +1955,164 @@ Item {
         }
     }
 
+    Popup {
+        id: codeActionPickerPopup
+        width: Math.min(520, root.width - 32)
+        height: Math.min(420, Math.max(190, pickerList.contentHeight + 104))
+        x: Math.max(16, (root.width - width) / 2)
+        y: Math.max(16, (root.height - height) / 2)
+        modal: true
+        padding: 0
+        closePolicy: Popup.CloseOnEscape
+
+        background: Rectangle {
+            color: root.theme.panel || "#252526"
+            border.color: root.theme.border || "#3A3D46"
+            border.width: 1
+            radius: 12
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 0
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 54
+                Layout.leftMargin: 14
+                Layout.rightMargin: 10
+                spacing: 10
+
+                Rectangle {
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    radius: 10
+                    color: Qt.rgba(0.23, 0.51, 0.96, 0.18)
+                    border.color: Qt.rgba(0.38, 0.64, 1.0, 0.38)
+                    Icon {
+                        anchors.centerIn: parent
+                        icon: "bolt"
+                        size: 16
+                        color: root.theme.info || "#93C5FD"
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Text {
+                        Layout.fillWidth: true
+                        text: root._codeActionPickerTitle
+                        color: root.theme.textStrong || "#F3F4F6"
+                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                        font.pointSize: 11
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: root._codeActionPickerSubtitle
+                        color: root.theme.textDim || "#9CA3AF"
+                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                        font.pointSize: 8
+                        elide: Text.ElideRight
+                    }
+                }
+
+                HoverActionButton {
+                    label: "Close"
+                    onClicked: codeActionPickerPopup.close()
+                }
+            }
+
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: root.theme.border || "#333842" }
+
+            ListView {
+                id: pickerList
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                spacing: 6
+                topMargin: 10
+                bottomMargin: 10
+                leftMargin: 10
+                rightMargin: 10
+                boundsBehavior: Flickable.StopAtBounds
+                model: root._codeActionPickerActions || []
+                ScrollBar.vertical: ScrollBar { policy: pickerList.contentHeight > pickerList.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+
+                delegate: Rectangle {
+                    required property var modelData
+                    readonly property bool disabled: modelData.disabled && Object.keys(modelData.disabled).length > 0
+                    width: pickerList.width - 20
+                    height: disabled ? 58 : 50
+                    radius: 9
+                    opacity: disabled ? 0.58 : 1
+                    color: pickerMouse.containsMouse && !disabled ? Qt.rgba(0.23, 0.51, 0.96, 0.18) : Qt.rgba(255, 255, 255, 0.035)
+                    border.width: 1
+                    border.color: pickerMouse.containsMouse && !disabled ? Qt.rgba(0.38, 0.64, 1.0, 0.42) : Qt.rgba(255, 255, 255, 0.06)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 9
+
+                        Rectangle {
+                            Layout.preferredWidth: 24
+                            Layout.preferredHeight: 24
+                            radius: 8
+                            color: modelData.isPreferred ? Qt.rgba(0.2, 0.78, 0.48, 0.18) : Qt.rgba(0.23, 0.51, 0.96, 0.14)
+                            border.color: modelData.isPreferred ? Qt.rgba(0.4, 0.95, 0.65, 0.36) : Qt.rgba(0.38, 0.64, 1.0, 0.32)
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.isPreferred ? "P" : "FX"
+                                color: modelData.isPreferred ? "#A7F3D0" : "#BFDBFE"
+                                font.pixelSize: modelData.isPreferred ? 10 : 8
+                                font.weight: Font.Bold
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.title || "Quick Fix"
+                                color: root.theme.textStrong || "#F3F4F6"
+                                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                                font.pointSize: 10
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: disabled ? (modelData.disabled.reason || "Unavailable")
+                                               : ((modelData.kind || "quickfix") + (modelData.source ? " · " + modelData.source : ""))
+                                color: disabled ? (root.theme.warning || "#D19A66") : (root.theme.textDim || "#9CA3AF")
+                                font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                                font.pointSize: 8
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: pickerMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: parent.disabled ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+                        onClicked: {
+                            if (parent.disabled)
+                                return
+                            codeActionPickerPopup.close()
+                            root._previewCodeAction(modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Inline suggestion (ghost text) ─────────────────
 
     Text {
@@ -1488,6 +2154,49 @@ Item {
     // ── Key handling ──────────────────────────────────
 
     Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_Shift) {
+            root._shiftKeyDown = true
+            return
+        }
+
+        if (event.matches(StandardKey.Find)) {
+            event.accepted = true
+            root.openFindPanel(false)
+            return
+        }
+        if (event.key === Qt.Key_H && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            root.openFindPanel(true)
+            return
+        }
+        if (event.key === Qt.Key_F3) {
+            event.accepted = true
+            if (root._hasShiftModifier(event.modifiers)) root.findPrevious()
+            else root.findNext()
+            return
+        }
+        if (event.key === Qt.Key_Escape && root._findPanelVisible) {
+            event.accepted = true
+            root.closeFindPanel()
+            return
+        }
+        if (event.key === Qt.Key_Escape && root._goToLinePanelVisible) {
+            event.accepted = true
+            root.closeGoToLinePanel()
+            return
+        }
+        if (event.key === Qt.Key_G && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            root.openGoToLinePanel()
+            return
+        }
+        if (event.key === Qt.Key_D && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.selectNextOccurrence()
+            root._ensureCursorVisible()
+            return
+        }
+
         if (event.matches(StandardKey.Copy)) {
             event.accepted = true; doc.copySelection(); return
         }
@@ -1618,13 +2327,29 @@ Item {
         // Navigation
         if (event.key === Qt.Key_Left) {
             event.accepted = true
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(doc.cursorPosition - 1)
+            if (root._suppressWordNavigationEvent && root._hasPrimaryModifier(event.modifiers)) {
+                root._suppressWordNavigationEvent = false
+                return
+            }
+            if (root._hasPrimaryModifier(event.modifiers)) {
+                doc.moveWordLeft(root._hasShiftModifier(event.modifiers))
+                return
+            }
+            if (root._hasShiftModifier(event.modifiers)) doc.moveCursorSelect(doc.cursorPosition - 1)
             else doc.moveCursor(doc.cursorPosition - 1)
             return
         }
         if (event.key === Qt.Key_Right) {
             event.accepted = true
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(doc.cursorPosition + 1)
+            if (root._suppressWordNavigationEvent && root._hasPrimaryModifier(event.modifiers)) {
+                root._suppressWordNavigationEvent = false
+                return
+            }
+            if (root._hasPrimaryModifier(event.modifiers)) {
+                doc.moveWordRight(root._hasShiftModifier(event.modifiers))
+                return
+            }
+            if (root._hasShiftModifier(event.modifiers)) doc.moveCursorSelect(doc.cursorPosition + 1)
             else doc.moveCursor(doc.cursorPosition + 1)
             return
         }
@@ -1671,9 +2396,15 @@ Item {
 
         // Editing
         if (event.key === Qt.Key_Backspace) {
+            if (event.modifiers & Qt.ControlModifier || event.modifiers & Qt.MetaModifier) {
+                event.accepted = true; doc.deleteWordLeft(); _triggerCompletions(); return
+            }
             event.accepted = true; doc.doBackspace(); _triggerCompletions(); return
         }
         if (event.key === Qt.Key_Delete) {
+            if (event.modifiers & Qt.ControlModifier || event.modifiers & Qt.MetaModifier) {
+                event.accepted = true; doc.deleteWordRight(); _triggerCompletions(); return
+            }
             event.accepted = true; doc.doDelete(); _triggerCompletions(); return
         }
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -1684,8 +2415,20 @@ Item {
         var text = event.text
         var textModifiers = event.modifiers & ~(Qt.ShiftModifier | Qt.KeypadModifier)
         if (text.length > 0 && text.charCodeAt(0) >= 32 && text.charCodeAt(0) !== 127 && textModifiers === Qt.NoModifier) {
+            var pair = doc.hasSelection() ? root._selectionWrapPair(text) : null
+            if (pair) {
+                event.accepted = true
+                doc.wrapSelection(pair[0], pair[1])
+                root._triggerCompletions()
+                return
+            }
             event.accepted = true; doc.typeText(text); _triggerCompletions(); return
         }
+    }
+
+    Keys.onReleased: function(event) {
+        if (event.key === Qt.Key_Shift)
+            root._shiftKeyDown = false
     }
 
     // ── Data sync from backend ─────────────────────────
@@ -1706,6 +2449,8 @@ Item {
             root._lines = root._lineItems.map(function(item) { return item.text || "" })
             root._rebuildLineStarts()
             root._updateContentWidth()
+            if (root._findPanelVisible)
+                root._rebuildFindMatches()
             lineView.contentX = keepX
             lineView.contentY = keepY
             Qt.callLater(function() { root._ensureCursorVisible() })
@@ -1893,6 +2638,11 @@ Item {
         function onCodeActionsReady(actions) {
             if (!root.visible) return
             root._codeActions = actions || []
+            if (root._autoPreviewNextCodeAction) {
+                root._autoPreviewNextCodeAction = false
+                root._showCodeActionPicker(root._codeActions)
+                return
+            }
             if (root._hoverMode === "actions") {
                 root._hoverSubtitle = root._codeActions.length > 0
                                     ? root._codeActions.length + " action" + (root._codeActions.length > 1 ? "s" : "") + " available"
