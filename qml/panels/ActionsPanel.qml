@@ -29,6 +29,7 @@ Rectangle {
                 "message": running.label || "",
                 "state": "running",
                 "startedAt": running.startedAt || 0,
+                "category": running.category || "",
                 "source": running.source || ""
             })
         }
@@ -37,12 +38,17 @@ Rectangle {
             output.push({
                 "_kind": "history",
                 "id": item.id || "",
-                "title": item.id || "",
+                "title": item.title || item.id || "",
                 "label": "",
                 "message": item.message || "",
                 "state": item.state || "",
                 "durationMs": item.durationMs || 0,
-                "source": item.source || ""
+                "category": item.category || "",
+                "source": item.source || "",
+                "payload": item.payload || ({}),
+                "permissions": item.permissions || [],
+                "requiresPermission": item.requiresPermission || false,
+                "exposable": item.exposable !== false
             })
         }
         if (query.length === 0)
@@ -50,7 +56,7 @@ Rectangle {
         var filtered = []
         for (var i = 0; i < output.length; i++) {
             var row = output[i] || ({})
-            var haystack = String(row.id || "") + " " + String(row.title || "") + " " + String(row.message || "") + " " + String(row.state || "")
+            var haystack = String(row.id || "") + " " + String(row.title || "") + " " + String(row.message || "") + " " + String(row.state || "") + " " + String(row.source || "") + " " + String(row.category || "")
             if (haystack.toLowerCase().indexOf(query) >= 0)
                 filtered.push(row)
         }
@@ -69,9 +75,29 @@ Rectangle {
         var items = rows()
         for (var i = 0; i < items.length; i++) {
             var row = items[i] || ({})
-            lines.push("[" + (row.state || row._kind || "action") + "] " + (row.id || "") + " · " + (row.message || row.label || ""))
+            lines.push("[" + (row.state || row._kind || "action") + "] " + (row.id || "") + " · " + (row.source || "core") + " · " + (row.message || row.label || ""))
         }
         return lines.join("\n")
+    }
+
+    function compactJson(value) {
+        try {
+            var text = JSON.stringify(value || {})
+            return text === "{}" ? "" : text
+        } catch (err) {
+            return ""
+        }
+    }
+
+    function metaText(row) {
+        var parts = []
+        if (row.source) parts.push(row.source)
+        if (row.category) parts.push(row.category)
+        if ((row._kind || "") === "running") parts.push("running")
+        else parts.push(String(row.durationMs || 0) + "ms")
+        if (row.permissions && row.permissions.length > 0)
+            parts.push("permissions: " + row.permissions.join(", "))
+        return parts.join(" · ")
     }
 
     ColumnLayout {
@@ -128,7 +154,7 @@ Rectangle {
                 required property var modelData
 
                 width: listView.width
-                height: Math.max(38, body.implicitHeight + 12)
+                height: Math.max(48, body.implicitHeight + 14)
                 color: index % 2 === 0 ? (theme.panel || "#1E1E1E") : (theme.inputBg || theme.panel || "#242424")
 
                 Rectangle {
@@ -166,11 +192,20 @@ Rectangle {
 
                         Text {
                             Layout.fillWidth: true
-                            text: modelData.id || modelData.title || "action"
+                            text: modelData.title || modelData.id || "action"
                             color: theme.textStrong || theme.text || "#E5E7EB"
                             font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
                             font.pointSize: 10
                             font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.metaText(modelData)
+                            color: theme.textMuted || theme.textDim || "#858585"
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 8
                             elide: Text.ElideRight
                         }
 
@@ -181,6 +216,16 @@ Rectangle {
                             font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
                             font.pointSize: 9
                             wrapMode: Text.Wrap
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            visible: text.length > 0
+                            text: root.compactJson(modelData.payload)
+                            color: theme.textMuted || theme.textDim || "#858585"
+                            font.family: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.editorFontFamily : "Menlo"
+                            font.pointSize: 8
+                            elide: Text.ElideRight
                         }
                     }
 
