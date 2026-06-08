@@ -71,6 +71,21 @@ Rectangle {
             codeEditor.requestQuickFixAt(line, col)
     }
 
+    function requestQuickFixPreviewAt(line, col) {
+        if (codeEditor.visible && codeEditor.requestQuickFixPreviewAt)
+            codeEditor.requestQuickFixPreviewAt(line, col)
+    }
+
+    function selectPreviousWord() {
+        if (codeEditor.visible && codeEditor._selectPreviousWordFromShortcut)
+            codeEditor._selectPreviousWordFromShortcut()
+    }
+
+    function selectNextWord() {
+        if (codeEditor.visible && codeEditor._selectNextWordFromShortcut)
+            codeEditor._selectNextWordFromShortcut()
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

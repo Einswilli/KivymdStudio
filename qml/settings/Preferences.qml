@@ -1024,6 +1024,38 @@ Item {
                 }
 
                 SettingRow {
+                    title: "Cursor style"
+                    description: "Visual shape of the editor caret. Overwrite mode temporarily uses block."
+                    SettingComboBox {
+                        id: editorCursorStyleCombo
+                        Layout.preferredWidth: 180
+                        model: ["bar", "block", "underline"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.editorCursorStyle)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Cursor width"
+                    description: "Thickness used by bar and underline cursor styles."
+                    SettingSpinBox {
+                        id: editorCursorWidthSpin
+                        from: 1
+                        to: 8
+                        value: root.hasSettings ? SettingsVM.editorCursorWidth : 2
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Cursor blink"
+                    description: "Animate the editor caret while the editor has focus."
+                    SettingSwitch {
+                        id: editorCursorBlinkSwitch
+                        checked: root.hasSettings ? SettingsVM.editorCursorBlink : true
+                    }
+                }
+
+                SettingRow {
                     title: "Hover delay"
                     description: "Delay before symbol documentation appears. Diagnostics stay instant."
                     SettingSpinBox {
@@ -1067,6 +1099,9 @@ Item {
                         root.runSettingAction("settings:editing", "Applying editing settings…", "Editing settings applied.", function() {
                             SettingsVM.setEditorProfile({
                                 "tabSize": tabSizeSpin.value,
+                                "cursorStyle": editorCursorStyleCombo.currentText,
+                                "cursorWidth": editorCursorWidthSpin.value,
+                                "cursorBlink": editorCursorBlinkSwitch.checked,
                                 "hoverDelayMs": hoverDelaySpin.value,
                                 "wordWrap": root.hasSettings ? SettingsVM.wordWrap : false,
                                 "rulersCsv": rulersInput.text

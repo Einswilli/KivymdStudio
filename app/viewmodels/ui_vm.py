@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QObject, Property, Signal, Slot
-from PySide6.QtGui import QFont
+from PySide6.QtCore import QEvent, QObject, Property, Signal, Slot, Qt
+from PySide6.QtGui import QFont, QGuiApplication
 from PySide6.QtWidgets import QApplication
 
 from app.core.async_tasks import schedule
@@ -18,9 +18,13 @@ class UiViewModel(QObject):
         self._settings_vm = settings_vm
         self._font_family = self._clean_font_family(settings_vm.uiFontFamily if settings_vm else "Arial", "Arial")
         self._font_size = max(10, int(settings_vm.uiFontSize) if settings_vm else 12)
+        self._shift_down = False
         if settings_vm:
             settings_vm.fontChanged.connect(self._sync_font)
         self._apply_application_font()
+        app = QApplication.instance()
+        if app:
+            app.installEventFilter(self)
 
     @Property(str, notify=fontChanged)
     def fontFamily(self) -> str:
@@ -57,6 +61,29 @@ class UiViewModel(QObject):
     @Slot(str, str)
     def dispatchShortcut(self, command_id: str, sequence: str = "") -> None:
         schedule(self._emit_shortcut(command_id, sequence))
+
+    @Slot(result=int)
+    def keyboardModifiers(self) -> int:
+        return int(QGuiApplication.keyboardModifiers().value)
+
+    @Slot(result=bool)
+    def shiftKeyDown(self) -> bool:
+        return self._shift_down
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.KeyPress and getattr(event, "key", None):
+            if event.key() == Qt.Key.Key_Shift:
+                self._shift_down = True
+        elif event.type() == QEvent.Type.KeyRelease and getattr(event, "key", None):
+            if event.key() == Qt.Key.Key_Shift:
+                self._shift_down = False
+        elif event.type() in {
+            QEvent.Type.FocusOut,
+            QEvent.Type.WindowDeactivate,
+            QEvent.Type.ApplicationDeactivate,
+        }:
+            self._shift_down = False
+        return False
 
     async def _emit_shortcut(self, command_id: str, sequence: str) -> None:
         await self._events.emit(

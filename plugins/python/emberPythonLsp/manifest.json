@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "author": "AllDotPy",
   "description": "Proprietary Python language providers for ty and ruff.",
+  "icon": "assets/icons/lsp-python.svg",
   "license": "MIT",
   "keywords": [
     "lsp",

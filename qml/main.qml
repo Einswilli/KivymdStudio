@@ -1177,6 +1177,54 @@ Instantiator {
             }
         }
 
+        Shortcut {
+            sequence: StandardKey.SelectPreviousWord
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectPreviousWord()
+            onActivatedAmbiguously: editorWorkspace.selectPreviousWord()
+        }
+
+        Shortcut {
+            sequence: StandardKey.SelectNextWord
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectNextWord()
+            onActivatedAmbiguously: editorWorkspace.selectNextWord()
+        }
+
+        Shortcut {
+            sequence: "Ctrl+Shift+Left"
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectPreviousWord()
+            onActivatedAmbiguously: editorWorkspace.selectPreviousWord()
+        }
+
+        Shortcut {
+            sequence: "Ctrl+Shift+Right"
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectNextWord()
+            onActivatedAmbiguously: editorWorkspace.selectNextWord()
+        }
+
+        Shortcut {
+            sequence: "Meta+Shift+Left"
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectPreviousWord()
+            onActivatedAmbiguously: editorWorkspace.selectPreviousWord()
+        }
+
+        Shortcut {
+            sequence: "Meta+Shift+Right"
+            context: Qt.ApplicationShortcut
+            enabled: editorWorkspace && editorWorkspace.editorVisible
+            onActivated: editorWorkspace.selectNextWord()
+            onActivatedAmbiguously: editorWorkspace.selectNextWord()
+        }
+
         NotificationHost {
             anchors.fill: parent
             theme: root.theme
@@ -1424,7 +1472,7 @@ Timer {
         }
         editorWorkspace.goToLocation(root.pendingProblemLine, root.pendingProblemCol)
         if (root.pendingQuickFix)
-            editorWorkspace.requestQuickFixAt(root.pendingProblemLine, root.pendingProblemCol)
+            editorWorkspace.requestQuickFixPreviewAt(root.pendingProblemLine, root.pendingProblemCol)
         root.pendingQuickFix = false
         root.pendingProblemPath = ""
     }
