@@ -41,6 +41,8 @@ class ServiceProvider:
         self.ui_vm = UiViewModel(self.events, self.settings_vm)
         self.panel_vm = PanelViewModel()
         self.search_vm = SearchViewModel(self.events)
+        self.notification_vm.configure(self.settings_vm.getNotificationsConfig())
+        self.action_service.set_history_limit(self.settings_vm.auditRetention)
 
         self.editor_vm.set_notification_vm(self.notification_vm)
         self.file_vm.set_notification_vm(self.notification_vm)
@@ -67,6 +69,10 @@ class ServiceProvider:
         self.file_vm.folderChanged.connect(self.terminal_vm.set_cwd)
         self.file_vm.folderChanged.connect(self.search_vm.setWorkspace)
         self.settings_vm.searchConfigChanged.connect(self.search_vm.applySettings)
+        self.settings_vm.notificationsChanged.connect(self.notification_vm.configure)
+        self.settings_vm.notificationsChanged.connect(
+            lambda config: self.action_service.set_history_limit(config.get("auditRetention", 200))
+        )
         self.plugin_vm.contributionsChanged.connect(self.panel_vm.refresh)
         self.command_vm.commandExecuted.connect(lambda command: self.status_vm.append_console("success", f"Executed {command}"))
         self.command_vm.commandFailed.connect(lambda command, error: self.status_vm.append_console("error", f"{command}: {error}"))
