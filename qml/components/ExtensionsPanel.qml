@@ -1732,26 +1732,26 @@ Rectangle {
                 spacing: 10
 
                 Rectangle {
-                    Layout.preferredWidth: 38
-                    Layout.preferredHeight: 38
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 52
                     Layout.alignment: Qt.AlignTop
-                    radius: 11
-                    color: Qt.rgba(1, 1, 1, 0.055)
+                    radius: 16
+                    color: Qt.rgba(1, 1, 1, 0.07)
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.11)
+                    border.color: Qt.rgba(1, 1, 1, 0.14)
 
                     Icon {
                         anchors.centerIn: parent
                         visible: !iconSource
                         icon: "extensions"
                         color: updateAvailable ? (theme.warning || "#D19A66") : (theme.info || "#61AFEF")
-                        size: 19
+                        size: 25
                     }
 
                     Image {
                         anchors.centerIn: parent
-                        width: 23
-                        height: 23
+                        width: 38
+                        height: 38
                         visible: !!iconSource
                         source: iconSource
                         fillMode: Image.PreserveAspectFit
@@ -1957,26 +1957,26 @@ Rectangle {
                 spacing: 10
 
                 Rectangle {
-                    Layout.preferredWidth: 42
-                    Layout.preferredHeight: 42
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 56
                     Layout.alignment: Qt.AlignTop
-                    radius: 12
-                    color: Qt.rgba(1, 1, 1, 0.055)
+                    radius: 18
+                    color: Qt.rgba(1, 1, 1, 0.07)
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.12)
+                    border.color: Qt.rgba(1, 1, 1, 0.15)
 
                     Icon {
                         anchors.centerIn: parent
                         visible: !iconSource
                         icon: iconName || "extensions"
                         color: accentColor
-                        size: 20
+                        size: 27
                     }
 
                     Image {
                         anchors.centerIn: parent
-                        width: 24
-                        height: 24
+                        width: 42
+                        height: 42
                         visible: !!iconSource
                         source: iconSource
                         fillMode: Image.PreserveAspectFit

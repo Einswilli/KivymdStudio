@@ -13,6 +13,7 @@ from pathlib import Path
 os.environ["QT_QUICK_CONTROLS_STYLE"] = "Fusion"
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
 from qasync import QEventLoop
 
@@ -48,6 +49,9 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Ember")
     app.setApplicationVersion("2.0.0")
+    app_icon = Path(__file__).resolve().parent / "assets" / "brand" / "ember-logo.svg"
+    if app_icon.exists():
+        app.setWindowIcon(QIcon(os.fspath(app_icon)))
 
     qmlRegisterType(EditorDocument, "Ember.Editor", 1, 0, "EditorDocument")
 

@@ -276,7 +276,7 @@ Rectangle {
 
                         ProblemActionButton {
                             theme: root.theme
-                            text: "Quick Fix"
+                            text: "Preview Fix"
                             onClicked: {
                                 root.selectedProblemKey = root.problemKey(modelData)
                                 root.quickFixRequested(modelData)
