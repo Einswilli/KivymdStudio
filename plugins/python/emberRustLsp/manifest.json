@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "author": "AllDotPy",
   "description": "Proprietary Rust language provider powered by rust-analyzer.",
+  "icon": "assets/icons/lsp-rust.svg",
   "license": "MIT",
   "keywords": [
     "lsp",

@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "author": "AllDotPy",
   "description": "VSCode Icons based file and folder icon provider for Ember file explorer and editor tabs.",
-  "icon": "assets/icons/vscode/vscode.svg",
+  "icon": "assets/icons/ember-file-icons.svg",
   "license": "MIT",
   "keywords": [
     "icons",
