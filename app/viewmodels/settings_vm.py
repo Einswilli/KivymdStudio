@@ -17,6 +17,8 @@ class SettingsViewModel(QObject):
     fontChanged = Signal(str, int)
     editorMetricsChanged = Signal()
     workbenchChanged = Signal()
+    terminalChanged = Signal()
+    notificationsChanged = Signal("QVariantMap")
     keybindingsChanged = Signal()
     configChanged = Signal("QVariantMap")
     aiModelsChanged = Signal(str, "QVariantList")
@@ -73,6 +75,16 @@ class SettingsViewModel(QObject):
         self._files_show_hidden = bool(self._get("files.showHidden", False))
         self._files_confirm_delete = bool(self._get("files.confirmDelete", True))
         self._files_exclude = list(self._get("files.exclude", []) or [])
+        self._terminal_shell = str(self._get("terminal.shell", ""))
+        self._terminal_cwd_mode = str(self._get("terminal.cwdMode", "project"))
+        self._terminal_font_family = self._clean_font_family(
+            str(self._get("terminal.fontFamily", "Menlo")),
+            "Menlo",
+        )
+        self._terminal_font_size = int(self._get("terminal.fontSize", 12))
+        self._terminal_cursor_style = str(self._get("terminal.cursorStyle", "block"))
+        self._terminal_scrollback = int(self._get("terminal.scrollback", 3000))
+        self._terminal_restore_sessions = bool(self._get("terminal.restoreSessions", True))
         self._default_formatter_by_language = dict(
             self._get("files.defaultFormatterByLanguage", {}) or {}
         )
@@ -116,6 +128,11 @@ class SettingsViewModel(QObject):
         self._panel_height = int(self._get("workbench.panel.height", 240))
         self._right_panel_visible = bool(self._get("workbench.rightPanel.visible", False))
         self._right_panel_width = int(self._get("workbench.rightPanel.width", 320))
+        self._notification_position = str(self._get("notifications.position", "top-right"))
+        self._notification_default_timeout_ms = int(self._get("notifications.defaultTimeoutMs", 4200))
+        self._notification_max_visible = int(self._get("notifications.maxVisible", 6))
+        self._notification_mute_non_critical = bool(self._get("notifications.muteNonCritical", False))
+        self._audit_retention = int(self._get("notifications.auditRetention", 200))
         self._available_themes: list[dict] = []
         self._ai_provider_models: dict[str, list[str]] = {}
         self._ai_models_revision = 0
@@ -275,6 +292,20 @@ class SettingsViewModel(QObject):
             self._get("files.confirmDelete", self._files_confirm_delete)
         )
         self._files_exclude = list(self._get("files.exclude", self._files_exclude) or [])
+        self._terminal_shell = str(self._get("terminal.shell", self._terminal_shell))
+        self._terminal_cwd_mode = str(self._get("terminal.cwdMode", self._terminal_cwd_mode))
+        self._terminal_font_family = self._clean_font_family(
+            str(self._get("terminal.fontFamily", self._terminal_font_family)),
+            "Menlo",
+        )
+        self._terminal_font_size = int(self._get("terminal.fontSize", self._terminal_font_size))
+        self._terminal_cursor_style = str(
+            self._get("terminal.cursorStyle", self._terminal_cursor_style)
+        )
+        self._terminal_scrollback = int(self._get("terminal.scrollback", self._terminal_scrollback))
+        self._terminal_restore_sessions = bool(
+            self._get("terminal.restoreSessions", self._terminal_restore_sessions)
+        )
         self._default_formatter_by_language = dict(
             self._get("files.defaultFormatterByLanguage", self._default_formatter_by_language) or {}
         )
@@ -338,11 +369,28 @@ class SettingsViewModel(QObject):
         self._right_panel_width = int(
             self._get("workbench.rightPanel.width", self._right_panel_width)
         )
+        self._notification_position = str(
+            self._get("notifications.position", self._notification_position)
+        )
+        self._notification_default_timeout_ms = int(
+            self._get("notifications.defaultTimeoutMs", self._notification_default_timeout_ms)
+        )
+        self._notification_max_visible = int(
+            self._get("notifications.maxVisible", self._notification_max_visible)
+        )
+        self._notification_mute_non_critical = bool(
+            self._get("notifications.muteNonCritical", self._notification_mute_non_critical)
+        )
+        self._audit_retention = int(
+            self._get("notifications.auditRetention", self._audit_retention)
+        )
         self._refresh_theme()
         self.configChanged.emit(self._config)
         self.themeChanged.emit(self._theme_colors)
         self.fontChanged.emit(self._font_family, self._font_size)
         self.editorMetricsChanged.emit()
+        self.terminalChanged.emit()
+        self.notificationsChanged.emit(self.getNotificationsConfig())
         self.workbenchChanged.emit()
         self.keybindingsChanged.emit()
 
@@ -650,16 +698,7 @@ class SettingsViewModel(QObject):
 
     @Slot(str)
     def setRulersCsv(self, value: str) -> None:
-        rulers: list[int] = []
-        for item in str(value or "").split(","):
-            item = item.strip()
-            if not item:
-                continue
-            try:
-                rulers.append(max(1, min(240, int(item))))
-            except ValueError:
-                continue
-        self._rulers = sorted(dict.fromkeys(rulers))
+        self._rulers = self._parse_rulers_csv(value)
         self._config = self._settings.save_global({"editor": {"rulers": self._rulers}})
         self.reload()
 
@@ -778,6 +817,96 @@ class SettingsViewModel(QObject):
     @Property(int, notify=editorMetricsChanged)
     def symbolsDelayMs(self) -> int:
         return self._symbols_delay_ms
+
+    @Slot("QVariantMap")
+    def setEditorProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "fontFamily" in values:
+            self._font_family = self._clean_font_family(str(values.get("fontFamily")), "Menlo")
+        if "fontSize" in values:
+            self._font_size = max(9, min(28, int(values.get("fontSize") or self._font_size)))
+        if "lineSpacing" in values:
+            self._editor_line_spacing = max(2, min(16, int(values.get("lineSpacing") or self._editor_line_spacing)))
+        if "tabSize" in values:
+            self._tab_size = max(1, min(12, int(values.get("tabSize") or self._tab_size)))
+        if "wordWrap" in values:
+            self._word_wrap = bool(values.get("wordWrap"))
+        if "rulersCsv" in values:
+            self._rulers = self._parse_rulers_csv(str(values.get("rulersCsv") or ""))
+        if "hoverDelayMs" in values:
+            self._hover_delay_ms = max(100, min(3000, int(values.get("hoverDelayMs") or self._hover_delay_ms)))
+        if "autoSaveEnabled" in values:
+            self._auto_save_enabled = bool(values.get("autoSaveEnabled"))
+        if "autoSaveDelayMs" in values:
+            self._auto_save_delay_ms = max(250, min(10000, int(values.get("autoSaveDelayMs") or self._auto_save_delay_ms)))
+        if "trimTrailingWhitespace" in values:
+            self._trim_trailing_whitespace = bool(values.get("trimTrailingWhitespace"))
+        if "insertFinalNewline" in values:
+            self._insert_final_newline = bool(values.get("insertFinalNewline"))
+        if "formatOnSave" in values:
+            self._format_on_save = bool(values.get("formatOnSave"))
+        if "suggestionsAuto" in values:
+            self._suggestions_auto = bool(values.get("suggestionsAuto"))
+        if "suggestionsDelayMs" in values:
+            self._suggestions_delay_ms = max(0, min(2000, int(values.get("suggestionsDelayMs") or self._suggestions_delay_ms)))
+        if "suggestionsDetailsOnSpace" in values:
+            self._suggestions_details_on_space = bool(values.get("suggestionsDetailsOnSpace"))
+        if "diagnosticsDelayMs" in values:
+            self._diagnostics_delay_ms = max(0, min(5000, int(values.get("diagnosticsDelayMs") or self._diagnostics_delay_ms)))
+        if "symbolsDelayMs" in values:
+            self._symbols_delay_ms = max(100, min(5000, int(values.get("symbolsDelayMs") or self._symbols_delay_ms)))
+        if "minimapEnabled" in values:
+            self._minimap_enabled = bool(values.get("minimapEnabled"))
+        if "minimapWidth" in values:
+            self._minimap_width = max(48, min(180, int(values.get("minimapWidth") or self._minimap_width)))
+        if "minimapDiagnostics" in values:
+            self._minimap_diagnostics = bool(values.get("minimapDiagnostics"))
+
+        self._config = self._settings.save_global({
+            "editor": {
+                "fontFamily": self._font_family,
+                "fontSize": self._font_size,
+                "lineSpacing": self._editor_line_spacing,
+                "tabSize": self._tab_size,
+                "wordWrap": self._word_wrap,
+                "autoSave": {
+                    "enabled": self._auto_save_enabled,
+                    "delayMs": self._auto_save_delay_ms,
+                },
+                "trimTrailingWhitespace": self._trim_trailing_whitespace,
+                "insertFinalNewline": self._insert_final_newline,
+                "rulers": self._rulers,
+                "hoverDelayMs": self._hover_delay_ms,
+                "minimap": {
+                    "enabled": self._minimap_enabled,
+                    "width": self._minimap_width,
+                    "diagnostics": self._minimap_diagnostics,
+                },
+                "suggestions": {
+                    "auto": self._suggestions_auto,
+                    "delayMs": self._suggestions_delay_ms,
+                    "detailsOnSpace": self._suggestions_details_on_space,
+                },
+                "diagnostics": {"delayMs": self._diagnostics_delay_ms},
+                "symbols": {"delayMs": self._symbols_delay_ms},
+            },
+            "files": {"formatOnSave": self._format_on_save},
+            "language": {"formatOnSave": self._format_on_save},
+        })
+        self.reload()
+
+    @staticmethod
+    def _parse_rulers_csv(value: str) -> list[int]:
+        rulers: list[int] = []
+        for item in str(value or "").split(","):
+            item = item.strip()
+            if not item:
+                continue
+            try:
+                rulers.append(max(1, min(240, int(item))))
+            except ValueError:
+                continue
+        return sorted(dict.fromkeys(rulers))
 
     @Slot(bool)
     def setLspEnabled(self, value: bool) -> None:
@@ -1114,13 +1243,42 @@ class SettingsViewModel(QObject):
     @Slot(str)
     @Slot(str, bool)
     def setFilesExcludeCsv(self, value: str, project: bool = False) -> None:
-        exclusions = []
-        for item in str(value or "").replace("\n", ",").split(","):
-            item = item.strip()
-            if item and item not in exclusions:
-                exclusions.append(item)
+        exclusions = self._parse_csv_list(value)
         self._files_exclude = exclusions
         patch = {"files": {"exclude": exclusions}}
+        self._config = self._settings.save_project(patch) if project else self._settings.save_global(patch)
+        self.reload()
+        self.searchConfigChanged.emit(self.getSearchConfig())
+
+    @Slot("QVariantMap")
+    @Slot("QVariantMap", bool)
+    def setFilesProfile(self, values: dict, project: bool = False) -> None:
+        values = dict(values or {})
+        if "restoreWorkspace" in values:
+            self._files_restore_workspace = bool(values.get("restoreWorkspace"))
+        if "watcherEnabled" in values:
+            self._files_watcher_enabled = bool(values.get("watcherEnabled"))
+        if "showHidden" in values:
+            self._files_show_hidden = bool(values.get("showHidden"))
+        if "confirmDelete" in values:
+            self._files_confirm_delete = bool(values.get("confirmDelete"))
+        if "excludeCsv" in values:
+            self._files_exclude = self._parse_csv_list(str(values.get("excludeCsv") or ""))
+        elif "exclude" in values:
+            self._files_exclude = [
+                str(item).strip()
+                for item in (values.get("exclude") or [])
+                if str(item).strip()
+            ]
+        patch = {
+            "files": {
+                "restoreWorkspace": self._files_restore_workspace,
+                "watcher": {"enabled": self._files_watcher_enabled},
+                "showHidden": self._files_show_hidden,
+                "confirmDelete": self._files_confirm_delete,
+                "exclude": list(dict.fromkeys(self._files_exclude)),
+            }
+        }
         self._config = self._settings.save_project(patch) if project else self._settings.save_global(patch)
         self.reload()
         self.searchConfigChanged.emit(self.getSearchConfig())
@@ -1128,6 +1286,15 @@ class SettingsViewModel(QObject):
     @Property(str, notify=configChanged)
     def filesExcludeCsv(self) -> str:
         return ", ".join(str(item) for item in self._files_exclude)
+
+    @staticmethod
+    def _parse_csv_list(value: str) -> list[str]:
+        items: list[str] = []
+        for item in str(value or "").replace("\n", ",").split(","):
+            item = item.strip()
+            if item and item not in items:
+                items.append(item)
+        return items
 
     @Slot(result="QVariantMap")
     def getFilesConfig(self) -> dict:
@@ -1597,7 +1764,173 @@ class SettingsViewModel(QObject):
     def extensionsMarketplaceLocalSourcesJson(self) -> str:
         return json.dumps(self._extensions_marketplace_local_sources, indent=2)
 
+    # ── Terminal ─────────────────────────────────────────
+
+    @Slot("QVariantMap")
+    def setTerminalProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "shell" in values:
+            self._terminal_shell = str(values.get("shell") or "").strip()
+        if "cwdMode" in values:
+            cwd_mode = str(values.get("cwdMode") or "project")
+            self._terminal_cwd_mode = cwd_mode if cwd_mode in {"project", "home", "process"} else "project"
+        if "fontFamily" in values:
+            self._terminal_font_family = self._clean_font_family(
+                str(values.get("fontFamily") or self._terminal_font_family),
+                "Menlo",
+            )
+        if "fontSize" in values:
+            self._terminal_font_size = max(9, min(28, int(values.get("fontSize") or self._terminal_font_size)))
+        if "cursorStyle" in values:
+            cursor_style = str(values.get("cursorStyle") or "block")
+            self._terminal_cursor_style = cursor_style if cursor_style in {"block", "bar", "underline"} else "block"
+        if "scrollback" in values:
+            self._terminal_scrollback = max(500, min(50000, int(values.get("scrollback") or self._terminal_scrollback)))
+        if "restoreSessions" in values:
+            self._terminal_restore_sessions = bool(values.get("restoreSessions"))
+        self._config = self._settings.save_global({
+            "terminal": {
+                "shell": self._terminal_shell,
+                "cwdMode": self._terminal_cwd_mode,
+                "fontFamily": self._terminal_font_family,
+                "fontSize": self._terminal_font_size,
+                "cursorStyle": self._terminal_cursor_style,
+                "scrollback": self._terminal_scrollback,
+                "restoreSessions": self._terminal_restore_sessions,
+            }
+        })
+        self.reload()
+
+    @Property(str, notify=terminalChanged)
+    def terminalShell(self) -> str:
+        return self._terminal_shell
+
+    @Property(str, notify=terminalChanged)
+    def terminalCwdMode(self) -> str:
+        return self._terminal_cwd_mode
+
+    @Property(str, notify=terminalChanged)
+    def terminalFontFamily(self) -> str:
+        return self._terminal_font_family
+
+    @Property(int, notify=terminalChanged)
+    def terminalFontSize(self) -> int:
+        return self._terminal_font_size
+
+    @Property(str, notify=terminalChanged)
+    def terminalCursorStyle(self) -> str:
+        return self._terminal_cursor_style
+
+    @Property(int, notify=terminalChanged)
+    def terminalScrollback(self) -> int:
+        return self._terminal_scrollback
+
+    @Property(bool, notify=terminalChanged)
+    def terminalRestoreSessions(self) -> bool:
+        return self._terminal_restore_sessions
+
+    # ── Notifications / Audit ─────────────────────────────
+
+    @Slot(result="QVariantMap")
+    def getNotificationsConfig(self) -> dict:
+        return {
+            "position": self._notification_position,
+            "defaultTimeoutMs": self._notification_default_timeout_ms,
+            "maxVisible": self._notification_max_visible,
+            "muteNonCritical": self._notification_mute_non_critical,
+            "auditRetention": self._audit_retention,
+        }
+
+    @Slot("QVariantMap")
+    def setNotificationsProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "position" in values:
+            position = str(values.get("position") or "top-right")
+            self._notification_position = position if position in {
+                "top-right",
+                "top-left",
+                "bottom-right",
+                "bottom-left",
+            } else "top-right"
+        if "defaultTimeoutMs" in values:
+            self._notification_default_timeout_ms = max(
+                1000,
+                min(30000, int(values.get("defaultTimeoutMs") or self._notification_default_timeout_ms)),
+            )
+        if "maxVisible" in values:
+            self._notification_max_visible = max(
+                1,
+                min(12, int(values.get("maxVisible") or self._notification_max_visible)),
+            )
+        if "muteNonCritical" in values:
+            self._notification_mute_non_critical = bool(values.get("muteNonCritical"))
+        if "auditRetention" in values:
+            self._audit_retention = max(
+                20,
+                min(5000, int(values.get("auditRetention") or self._audit_retention)),
+            )
+        self._config = self._settings.save_global({
+            "notifications": {
+                "position": self._notification_position,
+                "defaultTimeoutMs": self._notification_default_timeout_ms,
+                "maxVisible": self._notification_max_visible,
+                "muteNonCritical": self._notification_mute_non_critical,
+                "auditRetention": self._audit_retention,
+            }
+        })
+        self.reload()
+
+    @Property(str, notify=notificationsChanged)
+    def notificationPosition(self) -> str:
+        return self._notification_position
+
+    @Property(int, notify=notificationsChanged)
+    def notificationDefaultTimeoutMs(self) -> int:
+        return self._notification_default_timeout_ms
+
+    @Property(int, notify=notificationsChanged)
+    def notificationMaxVisible(self) -> int:
+        return self._notification_max_visible
+
+    @Property(bool, notify=notificationsChanged)
+    def notificationMuteNonCritical(self) -> bool:
+        return self._notification_mute_non_critical
+
+    @Property(int, notify=notificationsChanged)
+    def auditRetention(self) -> int:
+        return self._audit_retention
+
     # ── Workbench layout ─────────────────────────────────
+
+    @Slot("QVariantMap")
+    def setWorkbenchProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "activityBarVisible" in values:
+            self._activity_bar_visible = bool(values.get("activityBarVisible"))
+        if "sidebarVisible" in values:
+            self._sidebar_visible = bool(values.get("sidebarVisible"))
+        if "panelVisible" in values:
+            self._panel_visible = bool(values.get("panelVisible"))
+        if "rightPanelVisible" in values:
+            self._right_panel_visible = bool(values.get("rightPanelVisible"))
+        if "sidebarWidth" in values:
+            self._sidebar_width = max(180, min(520, int(values.get("sidebarWidth") or self._sidebar_width)))
+        if "panelHeight" in values:
+            self._panel_height = max(120, min(500, int(values.get("panelHeight") or self._panel_height)))
+        if "rightPanelWidth" in values:
+            self._right_panel_width = max(180, min(520, int(values.get("rightPanelWidth") or self._right_panel_width)))
+        self._config = self._settings.save_global({
+            "workbench": {
+                "activityBar": {"visible": self._activity_bar_visible},
+                "sidebar": {"visible": self._sidebar_visible, "width": self._sidebar_width},
+                "panel": {"visible": self._panel_visible, "height": self._panel_height},
+                "rightPanel": {
+                    "visible": self._right_panel_visible,
+                    "width": self._right_panel_width,
+                },
+            }
+        })
+        self.reload()
 
     @Slot(bool)
     def setActivityBarVisible(self, value: bool) -> None:

@@ -297,6 +297,9 @@ class ActionAPI:
         category: str = "Plugin",
         description: str = "",
         busy_label: str = "Running plugin action…",
+        permissions: list[str] | tuple[str, ...] = (),
+        safe_to_run: bool = True,
+        exposable: bool = True,
     ) -> None:
         if not self._service:
             return
@@ -308,6 +311,9 @@ class ActionAPI:
             description=description,
             source=self._plugin,
             busy_label=busy_label,
+            permissions=tuple(permissions or ()),
+            safe_to_run=safe_to_run,
+            exposable=exposable,
             handler=handler,
         ))
         self._registered.add(scoped_id)

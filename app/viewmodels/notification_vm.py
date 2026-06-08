@@ -16,6 +16,17 @@ class NotificationViewModel(QObject):
         self._notifications: list[dict] = []
         self._busy_count = 0
         self._operations: dict[str, dict] = {}
+        self._default_timeout = 4200
+        self._max_visible = 6
+        self._mute_non_critical = False
+
+    def configure(self, config: dict | None) -> None:
+        config = dict(config or {})
+        self._default_timeout = max(1000, min(30000, int(config.get("defaultTimeoutMs") or 4200)))
+        self._max_visible = max(1, min(12, int(config.get("maxVisible") or 6)))
+        self._mute_non_critical = bool(config.get("muteNonCritical", False))
+        self._notifications = self._notifications[:self._max_visible]
+        self.notificationsChanged.emit()
 
     @Property("QVariantList", notify=notificationsChanged)
     def notifications(self) -> list[dict]:
@@ -43,17 +54,21 @@ class NotificationViewModel(QObject):
         timeout: int = 4200,
         actions: dict | None = None,
     ) -> int:
+        level = level or "info"
+        if self._mute_non_critical and level in {"info", "success"}:
+            return 0
         notification_id = next(self._ids)
+        effective_timeout = int(timeout or 0) or self._default_timeout
         self._notifications.insert(0, {
             "id": notification_id,
-            "level": level or "info",
+            "level": level,
             "title": title or "Notification",
             "message": message or "",
-            "timeout": max(1200, int(timeout or 4200)),
+            "timeout": max(1000, effective_timeout),
             "createdAt": time(),
             "actions": self._normalize_actions(actions),
         })
-        self._notifications = self._notifications[:6]
+        self._notifications = self._notifications[:self._max_visible]
         self.notificationsChanged.emit()
         return notification_id
 

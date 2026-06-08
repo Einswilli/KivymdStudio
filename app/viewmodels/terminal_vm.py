@@ -360,16 +360,17 @@ class TerminalScreen:
 class TerminalSession:
     """PTY-based shell session — full terminal emulation via forkpty."""
 
-    def __init__(self, session_id: int, cwd: str = ""):
+    def __init__(self, session_id: int, cwd: str = "", shell: str = "", scrollback: int = 3000):
         self.id = session_id
         self.cwd = cwd or os.getcwd()
+        self.shell = shell or os.environ.get("SHELL", "/bin/bash")
         self._master_fd: int | None = None
         self._child_pid: int | None = None
         self._running = False
-        self.title = os.path.basename(os.environ.get("SHELL", "shell")) or "shell"
+        self.title = os.path.basename(self.shell or "shell") or "shell"
         self.cols = 100
         self.rows = 30
-        self.screen = TerminalScreen()
+        self.screen = TerminalScreen(scrollback=scrollback)
 
     async def start(self):
         if self._running:
@@ -378,7 +379,7 @@ class TerminalSession:
         if pid == 0:
             os.chdir(self.cwd)
             os.environ["TERM"] = "xterm-256color"
-            shell = os.environ.get("SHELL", "/bin/bash")
+            shell = self.shell or os.environ.get("SHELL", "/bin/bash")
             os.execve(shell, [shell, "-i"], os.environ)
             os._exit(1)
         self._child_pid = pid
@@ -472,10 +473,44 @@ class TerminalViewModel(QObject):
         self._screen_flush_tasks: dict[int, asyncio.Task] = {}
         self._pending_screens: dict[int, tuple[list[dict], str, dict]] = {}
         self._settings: SettingsService | None = None
+        self._terminal_config: dict = {}
         self._start_polling()
 
     def set_settings_service(self, settings: SettingsService) -> None:
         self._settings = settings
+        self._refresh_terminal_config()
+
+    def _refresh_terminal_config(self) -> dict:
+        if not self._settings:
+            self._terminal_config = {}
+            return self._terminal_config
+        try:
+            self._terminal_config = dict((self._settings.load().get("terminal") or {}))
+        except Exception:
+            self._terminal_config = {}
+        return self._terminal_config
+
+    def _configured_shell(self) -> str:
+        config = self._refresh_terminal_config()
+        shell = str(config.get("shell") or "").strip()
+        expanded = os.path.expanduser(shell)
+        return expanded if expanded and os.path.exists(expanded) else ""
+
+    def _configured_scrollback(self) -> int:
+        config = self._refresh_terminal_config()
+        try:
+            return max(500, min(50000, int(config.get("scrollback") or 3000)))
+        except Exception:
+            return 3000
+
+    def _configured_cwd(self) -> str:
+        config = self._refresh_terminal_config()
+        mode = str(config.get("cwdMode") or "project")
+        if mode == "home":
+            return os.path.expanduser("~")
+        if mode == "process":
+            return os.getcwd()
+        return self._cwd
 
     def _loop(self) -> asyncio.AbstractEventLoop | None:
         try:
@@ -552,7 +587,12 @@ class TerminalViewModel(QObject):
     def createSession(self) -> int:
         sid = self._next_id
         self._next_id += 1
-        sess = TerminalSession(sid, self._cwd)
+        sess = TerminalSession(
+            sid,
+            self._configured_cwd(),
+            shell=self._configured_shell(),
+            scrollback=self._configured_scrollback(),
+        )
         self._sessions[sid] = sess
         self._active_id = sid
         self._start_polling()

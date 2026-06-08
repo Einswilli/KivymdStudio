@@ -28,7 +28,11 @@ class EditorViewModel(QObject):
     completerReady = Signal(str)
     hoverReady = Signal("QVariantMap")
     symbolsReady = Signal("QVariantList")
+    definitionReady = Signal("QVariantList")
+    referencesReady = Signal("QVariantList")
+    navigationReady = Signal("QVariantMap")
     codeActionsReady = Signal("QVariantList")
+    codeActionPreviewReady = Signal("QVariantMap")
     codeActionApplied = Signal(str, str)
     lspStatusReady = Signal("QVariantMap")
     tabsChanged = Signal()
@@ -46,6 +50,8 @@ class EditorViewModel(QObject):
         self._completion_generation = 0
         self._hover_generation = 0
         self._symbols_generation = 0
+        self._definition_generation = 0
+        self._references_generation = 0
         self._diagnostics_generation = 0
         self._code_actions_generation = 0
         self._document_generation = 0
@@ -64,6 +70,10 @@ class EditorViewModel(QObject):
         self._operations = FileOperationsService(events)
         self._recent_internal_writes: dict[str, float] = {}
         self._external_change_pending: dict[str, dict] = {}
+        self._symbols: list[dict] = []
+        self._references: list[dict] = []
+        self._navigation_back: list[dict] = []
+        self._navigation_forward: list[dict] = []
         self._events.on("file:external_change", self._handle_external_file_change)
 
     # ── Active document management ───────────────────────
@@ -304,9 +314,15 @@ class EditorViewModel(QObject):
         self._completion_generation += 1
         self._hover_generation += 1
         self._symbols_generation += 1
+        self._definition_generation += 1
+        self._references_generation += 1
         self._diagnostics_generation += 1
         self._code_actions_generation += 1
         self.completerReady.emit("[]")
+        self._symbols = []
+        self._references = []
+        self.symbolsReady.emit([])
+        self.referencesReady.emit([])
         self._emit_lsp_status()
         schedule(self._open_async(path, generation))
 
@@ -353,6 +369,49 @@ class EditorViewModel(QObject):
         generation = self._symbols_generation
         schedule(self._symbols_async(code, generation))
 
+    @Slot(str, int)
+    def requestDefinition(self, code: str, cursor_pos: int) -> None:
+        self._definition_generation += 1
+        generation = self._definition_generation
+        schedule(self._definition_async(code, cursor_pos, generation))
+
+    @Slot(str, int)
+    def requestReferences(self, code: str, cursor_pos: int) -> None:
+        self._references_generation += 1
+        generation = self._references_generation
+        schedule(self._references_async(code, cursor_pos, generation))
+
+    @Slot(str, int, int)
+    def pushNavigationLocation(self, path: str, line: int, col: int) -> None:
+        location = {
+            "path": path or self._current_path,
+            "line": max(1, int(line or 1)),
+            "col": max(0, int(col or 0)),
+        }
+        if not location["path"]:
+            return
+        if self._navigation_back and self._navigation_back[-1] == location:
+            return
+        self._navigation_back.append(location)
+        self._navigation_back = self._navigation_back[-100:]
+        self._navigation_forward = []
+
+    @Slot()
+    def jumpBack(self) -> None:
+        if not self._navigation_back:
+            return
+        current = {"path": self._current_path, "line": 1, "col": 0}
+        self._navigation_forward.append(current)
+        self.navigationReady.emit(self._navigation_back.pop())
+
+    @Slot()
+    def jumpForward(self) -> None:
+        if not self._navigation_forward:
+            return
+        if self._current_path:
+            self._navigation_back.append({"path": self._current_path, "line": 1, "col": 0})
+        self.navigationReady.emit(self._navigation_forward.pop())
+
     @Slot(str)
     def requestDiagnostics(self, path: str) -> None:
         if path:
@@ -383,6 +442,11 @@ class EditorViewModel(QObject):
     def applyCodeAction(self, action: dict, code: str) -> None:
         if action:
             schedule(self._apply_code_action_async(action, code))
+
+    @Slot("QVariantMap", str)
+    def previewCodeAction(self, action: dict, code: str) -> None:
+        if action:
+            schedule(self._preview_code_action_async(action, code))
 
     @Slot()
     def refreshLspStatus(self) -> None:
@@ -441,6 +505,14 @@ class EditorViewModel(QObject):
     @Property("QVariantList", notify=tabsChanged)
     def tabs(self) -> list[dict[str, str]]:
         return list(self._tabs)
+
+    @Property("QVariantList", notify=symbolsReady)
+    def symbols(self) -> list[dict]:
+        return list(self._symbols)
+
+    @Property("QVariantList", notify=referencesReady)
+    def references(self) -> list[dict]:
+        return list(self._references)
 
     @Property("QVariantMap", notify=dirtyTabsChanged)
     def dirtyTabs(self) -> dict[str, bool]:
@@ -679,6 +751,8 @@ class EditorViewModel(QObject):
         self._completion_generation += 1
         self._hover_generation += 1
         self._symbols_generation += 1
+        self._definition_generation += 1
+        self._references_generation += 1
         self._diagnostics_generation += 1
         self._code_actions_generation += 1
         self.completerReady.emit("[]")
@@ -715,7 +789,52 @@ class EditorViewModel(QObject):
             print(f"[EditorVM] Completion error: {e}")
             return []
         if generation == self._completion_generation:
+            results = self._rank_completions(code, cursor_pos, results, force)
             self.completerReady.emit(json.dumps(results))
+
+    @classmethod
+    def _completion_prefix(cls, code: str, cursor_pos: int) -> str:
+        cursor_pos = max(0, min(int(cursor_pos or 0), len(code or "")))
+        start = cursor_pos
+        while start > 0 and (code[start - 1].isalnum() or code[start - 1] in {"_", "$"}):
+            start -= 1
+        return code[start:cursor_pos]
+
+    @classmethod
+    def _rank_completions(
+        cls,
+        code: str,
+        cursor_pos: int,
+        results: list[dict],
+        force: bool = False,
+    ) -> list[dict]:
+        prefix = cls._completion_prefix(code, cursor_pos).lower()
+        unique: dict[str, dict] = {}
+        for item in results or []:
+            label = str(item.get("name") or item.get("label") or item.get("text") or "")
+            insert_text = str(item.get("insertText") or item.get("text") or label)
+            if not label and not insert_text:
+                continue
+            candidate = (label or insert_text).lower()
+            if prefix and not force and not candidate.startswith(prefix):
+                continue
+            key = label or insert_text
+            unique.setdefault(key, item)
+
+        def score(item: dict) -> tuple[int, int, str]:
+            label = str(item.get("name") or item.get("label") or item.get("text") or "")
+            lowered = label.lower()
+            if prefix and lowered == prefix:
+                rank = 0
+            elif prefix and lowered.startswith(prefix):
+                rank = 1
+            elif prefix and prefix in lowered:
+                rank = 2
+            else:
+                rank = 3
+            return (rank, len(label), lowered)
+
+        return sorted(unique.values(), key=score)[:80]
 
     async def _hover_async(self, code: str, cursor_pos: int, generation: int) -> None:
         try:
@@ -742,7 +861,53 @@ class EditorViewModel(QObject):
             print(f"[EditorVM] Symbols error: {e}")
             symbols = []
         if generation == self._symbols_generation:
+            self._symbols = list(symbols or [])
             self.symbolsReady.emit(symbols)
+
+    async def _definition_async(self, code: str, cursor_pos: int, generation: int) -> None:
+        try:
+            locations = await self._lsp.get_definition(
+                code,
+                cursor_pos,
+                self._current_path or "",
+                self._language,
+            )
+        except Exception as e:
+            print(f"[EditorVM] Definition error: {e}")
+            locations = []
+        if generation == self._definition_generation:
+            self.definitionReady.emit(self._normalize_locations(locations))
+
+    async def _references_async(self, code: str, cursor_pos: int, generation: int) -> None:
+        try:
+            locations = await self._lsp.get_references(
+                code,
+                cursor_pos,
+                self._current_path or "",
+                self._language,
+            )
+        except Exception as e:
+            print(f"[EditorVM] References error: {e}")
+            locations = []
+        if generation == self._references_generation:
+            self._references = self._normalize_locations(locations)
+            self.referencesReady.emit(self._references)
+
+    def _normalize_locations(self, locations: list[dict]) -> list[dict]:
+        output = []
+        for item in locations or []:
+            path = str(item.get("path") or item.get("uri") or self._current_path or "")
+            if path.startswith("file://"):
+                path = uri_to_path(path)
+            output.append({
+                **item,
+                "path": path,
+                "line": max(1, int(item.get("line") or 1)),
+                "col": max(0, int(item.get("col") or 0)),
+                "endLine": max(1, int(item.get("endLine") or item.get("line") or 1)),
+                "endCol": max(0, int(item.get("endCol") or item.get("col") or 0)),
+            })
+        return output
 
     async def _code_actions_async(self, code: str, cursor_pos: int, generation: int) -> None:
         try:
@@ -769,6 +934,52 @@ class EditorViewModel(QObject):
         self._document_generation += 1
         await self._sync_document_async(self._current_path, updated, self._document_generation)
         self.codeActionApplied.emit(self._current_path, updated)
+
+    async def _preview_code_action_async(self, action: dict, code: str) -> None:
+        raw = action.get("raw") if isinstance(action.get("raw"), dict) else action
+        edit = raw.get("edit") if isinstance(raw, dict) else {}
+        title = str(action.get("title") or raw.get("title") or "Quick Fix")
+        if not isinstance(edit, dict):
+            self.codeActionPreviewReady.emit({
+                "ok": False,
+                "title": title,
+                "message": "This code action has no previewable edit.",
+                "action": action,
+                "preview": "",
+            })
+            return
+        updated = self._apply_workspace_edit(code, edit, self._current_path)
+        if updated is None:
+            self.codeActionPreviewReady.emit({
+                "ok": False,
+                "title": title,
+                "message": "No changes affect the current file.",
+                "action": action,
+                "preview": "",
+            })
+            return
+        self.codeActionPreviewReady.emit({
+            "ok": True,
+            "title": title,
+            "message": "Review changes before applying.",
+            "action": action,
+            "preview": self._diff_preview(code, updated),
+        })
+
+    @staticmethod
+    def _diff_preview(before: str, after: str, max_lines: int = 160) -> str:
+        import difflib
+
+        lines = list(difflib.unified_diff(
+            before.splitlines(),
+            after.splitlines(),
+            fromfile="current",
+            tofile="after",
+            lineterm="",
+        ))
+        if len(lines) > max_lines:
+            lines = lines[:max_lines] + ["… diff truncated …"]
+        return "\n".join(lines)
 
     @classmethod
     def _apply_workspace_edit(cls, code: str, edit: dict, current_path: str) -> str | None:
@@ -1016,7 +1227,9 @@ class EditorViewModel(QObject):
                 "endCol": max(0, end_column - 1),
                 "severity": severity,
                 "code": code,
+                "source": item.get("source") or item.get("provider") or code.split(":", 1)[0],
                 "message": item.get("message") or item.get("msg") or "",
+                "raw": item,
             })
         return normalized
 

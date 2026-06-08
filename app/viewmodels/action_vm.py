@@ -70,6 +70,9 @@ class ActionViewModel(QObject):
         handler=None,
         notify: bool = True,
         requires_payload: bool = False,
+        permissions: list[str] | tuple[str, ...] = (),
+        safe_to_run: bool = True,
+        exposable: bool = True,
     ) -> None:
         self._service.register(ActionDefinition(
             id=action_id,
@@ -80,6 +83,9 @@ class ActionViewModel(QObject):
             busy_label=busy_label,
             notify=notify,
             requires_payload=requires_payload,
+            permissions=tuple(permissions or ()),
+            safe_to_run=safe_to_run,
+            exposable=exposable,
             handler=handler,
         ))
 

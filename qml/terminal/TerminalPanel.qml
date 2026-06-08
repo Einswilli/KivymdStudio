@@ -32,8 +32,8 @@ FocusScope {
     readonly property color accentColor: theme.terminalAccent || theme.accent || theme.success || "#007ACC"
     readonly property color actionHover: theme.buttonHover || theme.accentHover || theme.hover || Qt.rgba(1, 1, 1, 0.08)
     readonly property font terminalFont: Qt.font({
-        family: root.fontFamily((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.fontFamily : "Menlo"),
-        pointSize: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.fontSize : 12
+        family: root.fontFamily((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.terminalFontFamily : "Menlo"),
+        pointSize: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.terminalFontSize : 12
     })
     readonly property real cellWidth: Math.max(7, terminalMetrics.advanceWidth / 10 || terminalMetrics.width / 10 || 8)
     readonly property real cellHeight: terminalMetrics.height + 4
@@ -490,8 +490,9 @@ FocusScope {
                     visible: !root.copyMode && root.cursor && root.cursor.visible
                     x: screenView.x + Math.max(0, Number(root.cursor.col || 0)) * root.cellWidth - screenView.contentX
                     y: screenView.y + Math.max(0, Number(root.cursor.line || 0)) * root.cellHeight - screenView.contentY
-                    width: Math.max(2, root.cellWidth)
-                    height: Math.max(2, root.cellHeight - 2)
+                       + (((typeof SettingsVM !== "undefined" && SettingsVM) && SettingsVM.terminalCursorStyle === "underline") ? root.cellHeight - 4 : 0)
+                    width: ((typeof SettingsVM !== "undefined" && SettingsVM) && SettingsVM.terminalCursorStyle === "bar") ? 2 : Math.max(2, root.cellWidth)
+                    height: ((typeof SettingsVM !== "undefined" && SettingsVM) && SettingsVM.terminalCursorStyle === "underline") ? 2 : Math.max(2, root.cellHeight - 2)
                     color: root.theme.terminalCursor || root.theme.editorCursor || root.accentColor
                     opacity: cursorBlink.visibleNow ? 0.85 : 0.25
                     z: 80

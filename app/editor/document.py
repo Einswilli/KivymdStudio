@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from PySide6.QtCore import QObject, Signal, Slot, Property
+from PySide6.QtGui import QGuiApplication
 from app.services.editor_service import build_line_items, detect_language
+
+
+@dataclass(slots=True)
+class _Snapshot:
+    text: str
+    cursor: int
+    selection_start: int
 
 
 class EditorDocument(QObject):
@@ -25,17 +34,32 @@ class EditorDocument(QObject):
         self._line_tokens: dict[int, list] = {}
         self._line_cache: list[str] = []
         self._line_items: list[dict] = []
+        self._sel_start = -1
+        self._undo_stack: list[_Snapshot] = []
+        self._redo_stack: list[_Snapshot] = []
+        self._history_limit = 200
 
     @Slot(str)
     def loadText(self, text: str) -> None:
         self._text = text
         self._cursor = 0
+        self._sel_start = -1
         self._is_dirty = False
+        self._undo_stack = []
+        self._redo_stack = []
         self._re_tokenize()
         self.textChanged.emit()
+        self._emit_cursor()
+        self.selectionChanged.emit()
 
     @Slot(str)
     def typeText(self, text: str) -> None:
+        if not text:
+            return
+        self._push_undo()
+        if self.hasSelection():
+            self._replace_selection(text)
+            return
         before = self._text[:self._cursor]
         after = self._text[self._cursor:]
         self._text = before + text + after
@@ -44,10 +68,12 @@ class EditorDocument(QObject):
 
     @Slot()
     def doBackspace(self) -> None:
-        if self._cursor <= 0:
+        if self._cursor <= 0 and not self.hasSelection():
             return
-        if self._sel_start >= 0:
-            self._delete_selection()
+        self._push_undo()
+        if self.hasSelection():
+            self._delete_selection(notify=False)
+            self._on_change()
             return
         self._text = self._text[:self._cursor - 1] + self._text[self._cursor:]
         self._cursor -= 1
@@ -55,10 +81,12 @@ class EditorDocument(QObject):
 
     @Slot()
     def doDelete(self) -> None:
-        if self._sel_start >= 0:
-            self._delete_selection()
+        if self._cursor >= len(self._text) and not self.hasSelection():
             return
-        if self._cursor >= len(self._text):
+        self._push_undo()
+        if self.hasSelection():
+            self._delete_selection(notify=False)
+            self._on_change()
             return
         self._text = self._text[:self._cursor] + self._text[self._cursor + 1:]
         self._on_change()
@@ -72,6 +100,82 @@ class EditorDocument(QObject):
     def doTab(self) -> None:
         self.typeText("    ")
 
+    @Slot()
+    def indentSelectionOrLine(self) -> None:
+        self._edit_selected_lines(lambda line: " " * 4 + line, keep_selection=self.hasSelection())
+
+    @Slot()
+    def outdentSelectionOrLine(self) -> None:
+        def outdent(line: str) -> str:
+            if line.startswith("    "):
+                return line[4:]
+            if line.startswith("\t"):
+                return line[1:]
+            stripped = len(line) - len(line.lstrip(" "))
+            return line[min(stripped, 4):]
+
+        self._edit_selected_lines(outdent, keep_selection=self.hasSelection())
+
+    @Slot()
+    def toggleLineComment(self) -> None:
+        comment = self._line_comment_prefix()
+
+        def toggle(line: str) -> str:
+            stripped = line.lstrip(" \t")
+            indent = line[: len(line) - len(stripped)]
+            if stripped.startswith(comment):
+                rest = stripped[len(comment):]
+                if rest.startswith(" "):
+                    rest = rest[1:]
+                return indent + rest
+            if not stripped:
+                return line
+            return indent + comment + " " + stripped
+
+        self._edit_selected_lines(toggle, keep_selection=self.hasSelection())
+
+    @Slot()
+    def duplicateLineOrSelection(self) -> None:
+        self._push_undo()
+        if self.hasSelection():
+            start = self.selectionStart
+            end = self.selectionEnd
+            text = self._text[start:end]
+            self._text = self._text[:end] + text + self._text[end:]
+            self._cursor = end + len(text)
+            self._sel_start = end
+            self._on_change()
+            return
+        line_start, line_end = self._current_line_range(include_newline=True)
+        text = self._text[line_start:line_end]
+        insert = text if text.endswith("\n") else text + "\n"
+        self._text = self._text[:line_end] + insert + self._text[line_end:]
+        self._cursor = line_end + min(self._cursor - line_start, len(insert.rstrip("\n")))
+        self._on_change()
+
+    @Slot()
+    def moveLineOrSelectionUp(self) -> None:
+        self._move_selected_lines(-1)
+
+    @Slot()
+    def moveLineOrSelectionDown(self) -> None:
+        self._move_selected_lines(1)
+
+    @Slot()
+    def deleteLineOrSelection(self) -> None:
+        self._push_undo()
+        if self.hasSelection():
+            self._delete_selection(notify=False)
+            self._on_change()
+            return
+        start, end = self._current_line_range(include_newline=True)
+        if end == start and start > 0:
+            start = self._text.rfind("\n", 0, start - 1) + 1
+        self._text = self._text[:start] + self._text[end:]
+        self._cursor = max(0, min(start, len(self._text)))
+        self._sel_start = -1
+        self._on_change()
+
     def _calc_auto_indent(self) -> str:
         lines = self._text[:self._cursor].split("\n")
         if len(lines) < 2:
@@ -82,6 +186,27 @@ class EditorDocument(QObject):
         if stripped.rstrip().endswith(":"):
             indent_len += 4
         return " " * indent_len
+
+    def _line_comment_prefix(self) -> str:
+        return {
+            "python": "#",
+            "ruby": "#",
+            "shell": "#",
+            "toml": "#",
+            "yaml": "#",
+            "rust": "//",
+            "javascript": "//",
+            "typescript": "//",
+            "java": "//",
+            "kotlin": "//",
+            "go": "//",
+            "swift": "//",
+            "c": "//",
+            "cpp": "//",
+            "css": "//",
+            "json": "//",
+            "qml": "//",
+        }.get(self._language, "//")
 
     @Slot(int)
     def moveCursor(self, pos: int) -> None:
@@ -101,8 +226,6 @@ class EditorDocument(QObject):
         self.selectionChanged.emit()
 
     # ── Selection ─────────────────────────────────────
-
-    _sel_start: int = -1
 
     @Slot()
     def selectAll(self) -> None:
@@ -127,13 +250,184 @@ class EditorDocument(QObject):
             return self._cursor
         return max(self._sel_start, self._cursor)
 
-    def _delete_selection(self) -> None:
+    def _delete_selection(self, notify: bool = True) -> None:
+        if not self.hasSelection():
+            return
         start = min(self._sel_start, self._cursor)
         end = max(self._sel_start, self._cursor)
         self._text = self._text[:start] + self._text[end:]
         self._cursor = start
         self._sel_start = -1
+        if notify:
+            self._on_change()
+
+    def _line_bounds_for_span(self, start: int, end: int) -> tuple[int, int]:
+        start = max(0, min(start, len(self._text)))
+        end = max(start, min(end, len(self._text)))
+        line_start = self._text.rfind("\n", 0, start) + 1
+        if end > start and end <= len(self._text) and self._text[end - 1:end] == "\n":
+            line_end = end - 1
+        else:
+            line_end = self._text.find("\n", end)
+        if line_end < 0:
+            line_end = len(self._text)
+        return line_start, line_end
+
+    def _current_line_range(self, include_newline: bool = False) -> tuple[int, int]:
+        start = self._text.rfind("\n", 0, self._cursor) + 1
+        end = self._text.find("\n", self._cursor)
+        if end < 0:
+            end = len(self._text)
+        elif include_newline:
+            end += 1
+        return start, end
+
+    def _edit_selected_lines(self, transform, keep_selection: bool = False) -> None:
+        self._push_undo()
+        selection_start = self.selectionStart if self.hasSelection() else self._cursor
+        selection_end = self.selectionEnd if self.hasSelection() else self._cursor
+        line_start, line_end = self._line_bounds_for_span(selection_start, selection_end)
+        block = self._text[line_start:line_end]
+        lines = block.split("\n")
+        changed_lines = [transform(line) for line in lines]
+        replacement = "\n".join(changed_lines)
+        self._text = self._text[:line_start] + replacement + self._text[line_end:]
+        delta_start = len(changed_lines[0]) - len(lines[0]) if lines else 0
+        if keep_selection or self.hasSelection():
+            self._sel_start = line_start
+            self._cursor = line_start + len(replacement)
+        else:
+            self._cursor = max(line_start, min(line_start + len(replacement), self._cursor + delta_start))
+            self._sel_start = -1
         self._on_change()
+
+    def _selected_line_block(self) -> tuple[int, int, str]:
+        if self.hasSelection():
+            line_start, line_end = self._line_bounds_for_span(self.selectionStart, self.selectionEnd)
+        else:
+            line_start, line_end = self._current_line_range(include_newline=False)
+        return line_start, line_end, self._text[line_start:line_end]
+
+    def _move_selected_lines(self, direction: int) -> None:
+        had_selection = self.hasSelection()
+        line_start, line_end, block = self._selected_line_block()
+        if direction < 0:
+            if line_start <= 0:
+                return
+            prev_start = self._text.rfind("\n", 0, line_start - 1) + 1
+            prev_block = self._text[prev_start:line_start]
+            selected_with_newline = self._text[line_start:line_end]
+            separator = "\n" if line_end < len(self._text) else ""
+            self._push_undo()
+            self._text = (
+                self._text[:prev_start]
+                + selected_with_newline
+                + separator
+                + prev_block.rstrip("\n")
+                + self._text[line_end:]
+            )
+            new_start = prev_start
+        else:
+            next_start = line_end + (1 if line_end < len(self._text) and self._text[line_end] == "\n" else 0)
+            if next_start >= len(self._text):
+                return
+            next_end = self._text.find("\n", next_start)
+            if next_end < 0:
+                next_end = len(self._text)
+            next_block = self._text[next_start:next_end]
+            self._push_undo()
+            before = self._text[:line_start]
+            selected = self._text[line_start:line_end]
+            between_newline = "\n" if line_end < len(self._text) and self._text[line_end] == "\n" else ""
+            after_newline = "\n" if next_end < len(self._text) and self._text[next_end] == "\n" else ""
+            self._text = before + next_block + between_newline + selected + after_newline + self._text[next_end + len(after_newline):]
+            new_start = line_start + len(next_block) + len(between_newline)
+
+        if had_selection:
+            self._sel_start = new_start
+            self._cursor = new_start + len(block)
+        else:
+            self._sel_start = -1
+            self._cursor = new_start + min(self._cursor - line_start, len(block))
+        self._on_change()
+
+    def _replace_selection(self, text: str) -> None:
+        start = min(self._sel_start, self._cursor)
+        end = max(self._sel_start, self._cursor)
+        self._text = self._text[:start] + text + self._text[end:]
+        self._cursor = start + len(text)
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot(result=str)
+    def selectedText(self) -> str:
+        if not self.hasSelection():
+            return ""
+        start = min(self._sel_start, self._cursor)
+        end = max(self._sel_start, self._cursor)
+        return self._text[start:end]
+
+    @Slot()
+    def copySelection(self) -> None:
+        text = self.selectedText()
+        if text:
+            clipboard = QGuiApplication.clipboard()
+            if clipboard:
+                clipboard.setText(text)
+
+    @Slot()
+    def cutSelection(self) -> None:
+        if not self.hasSelection():
+            return
+        self.copySelection()
+        self._push_undo()
+        self._delete_selection(notify=False)
+        self._on_change()
+
+    @Slot()
+    def pasteClipboard(self) -> None:
+        clipboard = QGuiApplication.clipboard()
+        if clipboard:
+            self.typeText(clipboard.text() or "")
+
+    # ── Undo / Redo ───────────────────────────────────
+
+    def _snapshot(self) -> _Snapshot:
+        return _Snapshot(self._text, self._cursor, self._sel_start)
+
+    def _restore_snapshot(self, snapshot: _Snapshot) -> None:
+        self._text = snapshot.text
+        self._cursor = max(0, min(snapshot.cursor, len(self._text)))
+        self._sel_start = snapshot.selection_start
+        if self._sel_start >= 0:
+            self._sel_start = max(0, min(self._sel_start, len(self._text)))
+        self._is_dirty = True
+        self._re_tokenize()
+        self.textChanged.emit()
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    def _push_undo(self) -> None:
+        current = self._snapshot()
+        if self._undo_stack and self._undo_stack[-1] == current:
+            return
+        self._undo_stack.append(current)
+        self._undo_stack = self._undo_stack[-self._history_limit :]
+        self._redo_stack = []
+
+    @Slot()
+    def undo(self) -> None:
+        if not self._undo_stack:
+            return
+        self._redo_stack.append(self._snapshot())
+        self._restore_snapshot(self._undo_stack.pop())
+
+    @Slot()
+    def redo(self) -> None:
+        if not self._redo_stack:
+            return
+        self._undo_stack.append(self._snapshot())
+        self._restore_snapshot(self._redo_stack.pop())
 
     # ── Text access ────────────────────────────────────
 
@@ -224,9 +518,10 @@ class EditorDocument(QObject):
 
     def _on_change(self) -> None:
         self._is_dirty = True
+        self._emit_cursor()
+        self.selectionChanged.emit()
         self._re_tokenize()
         self.textChanged.emit()
-        self._emit_cursor()
 
     def _emit_cursor(self) -> None:
         line = self._text[:self._cursor].count("\n")

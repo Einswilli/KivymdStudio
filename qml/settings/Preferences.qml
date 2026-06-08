@@ -38,6 +38,7 @@ Item {
         { icon: "bolt", title: "AI", component: aiPage },
         { icon: "extensions", title: "Plugins", component: pluginsPage },
         { icon: "bolt", title: "Actions", component: actionsPage },
+        { icon: "bell", title: "Notifications", component: notificationsPage },
         { icon: "settings", title: "Config", component: configPage }
     ]
     property var formatterTargets: [
@@ -234,12 +235,24 @@ Item {
     }
 
     function actionShortcut(actionId) {
+        var binding = root.actionBinding(actionId)
+        return binding.key || ""
+    }
+
+    function actionBinding(actionId) {
         var bindings = (typeof PluginVM !== "undefined" && PluginVM) ? PluginVM.getResolvedKeybindings() : []
+        var inactiveMatch = null
         for (var i = 0; i < bindings.length; i++) {
-            if ((bindings[i].command || "") === actionId && (bindings[i].active === undefined || bindings[i].active))
-                return bindings[i].key || ""
+            if ((bindings[i].command || "") === actionId) {
+                if (bindings[i].active === undefined || bindings[i].active)
+                    return bindings[i]
+                if (inactiveMatch === null)
+                    inactiveMatch = bindings[i]
+            }
         }
-        return ""
+        if (inactiveMatch !== null)
+            return inactiveMatch
+        return ({ key: "", conflict: false, conflicts: [] })
     }
 
     function notify(level, title, message) {
@@ -984,8 +997,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:typography", "Applying editor typography…", "Editor typography applied.", function() {
-                            SettingsVM.setFont(fontFamilyCombo.currentText, fontSizeSpin.value)
-                            SettingsVM.setEditorLineSpacing(lineSpacingSpin.value)
+                            SettingsVM.setEditorProfile({
+                                "fontFamily": fontFamilyCombo.currentText,
+                                "fontSize": fontSizeSpin.value,
+                                "lineSpacing": lineSpacingSpin.value
+                            })
                         })
                     }
                 }
@@ -1049,9 +1065,12 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:editing", "Applying editing settings…", "Editing settings applied.", function() {
-                            SettingsVM.setTabSize(tabSizeSpin.value)
-                            SettingsVM.setHoverDelayMs(hoverDelaySpin.value)
-                            SettingsVM.setRulersCsv(rulersInput.text)
+                            SettingsVM.setEditorProfile({
+                                "tabSize": tabSizeSpin.value,
+                                "hoverDelayMs": hoverDelaySpin.value,
+                                "wordWrap": root.hasSettings ? SettingsVM.wordWrap : false,
+                                "rulersCsv": rulersInput.text
+                            })
                         })
                     }
                 }
@@ -1113,12 +1132,27 @@ Item {
                     }
                 }
 
+                SettingRow {
+                    title: "Format on save"
+                    description: "Run the configured formatter before writing files."
+                    SettingSwitch {
+                        id: formatOnSaveSwitch
+                        checked: root.hasSettings ? SettingsVM.formatOnSave : false
+                    }
+                }
+
                 SettingButton {
                     text: "Apply save behavior"
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:save-behavior", "Applying save behavior…", "Save behavior applied.", function() {
-                            SettingsVM.setAutoSaveDelayMs(autoSaveDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "autoSaveEnabled": root.hasSettings ? SettingsVM.autoSaveEnabled : false,
+                                "autoSaveDelayMs": autoSaveDelaySpin.value,
+                                "trimTrailingWhitespace": root.hasSettings ? SettingsVM.trimTrailingWhitespace : true,
+                                "insertFinalNewline": root.hasSettings ? SettingsVM.insertFinalNewline : true,
+                                "formatOnSave": formatOnSaveSwitch.checked
+                            })
                         })
                     }
                 }
@@ -1164,7 +1198,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:suggestions", "Applying suggestion settings…", "Suggestion settings applied.", function() {
-                            SettingsVM.setSuggestionsDelayMs(suggestionsDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "suggestionsAuto": root.hasSettings ? SettingsVM.suggestionsAuto : true,
+                                "suggestionsDelayMs": suggestionsDelaySpin.value,
+                                "suggestionsDetailsOnSpace": root.hasSettings ? SettingsVM.suggestionsDetailsOnSpace : true
+                            })
                         })
                     }
                 }
@@ -1205,8 +1243,10 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:diagnostics", "Applying diagnostics timing…", "Diagnostics timing applied.", function() {
-                            SettingsVM.setDiagnosticsDelayMs(diagnosticsDelaySpin.value)
-                            SettingsVM.setSymbolsDelayMs(symbolsDelaySpin.value)
+                            SettingsVM.setEditorProfile({
+                                "diagnosticsDelayMs": diagnosticsDelaySpin.value,
+                                "symbolsDelayMs": symbolsDelaySpin.value
+                            })
                         })
                     }
                 }
@@ -1252,7 +1292,11 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:minimap", "Applying minimap settings…", "Minimap settings applied.", function() {
-                            SettingsVM.setMinimapWidth(minimapWidthSpin.value)
+                            SettingsVM.setEditorProfile({
+                                "minimapEnabled": root.hasSettings ? SettingsVM.minimapEnabled : true,
+                                "minimapWidth": minimapWidthSpin.value,
+                                "minimapDiagnostics": root.hasSettings ? SettingsVM.minimapDiagnostics : true
+                            })
                         })
                     }
                 }
@@ -1366,9 +1410,116 @@ Item {
                     onClicked: {
                         if (!root.hasSettings) return
                         root.runSettingAction("settings:layout", "Applying layout sizes…", "Layout sizes applied.", function() {
-                            SettingsVM.setSidebarWidth(sidebarWidthSpin.value)
-                            SettingsVM.setPanelHeight(panelHeightSpin.value)
-                            SettingsVM.setRightPanelWidth(rightPanelWidthSpin.value)
+                            SettingsVM.setWorkbenchProfile({
+                                "activityBarVisible": root.hasSettings ? SettingsVM.activityBarVisible : true,
+                                "sidebarVisible": root.hasSettings ? SettingsVM.sidebarVisible : true,
+                                "panelVisible": root.hasSettings ? SettingsVM.panelVisible : false,
+                                "rightPanelVisible": root.hasSettings ? SettingsVM.rightPanelVisible : false,
+                                "sidebarWidth": sidebarWidthSpin.value,
+                                "panelHeight": panelHeightSpin.value,
+                                "rightPanelWidth": rightPanelWidthSpin.value
+                            })
+                        })
+                    }
+                }
+            }
+
+            SectionCard {
+                title: "Terminal"
+                subtitle: "PTY shell, startup directory, session restore and rendering."
+
+                SettingRow {
+                    title: "Shell"
+                    description: "Absolute shell path. Empty uses the system default shell."
+                    SettingTextField {
+                        id: terminalShellInput
+                        Layout.preferredWidth: 300
+                        text: root.hasSettings ? SettingsVM.terminalShell : ""
+                        placeholderText: "/bin/zsh"
+                    }
+                }
+
+                SettingRow {
+                    title: "Startup directory"
+                    description: "Where new terminal sessions start."
+                    SettingComboBox {
+                        id: terminalCwdModeCombo
+                        Layout.preferredWidth: 180
+                        model: ["project", "home", "process"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalCwdMode)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Restore sessions"
+                    description: "Recreate terminal sessions for the current workspace."
+                    SettingSwitch {
+                        id: terminalRestoreSwitch
+                        checked: root.hasSettings ? SettingsVM.terminalRestoreSessions : true
+                    }
+                }
+
+                SettingRow {
+                    title: "Terminal font"
+                    description: "Separate from editor and UI fonts."
+                    SettingComboBox {
+                        id: terminalFontCombo
+                        Layout.preferredWidth: 220
+                        model: root.fontFamilyOptions()
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalFontFamily)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Terminal font size"
+                    description: "Terminal cell text size in points."
+                    SettingSpinBox {
+                        id: terminalFontSizeSpin
+                        from: 9
+                        to: 28
+                        value: root.hasSettings ? SettingsVM.terminalFontSize : 12
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Cursor style"
+                    description: "Visual cursor shape for the terminal surface."
+                    SettingComboBox {
+                        id: terminalCursorStyleCombo
+                        Layout.preferredWidth: 180
+                        model: ["block", "bar", "underline"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.terminalCursorStyle)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Scrollback"
+                    description: "Maximum rendered terminal history lines."
+                    SettingSpinBox {
+                        id: terminalScrollbackSpin
+                        from: 500
+                        to: 50000
+                        stepSize: 500
+                        value: root.hasSettings ? SettingsVM.terminalScrollback : 3000
+                        editable: true
+                    }
+                }
+
+                SettingButton {
+                    text: "Apply terminal"
+                    onClicked: {
+                        if (!root.hasSettings) return
+                        root.runSettingAction("settings:terminal", "Applying terminal settings…", "Terminal settings applied.", function() {
+                            SettingsVM.setTerminalProfile({
+                                "shell": terminalShellInput.text,
+                                "cwdMode": terminalCwdModeCombo.currentText,
+                                "restoreSessions": terminalRestoreSwitch.checked,
+                                "fontFamily": terminalFontCombo.currentText,
+                                "fontSize": terminalFontSizeSpin.value,
+                                "cursorStyle": terminalCursorStyleCombo.currentText,
+                                "scrollback": terminalScrollbackSpin.value
+                            })
                         })
                     }
                 }
@@ -1451,7 +1602,13 @@ Item {
                         onClicked: {
                             if (!root.hasSettings) return
                             root.runSettingAction("settings:files", "Applying global file settings…", "Global file settings applied.", function() {
-                                SettingsVM.setFilesExcludeCsv(filesExcludeInput.text, false)
+                                SettingsVM.setFilesProfile({
+                                    "restoreWorkspace": root.hasSettings ? SettingsVM.filesRestoreWorkspace : true,
+                                    "watcherEnabled": root.hasSettings ? SettingsVM.filesWatcherEnabled : true,
+                                    "showHidden": root.hasSettings ? SettingsVM.filesShowHidden : false,
+                                    "confirmDelete": root.hasSettings ? SettingsVM.filesConfirmDelete : true,
+                                    "excludeCsv": filesExcludeInput.text
+                                }, false)
                             })
                         }
                     }
@@ -1461,7 +1618,13 @@ Item {
                         onClicked: {
                             if (!root.hasSettings) return
                             root.runSettingAction("settings:files-project", "Applying project file settings…", "Project file settings applied.", function() {
-                                SettingsVM.setFilesExcludeCsv(filesExcludeInput.text, true)
+                                SettingsVM.setFilesProfile({
+                                    "restoreWorkspace": root.hasSettings ? SettingsVM.filesRestoreWorkspace : true,
+                                    "watcherEnabled": root.hasSettings ? SettingsVM.filesWatcherEnabled : true,
+                                    "showHidden": root.hasSettings ? SettingsVM.filesShowHidden : false,
+                                    "confirmDelete": root.hasSettings ? SettingsVM.filesConfirmDelete : true,
+                                    "excludeCsv": filesExcludeInput.text
+                                }, true)
                             })
                         }
                     }
@@ -2665,8 +2828,127 @@ Item {
                         source: modelData.source || "core"
                         description: modelData.description || ""
                         requiresPayload: modelData.requiresPayload || false
+                        permissions: modelData.permissions || []
+                        requiresPermission: modelData.requiresPermission || false
+                        safeToRun: modelData.safeToRun !== false
+                        exposable: modelData.exposable !== false
                         shortcut: root.actionShortcut(modelData.id || "")
+                        conflict: root.actionBinding(modelData.id || "").conflict || false
+                        conflicts: root.actionBinding(modelData.id || "").conflicts || []
                         running: (typeof ActionVM !== "undefined" && ActionVM) ? ActionVM.isRunning(modelData.id || "") : false
+                        onResolveConflictRequested: {
+                            if (!root.hasSettings || shortcut.length === 0)
+                                return
+                            SettingsVM.setKeybindingOverride(shortcut, actionId, "global", false)
+                            root.notify("success", "Shortcut conflict resolved", shortcut + " now runs " + actionId + ".")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: notificationsPage
+
+        ColumnLayout {
+            spacing: 42
+
+            SectionCard {
+                title: "Notifications"
+                subtitle: "Toast position, visibility and non-critical noise control."
+
+                SettingRow {
+                    title: "Toast position"
+                    description: "Screen corner used by notification toasts."
+                    SettingComboBox {
+                        id: notificationPositionCombo
+                        Layout.preferredWidth: 190
+                        model: ["top-right", "top-left", "bottom-right", "bottom-left"]
+                        currentIndex: root.hasSettings ? Math.max(0, model.indexOf(SettingsVM.notificationPosition)) : 0
+                    }
+                }
+
+                SettingRow {
+                    title: "Default timeout"
+                    description: "Default auto-dismiss delay in milliseconds."
+                    SettingSpinBox {
+                        id: notificationTimeoutSpin
+                        from: 1000
+                        to: 30000
+                        stepSize: 250
+                        value: root.hasSettings ? SettingsVM.notificationDefaultTimeoutMs : 4200
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Max visible"
+                    description: "Maximum number of toasts shown at once."
+                    SettingSpinBox {
+                        id: notificationMaxVisibleSpin
+                        from: 1
+                        to: 12
+                        value: root.hasSettings ? SettingsVM.notificationMaxVisible : 6
+                        editable: true
+                    }
+                }
+
+                SettingRow {
+                    title: "Mute non-critical"
+                    description: "Hide info and success toasts while keeping warnings and errors."
+                    SettingSwitch {
+                        id: notificationMuteSwitch
+                        checked: root.hasSettings ? SettingsVM.notificationMuteNonCritical : false
+                    }
+                }
+
+                SettingButton {
+                    text: "Apply notifications"
+                    onClicked: {
+                        if (!root.hasSettings) return
+                        root.runSettingAction("settings:notifications", "Applying notification settings…", "Notification settings applied.", function() {
+                            SettingsVM.setNotificationsProfile({
+                                "position": notificationPositionCombo.currentText,
+                                "defaultTimeoutMs": notificationTimeoutSpin.value,
+                                "maxVisible": notificationMaxVisibleSpin.value,
+                                "muteNonCritical": notificationMuteSwitch.checked,
+                                "auditRetention": auditRetentionSpin.value
+                            })
+                        })
+                    }
+                }
+            }
+
+            SectionCard {
+                title: "Action Audit"
+                subtitle: "Local action history used by the Actions panel and future agent/MCP exposure."
+
+                SettingRow {
+                    title: "Audit retention"
+                    description: "Maximum number of action results kept in memory."
+                    SettingSpinBox {
+                        id: auditRetentionSpin
+                        from: 20
+                        to: 5000
+                        stepSize: 20
+                        value: root.hasSettings ? SettingsVM.auditRetention : 200
+                        editable: true
+                    }
+                }
+
+                InfoPill {
+                    title: "History"
+                    value: (typeof ActionVM !== "undefined" && ActionVM) ? String(ActionVM.history.length) + " entries" : "Unavailable"
+                }
+
+                SettingButton {
+                    text: "Clear action history"
+                    onClicked: {
+                        if (typeof ActionVM !== "undefined" && ActionVM) {
+                            ActionVM.clearHistory()
+                            root.notify("success", "Audit cleared", "Action history cleared.")
+                        }
                     }
                 }
             }
@@ -3509,16 +3791,24 @@ Item {
         property string source: ""
         property string description: ""
         property string shortcut: ""
+        property bool conflict: false
+        property var conflicts: []
         property bool requiresPayload: false
+        property var permissions: []
+        property bool requiresPermission: false
+        property bool safeToRun: true
+        property bool exposable: true
         property bool running: false
+        signal resolveConflictRequested()
 
         Layout.fillWidth: true
-        implicitHeight: 76
+        implicitHeight: conflict || requiresPermission || !exposable || !safeToRun ? 104 : 76
         radius: DesignTokens.metrics.radiusMd
         color: actionMouse.containsMouse ? root.cardHover : "transparent"
         border.width: 1
-        border.color: actionMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.24)
-                                                : Qt.rgba(root.border.r, root.border.g, root.border.b, 0.42)
+        border.color: conflict ? root.warning
+                               : actionMouse.containsMouse ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.24)
+                                                           : Qt.rgba(root.border.r, root.border.g, root.border.b, 0.42)
 
         RowLayout {
             anchors.fill: parent
@@ -3573,6 +3863,15 @@ Item {
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: conflict
+                    text: "Shortcut conflict: " + conflicts.join(" | ")
+                    color: root.warning
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
             }
 
             ColumnLayout {
@@ -3622,8 +3921,21 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: (shortcut.length > 0 ? shortcut + " · " : "") + (requiresPayload ? "Context payload required" : "Palette executable")
-                    color: requiresPayload ? root.warning : root.success
+                    text: (shortcut.length > 0 ? shortcut + " · " : "")
+                          + (requiresPayload ? "Context payload required" : "Palette executable")
+                          + (requiresPermission ? " · Requires permission" : "")
+                          + (!exposable ? " · Not agent-exposable" : "")
+                    color: !safeToRun ? root.error : (requiresPayload || requiresPermission || !exposable ? root.warning : root.success)
+                    font.pixelSize: 10
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: permissions.length > 0
+                    text: "Permissions: " + permissions.join(", ")
+                    color: root.muted
                     font.pixelSize: 10
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
@@ -3634,6 +3946,12 @@ Item {
                     spacing: 6
 
                     Item { Layout.fillWidth: true }
+
+                    SettingButton {
+                        visible: conflict && shortcut.length > 0
+                        text: "Resolve"
+                        onClicked: resolveConflictRequested()
+                    }
 
                     SettingButton {
                         visible: !requiresPayload

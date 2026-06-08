@@ -37,6 +37,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "rightPanel": {"visible": False, "width": 320},
     },
     "terminal": {
+        "shell": "",
+        "cwdMode": "project",
+        "fontFamily": "Menlo",
+        "fontSize": 12,
+        "cursorStyle": "block",
+        "scrollback": 3000,
         "restoreSessions": True,
         "sessions": [],
         "activeSession": 0,
@@ -151,6 +157,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "keybindings": {
         "overrides": {},
         "custom": [],
+    },
+    "notifications": {
+        "position": "top-right",
+        "defaultTimeoutMs": 4200,
+        "maxVisible": 6,
+        "muteNonCritical": False,
+        "auditRetention": 200,
     },
 }
 

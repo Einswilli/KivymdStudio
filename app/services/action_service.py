@@ -21,6 +21,9 @@ class ActionDefinition:
     busy_label: str = "Working…"
     notify: bool = True
     requires_payload: bool = False
+    permissions: tuple[str, ...] = ()
+    safe_to_run: bool = True
+    exposable: bool = True
     handler: ActionHandler | None = field(default=None, repr=False)
 
 
@@ -36,6 +39,7 @@ class ActionService:
         self._actions: dict[str, ActionDefinition] = {}
         self._running: dict[str, dict[str, Any]] = {}
         self._history: list[dict[str, Any]] = []
+        self._history_limit = 200
         self._listeners: list[Callable[[], None]] = []
 
     def on_changed(self, listener: Callable[[], None]) -> None:
@@ -62,6 +66,10 @@ class ActionService:
                 "busyLabel": action.busy_label,
                 "notify": action.notify,
                 "requiresPayload": action.requires_payload,
+                "permissions": list(action.permissions),
+                "requiresPermission": bool(action.permissions),
+                "safeToRun": action.safe_to_run,
+                "exposable": action.exposable,
             }
             for action in sorted(self._actions.values(), key=lambda item: (item.category, item.title))
         ]
@@ -76,6 +84,11 @@ class ActionService:
         self._history = []
         self._notify_changed()
 
+    def set_history_limit(self, limit: int) -> None:
+        self._history_limit = max(20, min(5000, int(limit or 200)))
+        self._history = self._history[-self._history_limit :]
+        self._notify_changed()
+
     def is_running(self, action_id: str) -> bool:
         return action_id in self._running
 
@@ -85,7 +98,15 @@ class ActionService:
         if not action:
             result = self._result(action_id, payload, "error", f"Unknown action: {action_id}")
             self._append_history(result)
+            await self._emit("audit:action", result=result)
             await self._emit("action:error", result=result)
+            return result
+        if not action.safe_to_run:
+            result = self._result(action_id, payload, "error", f"Action is not marked safe to run: {action_id}")
+            self._attach_action_meta(result, action)
+            self._append_history(result)
+            await self._emit("audit:action", action=action_id, payload=payload, result=result)
+            await self._emit("action:error", action=action_id, payload=payload, result=result)
             return result
 
         started_at = time()
@@ -112,12 +133,16 @@ class ActionService:
                 value,
                 started_at,
             )
+            self._attach_action_meta(result, action)
             self._append_history(result)
+            await self._emit("audit:action", action=action.id, payload=payload, result=result)
             await self._emit("action:after", action=action.id, payload=payload, result=result)
             return result
         except Exception as exc:
             result = self._result(action.id, payload, "error", str(exc), None, started_at)
+            self._attach_action_meta(result, action)
             self._append_history(result)
+            await self._emit("audit:action", action=action.id, payload=payload, result=result)
             await self._emit("action:error", action=action.id, payload=payload, result=result)
             return result
         finally:
@@ -132,12 +157,22 @@ class ActionService:
 
     def _append_history(self, result: dict[str, Any]) -> None:
         self._history.append(result)
-        self._history = self._history[-200:]
+        self._history = self._history[-self._history_limit:]
         self._notify_changed()
 
     def _notify_changed(self) -> None:
         for listener in list(self._listeners):
             listener()
+
+    @staticmethod
+    def _attach_action_meta(result: dict[str, Any], action: ActionDefinition) -> None:
+        result["title"] = action.title
+        result["category"] = action.category
+        result["source"] = action.source
+        result["permissions"] = list(action.permissions)
+        result["requiresPermission"] = bool(action.permissions)
+        result["safeToRun"] = action.safe_to_run
+        result["exposable"] = action.exposable
 
     @staticmethod
     def _message_from_value(value: Any) -> str:
@@ -146,6 +181,25 @@ class ActionService:
         if isinstance(value, str):
             return value
         return ""
+
+    @classmethod
+    def _redact_payload(cls, payload: Any) -> Any:
+        sensitive = ("key", "token", "secret", "password", "authorization", "credential")
+        if isinstance(payload, list):
+            return [cls._redact_payload(item) for item in payload]
+        if not isinstance(payload, dict):
+            return payload
+
+        redacted = {}
+        for key, value in (payload or {}).items():
+            lowered = str(key).lower()
+            if any(marker in lowered for marker in sensitive):
+                redacted[key] = "<redacted>"
+            elif isinstance(value, (dict, list)):
+                redacted[key] = cls._redact_payload(value)
+            else:
+                redacted[key] = value
+        return redacted
 
     @staticmethod
     def _result(
@@ -162,7 +216,7 @@ class ActionService:
             "state": state,
             "ok": state == "success",
             "message": message,
-            "payload": payload,
+            "payload": ActionService._redact_payload(payload),
             "value": value,
             "startedAt": started_at or now,
             "finishedAt": now,

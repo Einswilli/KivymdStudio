@@ -12,6 +12,7 @@ class PluginManifestActionsTest(unittest.TestCase):
             "display_name": "Test Actions",
             "version": "1.0.0",
             "author": "Ember",
+            "permissions": ["file:write"],
             "contributes": {
                 "actions": [
                     {
@@ -22,6 +23,7 @@ class PluginManifestActionsTest(unittest.TestCase):
                         "description": "Runs a test action.",
                         "keybinding": "Ctrl+Alt+H",
                         "requiresPayload": False,
+                        "permissions": ["file:write"],
                     }
                 ]
             },
@@ -33,6 +35,7 @@ class PluginManifestActionsTest(unittest.TestCase):
         self.assertEqual(action.command, "testActions.sayHello")
         self.assertEqual(action.keybinding, "Ctrl+Alt+H")
         self.assertFalse(action.requiresPayload)
+        self.assertEqual(action.permissions, ["file:write"])
         self.assertTrue(manifest.contributes.has_any)
 
 

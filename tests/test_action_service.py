@@ -58,6 +58,40 @@ class ActionServiceTest(unittest.IsolatedAsyncioTestCase):
             ["missing.action", "test.fail"],
         )
 
+    async def test_lists_security_metadata_and_redacts_payload_history(self):
+        service = ActionService(EventBus())
+
+        service.register(ActionDefinition(
+            id="test.secure",
+            title="Secure Test",
+            permissions=("file:write",),
+            exposable=False,
+            handler=lambda payload: "ok",
+        ))
+
+        actions = service.list_actions()
+        self.assertEqual(actions[0]["permissions"], ["file:write"])
+        self.assertTrue(actions[0]["requiresPermission"])
+        self.assertTrue(actions[0]["safeToRun"])
+        self.assertFalse(actions[0]["exposable"])
+
+        result = await service.execute(
+            "test.secure",
+            {
+                "api_key": "secret",
+                "nested": {"password": "hidden", "value": 1},
+                "items": [{"token": "hidden"}, {"name": "safe"}],
+            },
+        )
+
+        self.assertTrue(result["ok"])
+        payload = service.history()[-1]["payload"]
+        self.assertEqual(payload["api_key"], "<redacted>")
+        self.assertEqual(payload["nested"]["password"], "<redacted>")
+        self.assertEqual(payload["nested"]["value"], 1)
+        self.assertEqual(payload["items"][0]["token"], "<redacted>")
+        self.assertEqual(payload["items"][1]["name"], "safe")
+
 
 if __name__ == "__main__":
     unittest.main()

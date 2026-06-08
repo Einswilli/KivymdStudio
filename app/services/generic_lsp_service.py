@@ -123,6 +123,24 @@ class GenericLSPProviderRuntime:
                 return symbols[:200]
         return []
 
+    async def definition(self, code: str, position: Any, path: str, language: str) -> list[dict]:
+        for provider in self._capable_providers(language, "definition"):
+            locations = await self._process_for(provider).definition(
+                path, code, position.line - 1, position.character
+            )
+            if locations:
+                return [self._location_item(item) for item in locations[:50]]
+        return []
+
+    async def references(self, code: str, position: Any, path: str, language: str) -> list[dict]:
+        for provider in self._capable_providers(language, "references"):
+            locations = await self._process_for(provider).references(
+                path, code, position.line - 1, position.character
+            )
+            if locations:
+                return [self._location_item(item) for item in locations[:200]]
+        return []
+
     async def code_actions(
         self,
         code: str,
@@ -183,6 +201,21 @@ class GenericLSPProviderRuntime:
             "type": "word",
             "description": str(item.get("detail") or item.get("documentation") or ""),
             "color": "#ABB2BF",
+        }
+
+    @staticmethod
+    def _location_item(item: dict[str, Any]) -> dict[str, Any]:
+        target = item.get("targetUri") or item.get("uri") or ""
+        range_info = item.get("targetSelectionRange") or item.get("targetRange") or item.get("range") or {}
+        start = range_info.get("start") or {}
+        end = range_info.get("end") or start
+        return {
+            "path": target,
+            "uri": target,
+            "line": int(start.get("line") or 0) + 1,
+            "col": int(start.get("character") or 0),
+            "endLine": int(end.get("line") or start.get("line") or 0) + 1,
+            "endCol": int(end.get("character") or start.get("character") or 0),
         }
 
     @classmethod

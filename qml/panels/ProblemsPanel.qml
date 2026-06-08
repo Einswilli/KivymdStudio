@@ -43,6 +43,19 @@ Rectangle {
         return [item.path || "", item.line || 1, item.col || 0, item.message || ""].join("|")
     }
 
+    function basename(path) {
+        var value = String(path || "")
+        var slash = Math.max(value.lastIndexOf("/"), value.lastIndexOf("\\"))
+        return slash >= 0 ? value.substring(slash + 1) : value
+    }
+
+    function compactPath(path) {
+        var value = String(path || "")
+        if (!value) return "No file path"
+        if (value.length <= 72) return value
+        return "…" + value.substring(value.length - 71)
+    }
+
     function allText() {
         var rows = []
         var items = root.filteredProblems()
@@ -156,7 +169,7 @@ Rectangle {
                 required property var modelData
 
                 width: listView.width
-                height: Math.max(72, messageText.implicitHeight + actionRow.implicitHeight + 22)
+                height: Math.max(84, messageText.implicitHeight + pathText.implicitHeight + actionRow.implicitHeight + 24)
                 readonly property bool selected: root.problemKey(modelData) === root.selectedProblemKey
                 color: selected
                     ? Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.13)
@@ -182,15 +195,30 @@ Rectangle {
                     anchors.bottomMargin: 7
                     spacing: 2
 
-                    Text {
-                        text: (modelData.severity || "info").toUpperCase()
-                            + " · line " + (modelData.line || 1) + ":" + ((modelData.col || 0) + 1)
-                            + (modelData.code ? " · " + modelData.code : "")
-                        color: root.severityColor(modelData.severity)
-                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
-                        font.pointSize: 10
-                        font.weight: Font.DemiBold
+                    RowLayout {
                         Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: (modelData.severity || "info").toUpperCase()
+                                + " · " + root.basename(modelData.path || "")
+                                + " · L" + (modelData.line || 1) + ":C" + ((modelData.col || 0) + 1)
+                            color: root.severityColor(modelData.severity)
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 10
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            visible: !!modelData.code
+                            text: modelData.code || ""
+                            color: theme.textStrong || "#F3F4F6"
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 8
+                            horizontalAlignment: Text.AlignRight
+                        }
                     }
 
                     Text {
@@ -200,6 +228,16 @@ Rectangle {
                         wrapMode: Text.Wrap
                         font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
                         font.pointSize: 11
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        id: pathText
+                        text: root.compactPath(modelData.path || "")
+                        color: theme.textDim || "#858585"
+                        font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                        font.pointSize: 8
+                        elide: Text.ElideLeft
                         Layout.fillWidth: true
                     }
 

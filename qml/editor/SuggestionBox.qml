@@ -200,7 +200,7 @@ Popup {
 
     function _detailsText(item) {
         if (!item) return ""
-        return item.documentation || item.doc || item.detail || item.description || item.labelDetails || "Aucun détail disponible pour cette suggestion."
+        return item.documentation || item.doc || item.detail || item.description || item.labelDetails || "No details available for this suggestion."
     }
 
     function _typeColor(type) {
