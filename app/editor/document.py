@@ -79,6 +79,29 @@ class EditorDocument(QObject):
         self._cursor = self._sel_start + len(selected)
         self._on_change()
 
+    @Slot(str, str)
+    def insertPair(self, prefix: str, suffix: str) -> None:
+        if self.hasSelection():
+            self.wrapSelection(prefix, suffix)
+            return
+        self._push_undo()
+        self._text = self._text[:self._cursor] + prefix + suffix + self._text[self._cursor:]
+        self._cursor += len(prefix)
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot(str, result=bool)
+    def skipNextIf(self, text: str) -> bool:
+        if self.hasSelection() or not text:
+            return False
+        if self._text[self._cursor:self._cursor + len(text)] != text:
+            return False
+        self._cursor += len(text)
+        self._sel_start = -1
+        self._emit_cursor()
+        self.selectionChanged.emit()
+        return True
+
     @Slot()
     def doBackspace(self) -> None:
         if self._cursor <= 0 and not self.hasSelection():
