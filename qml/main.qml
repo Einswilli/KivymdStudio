@@ -1092,6 +1092,7 @@ Instantiator {
         NotificationHost {
             anchors.fill: parent
             theme: root.theme
+            position: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.notificationPosition : "top-right"
             notifications: NotificationVM ? NotificationVM.notifications : []
             busy: NotificationVM ? NotificationVM.busy : false
             operations: NotificationVM ? NotificationVM.operations : []

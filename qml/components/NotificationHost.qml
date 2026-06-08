@@ -9,6 +9,7 @@ Item {
     property bool busy: false
     property var operations: []
     property var theme: ({})
+    property string position: "top-right"
     property color panelColor: "#1F232A"
     property color borderColor: "#343C4A"
 
@@ -56,9 +57,13 @@ Item {
 
     Column {
         id: stack
-        anchors.top: parent.top
-        anchors.right: parent.right
+        anchors.top: root.position.indexOf("top") === 0 ? parent.top : undefined
+        anchors.bottom: root.position.indexOf("bottom") === 0 ? parent.bottom : undefined
+        anchors.left: root.position.indexOf("left") > 0 ? parent.left : undefined
+        anchors.right: root.position.indexOf("right") > 0 ? parent.right : undefined
         anchors.topMargin: 18
+        anchors.bottomMargin: 18
+        anchors.leftMargin: 18
         anchors.rightMargin: 18
         spacing: 10
 
