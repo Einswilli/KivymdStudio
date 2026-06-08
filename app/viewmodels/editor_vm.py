@@ -715,7 +715,52 @@ class EditorViewModel(QObject):
             print(f"[EditorVM] Completion error: {e}")
             return []
         if generation == self._completion_generation:
+            results = self._rank_completions(code, cursor_pos, results, force)
             self.completerReady.emit(json.dumps(results))
+
+    @classmethod
+    def _completion_prefix(cls, code: str, cursor_pos: int) -> str:
+        cursor_pos = max(0, min(int(cursor_pos or 0), len(code or "")))
+        start = cursor_pos
+        while start > 0 and (code[start - 1].isalnum() or code[start - 1] in {"_", "$"}):
+            start -= 1
+        return code[start:cursor_pos]
+
+    @classmethod
+    def _rank_completions(
+        cls,
+        code: str,
+        cursor_pos: int,
+        results: list[dict],
+        force: bool = False,
+    ) -> list[dict]:
+        prefix = cls._completion_prefix(code, cursor_pos).lower()
+        unique: dict[str, dict] = {}
+        for item in results or []:
+            label = str(item.get("name") or item.get("label") or item.get("text") or "")
+            insert_text = str(item.get("insertText") or item.get("text") or label)
+            if not label and not insert_text:
+                continue
+            candidate = (label or insert_text).lower()
+            if prefix and not force and not candidate.startswith(prefix):
+                continue
+            key = label or insert_text
+            unique.setdefault(key, item)
+
+        def score(item: dict) -> tuple[int, int, str]:
+            label = str(item.get("name") or item.get("label") or item.get("text") or "")
+            lowered = label.lower()
+            if prefix and lowered == prefix:
+                rank = 0
+            elif prefix and lowered.startswith(prefix):
+                rank = 1
+            elif prefix and prefix in lowered:
+                rank = 2
+            else:
+                rank = 3
+            return (rank, len(label), lowered)
+
+        return sorted(unique.values(), key=score)[:80]
 
     async def _hover_async(self, code: str, cursor_pos: int, generation: int) -> None:
         try:

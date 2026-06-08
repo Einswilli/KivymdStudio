@@ -431,17 +431,28 @@ Item {
     }
 
     function rulerColumns() {
-        if (typeof SettingsVM === "undefined" || !SettingsVM)
-            return []
-        var raw = String(SettingsVM.rulersCsv || "")
-        var values = raw.split(",")
-        var columns = []
-        for (var i = 0; i < values.length; i++) {
-            var column = parseInt(values[i].trim())
-            if (!isNaN(column) && column > 0)
-                columns.push(column)
-        }
-        return columns
+        return []
+    }
+
+    function _currentWordPrefix() {
+        if (root._lineItems.length === 0)
+            return ""
+        var lineText = root._lineItems[root._cursorLine] ? (root._lineItems[root._cursorLine].text || "") : ""
+        var col = Math.max(0, Math.min(root._cursorCol, lineText.length))
+        var start = col
+        while (start > 0 && /[A-Za-z0-9_$]/.test(lineText.charAt(start - 1)))
+            start--
+        return lineText.slice(start, col)
+    }
+
+    function _completionInsertText(item) {
+        var value = item.insertText || item.text || item.label || ""
+        if (!value)
+            return ""
+        var prefix = root._currentWordPrefix()
+        if (prefix.length > 0 && value.indexOf(prefix) === 0)
+            return value.slice(prefix.length)
+        return value
     }
 
     Item {
@@ -476,6 +487,7 @@ Item {
             boundsMovement: Flickable.StopAtBounds
             interactive: false
             clip: true
+            footer: Item { width: 1; height: Math.max(root.lineHeight * 2, hScroll.visible ? hScroll.height + root.lineHeight : root.lineHeight) }
 
             delegate: TokenLine {
                 width: lineView.contentWidth
@@ -984,7 +996,9 @@ Item {
         editor: root
 
         onItemSelected: function(item) {
-            doc.typeText(item.text)
+            var insertText = root._completionInsertText(item)
+            if (insertText.length > 0)
+                doc.typeText(insertText)
             suggestionBox.visible = false
             root.forceActiveFocus()
         }
@@ -1030,6 +1044,25 @@ Item {
     // ── Key handling ──────────────────────────────────
 
     Keys.onPressed: function(event) {
+        if (event.matches(StandardKey.Copy)) {
+            event.accepted = true; doc.copySelection(); return
+        }
+        if (event.matches(StandardKey.Cut)) {
+            event.accepted = true; doc.cutSelection(); root._triggerCompletions(); return
+        }
+        if (event.matches(StandardKey.Paste)) {
+            event.accepted = true; doc.pasteClipboard(); root._triggerCompletions(); return
+        }
+        if (event.matches(StandardKey.Undo)) {
+            event.accepted = true; doc.undo(); root._triggerCompletions(); return
+        }
+        if (event.matches(StandardKey.Redo)) {
+            event.accepted = true; doc.redo(); root._triggerCompletions(); return
+        }
+        if (event.matches(StandardKey.SelectAll)) {
+            event.accepted = true; doc.selectAll(); return
+        }
+
         if (event.key === Qt.Key_Space && (event.modifiers & Qt.ControlModifier)) {
             event.accepted = true
             root._forceSuggestions()
@@ -1045,7 +1078,7 @@ Item {
         if (suggestionBox.visible) {
             if (event.key === Qt.Key_Down) { suggestionBox.selectNext(); event.accepted = true; return }
             if (event.key === Qt.Key_Up) { suggestionBox.selectPrevious(); event.accepted = true; return }
-            if (event.key === Qt.Key_Space) { suggestionBox.toggleDetails(); event.accepted = true; return }
+            if (event.key === Qt.Key_Space && ((typeof SettingsVM === "undefined" || !SettingsVM) || SettingsVM.suggestionsDetailsOnSpace)) { suggestionBox.toggleDetails(); event.accepted = true; return }
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 suggestionBox.acceptSelected(); event.accepted = true; return
             }
@@ -1125,11 +1158,6 @@ Item {
         }
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             event.accepted = true; doc.doNewline(); _triggerCompletions(); return
-        }
-
-        // Ctrl+A select all
-        if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
-            event.accepted = true; doc.selectAll(); return
         }
 
         // Text input (printable characters)
