@@ -262,6 +262,51 @@ Item {
         return { "line": line, "col": col, "pos": root._posFromLineCol(line, col) }
     }
 
+    function _codeHitFromPoint(x, y) {
+        if (root._lineItems.length === 0)
+            return { "valid": false, "line": 0, "col": 0, "pos": -1 }
+
+        var hit = root._lineColFromPoint(x, y)
+        var text = root._lineItems[hit.line] ? (root._lineItems[hit.line].text || "") : ""
+        var contentX = x + lineView.contentX - root.gutterWidth - root.contentPadding
+        var lineWidth = root._visualColFromLogical(hit.line, text.length) * root.charWidth
+        if (contentX < 0 || contentX >= lineWidth || text.length === 0)
+            return { "valid": false, "line": hit.line, "col": hit.col, "pos": -1 }
+        var character = hit.col < text.length ? text.charAt(hit.col) : ""
+        if (!character || character.trim().length === 0)
+            return { "valid": false, "line": hit.line, "col": hit.col, "pos": -1 }
+        return { "valid": true, "line": hit.line, "col": hit.col, "pos": hit.pos }
+    }
+
+    function _tryToggleFoldAtPoint(x, y) {
+        if (x > root.gutterWidth || root._lineItems.length === 0)
+            return false
+        var line = Math.floor((y + lineView.contentY) / root.lineHeight)
+        line = Math.max(0, Math.min(line, root._lineItems.length - 1))
+        if (root._foldRangeForLine(line) === null)
+            return false
+        root._toggleFold(line + 1)
+        return true
+    }
+
+    function _isFoldGutterPoint(x, y) {
+        if (x < 0 || x > root.gutterWidth || root._lineItems.length === 0)
+            return false
+        var line = Math.floor((y + lineView.contentY) / root.lineHeight)
+        line = Math.max(0, Math.min(line, root._lineItems.length - 1))
+        return root._foldRangeForLine(line) !== null
+    }
+
+    function _cursorShapeForPoint(x, y, modifiers) {
+        if (root._isFoldGutterPoint(x, y))
+            return Qt.PointingHandCursor
+        if (x <= root.gutterWidth)
+            return Qt.ArrowCursor
+        if ((modifiers & Qt.ControlModifier) || (modifiers & Qt.MetaModifier))
+            return root._codeHitFromPoint(x, y).valid ? Qt.PointingHandCursor : Qt.IBeamCursor
+        return Qt.IBeamCursor
+    }
+
     function _hoverHitFromPoint(x, y) {
         if (root._lineItems.length === 0)
             return { "valid": false, "line": 0, "col": 0, "pos": -1 }
@@ -390,10 +435,18 @@ Item {
     }
 
     function _scrollTo(x, y) {
-        var maxX = Math.max(0, lineView.contentWidth - lineView.width)
-        var maxY = Math.max(0, lineView.contentHeight - lineView.height)
+        var maxX = Math.max(0, lineView.contentWidth - root._editorViewportWidth())
+        var maxY = Math.max(0, lineView.contentHeight - root._editorViewportHeight())
         lineView.contentX = Math.max(0, Math.min(x, maxX))
         lineView.contentY = Math.max(0, Math.min(y, maxY))
+    }
+
+    function _editorViewportWidth() {
+        return Math.max(1, scrollView.width - (vScroll.visible ? vScroll.width : 0))
+    }
+
+    function _editorViewportHeight() {
+        return Math.max(1, scrollView.height - (hScroll.visible ? hScroll.height : 0))
     }
 
     function _severityColor(severity) {
@@ -590,7 +643,7 @@ Item {
             boundsMovement: Flickable.StopAtBounds
             interactive: false
             clip: true
-            footer: Item { width: 1; height: Math.max(root.lineHeight * 2, hScroll.visible ? hScroll.height + root.lineHeight : root.lineHeight) }
+            footer: Item { width: 1; height: Math.max(root.lineHeight, hScroll.visible ? hScroll.height + 6 : 6) }
 
             delegate: TokenLine {
                 width: lineView.contentWidth
@@ -650,6 +703,21 @@ Item {
             onPressed: function(mouse) {
                 root.forceActiveFocus()
                 if (root._lineItems.length === 0) return
+                if (root._tryToggleFoldAtPoint(mouse.x, mouse.y)) {
+                    mouse.accepted = true
+                    selecting = false
+                    return
+                }
+                if ((mouse.modifiers & Qt.ControlModifier) || (mouse.modifiers & Qt.MetaModifier)) {
+                    var codeHit = root._codeHitFromPoint(mouse.x, mouse.y)
+                    if (codeHit.valid) {
+                        doc.moveCursor(codeHit.pos)
+                        root._requestDefinition()
+                        mouse.accepted = true
+                        selecting = false
+                        return
+                    }
+                }
                 var hit = root._lineColFromPoint(mouse.x, mouse.y)
                 doc.moveCursor(hit.pos)
                 selecting = true
@@ -658,6 +726,7 @@ Item {
             onPositionChanged: function(mouse) {
                 root._editorHovered = true
                 if (root._lineItems.length === 0) return
+                editorHitArea.cursorShape = root._cursorShapeForPoint(mouse.x, mouse.y, mouse.modifiers)
                 if (root._tokenInfoHovered) {
                     hoverTimer.stop()
                     root._pendingHoverHit = null
@@ -730,6 +799,32 @@ Item {
             }
         }
 
+        MouseArea {
+            id: gutterHitArea
+            x: 0
+            y: 0
+            width: root.gutterWidth
+            height: parent.height
+            z: 30
+            acceptedButtons: Qt.LeftButton
+            hoverEnabled: true
+            cursorShape: root._isFoldGutterPoint(mouseX, mouseY) ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+            onClicked: function(mouse) {
+                root.forceActiveFocus()
+                if (!root._tryToggleFoldAtPoint(mouse.x, mouse.y)) {
+                    var hit = root._lineColFromPoint(root.gutterWidth + root.contentPadding, mouse.y)
+                    doc.moveCursor(hit.pos)
+                }
+                mouse.accepted = true
+            }
+
+            onWheel: function(wheel) {
+                root._scrollTo(lineView.contentX, lineView.contentY - wheel.angleDelta.y / 120 * root.lineHeight * 3)
+                wheel.accepted = true
+            }
+        }
+
         ScrollBar {
             id: vScroll
             anchors.top: parent.top
@@ -737,11 +832,11 @@ Item {
             anchors.bottom: hScroll.top
             orientation: Qt.Vertical
             policy: lineView.contentHeight > lineView.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-            size: lineView.contentHeight > 0 ? Math.min(1, lineView.height / lineView.contentHeight) : 1
-            position: lineView.contentHeight > lineView.height ? lineView.contentY / (lineView.contentHeight - lineView.height) * (1 - size) : 0
+            size: lineView.contentHeight > 0 ? Math.min(1, root._editorViewportHeight() / lineView.contentHeight) : 1
+            position: lineView.contentHeight > root._editorViewportHeight() ? lineView.contentY / Math.max(1, lineView.contentHeight - root._editorViewportHeight()) * (1 - size) : 0
             onPositionChanged: {
                 if (pressed)
-                    root._scrollTo(lineView.contentX, position / Math.max(0.0001, 1 - size) * Math.max(0, lineView.contentHeight - lineView.height))
+                    root._scrollTo(lineView.contentX, position / Math.max(0.0001, 1 - size) * Math.max(0, lineView.contentHeight - root._editorViewportHeight()))
             }
         }
 
@@ -752,11 +847,11 @@ Item {
             anchors.bottom: parent.bottom
             orientation: Qt.Horizontal
             policy: !root.wordWrapEnabled && lineView.contentWidth > lineView.width ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
-            size: lineView.contentWidth > 0 ? Math.min(1, lineView.width / lineView.contentWidth) : 1
-            position: lineView.contentWidth > lineView.width ? lineView.contentX / (lineView.contentWidth - lineView.width) * (1 - size) : 0
+            size: lineView.contentWidth > 0 ? Math.min(1, root._editorViewportWidth() / lineView.contentWidth) : 1
+            position: lineView.contentWidth > root._editorViewportWidth() ? lineView.contentX / Math.max(1, lineView.contentWidth - root._editorViewportWidth()) * (1 - size) : 0
             onPositionChanged: {
                 if (pressed)
-                    root._scrollTo(position / Math.max(0.0001, 1 - size) * Math.max(0, lineView.contentWidth - lineView.width), lineView.contentY)
+                    root._scrollTo(position / Math.max(0.0001, 1 - size) * Math.max(0, lineView.contentWidth - root._editorViewportWidth()), lineView.contentY)
             }
         }
     }
@@ -815,8 +910,10 @@ Item {
 
         Rectangle {
             width: parent.width
-            height: Math.max(24, parent.height * lineView.visibleArea.heightRatio)
-            y: parent.height * lineView.visibleArea.yPosition
+            height: Math.max(24, parent.height * Math.min(1, root._editorViewportHeight() / Math.max(1, lineView.contentHeight)))
+            y: parent.height * (lineView.contentHeight > root._editorViewportHeight()
+                                ? lineView.contentY / Math.max(1, lineView.contentHeight - root._editorViewportHeight()) * (1 - height / parent.height)
+                                : 0)
             radius: 3
             color: Qt.rgba(0.0, 0.47, 0.83, 0.20)
             border.color: Qt.rgba(0.3, 0.7, 1.0, 0.32)
@@ -825,8 +922,11 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: function(mouse) {
-                if (lineView.contentHeight <= lineView.height) return
-                lineView.contentY = Math.max(0, Math.min(lineView.contentHeight - lineView.height, mouse.y / height * lineView.contentHeight))
+                if (lineView.contentHeight <= root._editorViewportHeight()) return
+                root._scrollTo(
+                    lineView.contentX,
+                    Math.max(0, Math.min(lineView.contentHeight - root._editorViewportHeight(), mouse.y / height * lineView.contentHeight))
+                )
             }
         }
     }
@@ -1648,17 +1748,18 @@ Item {
 
     function _ensureCursorVisible() {
         var cy = root._cursorLine * root.lineHeight
-        var vh = scrollView.height
+        var vh = root._editorViewportHeight()
         var maxY = Math.max(0, lineView.contentHeight - vh)
-        if (cy < lineView.contentY) lineView.contentY = Math.max(0, cy)
+        if (cy < lineView.contentY) root._scrollTo(lineView.contentX, cy)
         if (cy + root.lineHeight > lineView.contentY + vh)
-            lineView.contentY = Math.min(maxY, cy + root.lineHeight - vh + 20)
+            root._scrollTo(lineView.contentX, Math.min(maxY, cy + root.lineHeight - vh + 20))
         var cx = root.gutterWidth + root.contentPadding + root._visualColFromLogical(root._cursorLine, root._cursorCol) * root.charWidth
-        var maxX = Math.max(0, lineView.contentWidth - lineView.width)
+        var vw = root._editorViewportWidth()
+        var maxX = Math.max(0, lineView.contentWidth - vw)
         if (cx < lineView.contentX + root.gutterWidth)
-            lineView.contentX = Math.max(0, cx - root.gutterWidth - root.contentPadding)
-        if (cx + root.charWidth > lineView.contentX + lineView.width)
-            lineView.contentX = Math.min(maxX, cx + root.charWidth - lineView.width + 20)
+            root._scrollTo(Math.max(0, cx - root.gutterWidth - root.contentPadding), lineView.contentY)
+        if (cx + root.charWidth > lineView.contentX + vw)
+            root._scrollTo(Math.min(maxX, cx + root.charWidth - vw + 20), lineView.contentY)
     }
 
     function _triggerCompletions() {
