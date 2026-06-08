@@ -158,6 +158,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "overrides": {},
         "custom": [],
     },
+    "notifications": {
+        "position": "top-right",
+        "defaultTimeoutMs": 4200,
+        "maxVisible": 6,
+        "muteNonCritical": False,
+        "auditRetention": 200,
+    },
 }
 
 

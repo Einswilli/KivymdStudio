@@ -18,6 +18,7 @@ class SettingsViewModel(QObject):
     editorMetricsChanged = Signal()
     workbenchChanged = Signal()
     terminalChanged = Signal()
+    notificationsChanged = Signal("QVariantMap")
     keybindingsChanged = Signal()
     configChanged = Signal("QVariantMap")
     aiModelsChanged = Signal(str, "QVariantList")
@@ -127,6 +128,11 @@ class SettingsViewModel(QObject):
         self._panel_height = int(self._get("workbench.panel.height", 240))
         self._right_panel_visible = bool(self._get("workbench.rightPanel.visible", False))
         self._right_panel_width = int(self._get("workbench.rightPanel.width", 320))
+        self._notification_position = str(self._get("notifications.position", "top-right"))
+        self._notification_default_timeout_ms = int(self._get("notifications.defaultTimeoutMs", 4200))
+        self._notification_max_visible = int(self._get("notifications.maxVisible", 6))
+        self._notification_mute_non_critical = bool(self._get("notifications.muteNonCritical", False))
+        self._audit_retention = int(self._get("notifications.auditRetention", 200))
         self._available_themes: list[dict] = []
         self._ai_provider_models: dict[str, list[str]] = {}
         self._ai_models_revision = 0
@@ -363,12 +369,28 @@ class SettingsViewModel(QObject):
         self._right_panel_width = int(
             self._get("workbench.rightPanel.width", self._right_panel_width)
         )
+        self._notification_position = str(
+            self._get("notifications.position", self._notification_position)
+        )
+        self._notification_default_timeout_ms = int(
+            self._get("notifications.defaultTimeoutMs", self._notification_default_timeout_ms)
+        )
+        self._notification_max_visible = int(
+            self._get("notifications.maxVisible", self._notification_max_visible)
+        )
+        self._notification_mute_non_critical = bool(
+            self._get("notifications.muteNonCritical", self._notification_mute_non_critical)
+        )
+        self._audit_retention = int(
+            self._get("notifications.auditRetention", self._audit_retention)
+        )
         self._refresh_theme()
         self.configChanged.emit(self._config)
         self.themeChanged.emit(self._theme_colors)
         self.fontChanged.emit(self._font_family, self._font_size)
         self.editorMetricsChanged.emit()
         self.terminalChanged.emit()
+        self.notificationsChanged.emit(self.getNotificationsConfig())
         self.workbenchChanged.emit()
         self.keybindingsChanged.emit()
 
@@ -1221,13 +1243,42 @@ class SettingsViewModel(QObject):
     @Slot(str)
     @Slot(str, bool)
     def setFilesExcludeCsv(self, value: str, project: bool = False) -> None:
-        exclusions = []
-        for item in str(value or "").replace("\n", ",").split(","):
-            item = item.strip()
-            if item and item not in exclusions:
-                exclusions.append(item)
+        exclusions = self._parse_csv_list(value)
         self._files_exclude = exclusions
         patch = {"files": {"exclude": exclusions}}
+        self._config = self._settings.save_project(patch) if project else self._settings.save_global(patch)
+        self.reload()
+        self.searchConfigChanged.emit(self.getSearchConfig())
+
+    @Slot("QVariantMap")
+    @Slot("QVariantMap", bool)
+    def setFilesProfile(self, values: dict, project: bool = False) -> None:
+        values = dict(values or {})
+        if "restoreWorkspace" in values:
+            self._files_restore_workspace = bool(values.get("restoreWorkspace"))
+        if "watcherEnabled" in values:
+            self._files_watcher_enabled = bool(values.get("watcherEnabled"))
+        if "showHidden" in values:
+            self._files_show_hidden = bool(values.get("showHidden"))
+        if "confirmDelete" in values:
+            self._files_confirm_delete = bool(values.get("confirmDelete"))
+        if "excludeCsv" in values:
+            self._files_exclude = self._parse_csv_list(str(values.get("excludeCsv") or ""))
+        elif "exclude" in values:
+            self._files_exclude = [
+                str(item).strip()
+                for item in (values.get("exclude") or [])
+                if str(item).strip()
+            ]
+        patch = {
+            "files": {
+                "restoreWorkspace": self._files_restore_workspace,
+                "watcher": {"enabled": self._files_watcher_enabled},
+                "showHidden": self._files_show_hidden,
+                "confirmDelete": self._files_confirm_delete,
+                "exclude": list(dict.fromkeys(self._files_exclude)),
+            }
+        }
         self._config = self._settings.save_project(patch) if project else self._settings.save_global(patch)
         self.reload()
         self.searchConfigChanged.emit(self.getSearchConfig())
@@ -1235,6 +1286,15 @@ class SettingsViewModel(QObject):
     @Property(str, notify=configChanged)
     def filesExcludeCsv(self) -> str:
         return ", ".join(str(item) for item in self._files_exclude)
+
+    @staticmethod
+    def _parse_csv_list(value: str) -> list[str]:
+        items: list[str] = []
+        for item in str(value or "").replace("\n", ",").split(","):
+            item = item.strip()
+            if item and item not in items:
+                items.append(item)
+        return items
 
     @Slot(result="QVariantMap")
     def getFilesConfig(self) -> dict:
@@ -1768,6 +1828,77 @@ class SettingsViewModel(QObject):
     @Property(bool, notify=terminalChanged)
     def terminalRestoreSessions(self) -> bool:
         return self._terminal_restore_sessions
+
+    # ── Notifications / Audit ─────────────────────────────
+
+    @Slot(result="QVariantMap")
+    def getNotificationsConfig(self) -> dict:
+        return {
+            "position": self._notification_position,
+            "defaultTimeoutMs": self._notification_default_timeout_ms,
+            "maxVisible": self._notification_max_visible,
+            "muteNonCritical": self._notification_mute_non_critical,
+            "auditRetention": self._audit_retention,
+        }
+
+    @Slot("QVariantMap")
+    def setNotificationsProfile(self, values: dict) -> None:
+        values = dict(values or {})
+        if "position" in values:
+            position = str(values.get("position") or "top-right")
+            self._notification_position = position if position in {
+                "top-right",
+                "top-left",
+                "bottom-right",
+                "bottom-left",
+            } else "top-right"
+        if "defaultTimeoutMs" in values:
+            self._notification_default_timeout_ms = max(
+                1000,
+                min(30000, int(values.get("defaultTimeoutMs") or self._notification_default_timeout_ms)),
+            )
+        if "maxVisible" in values:
+            self._notification_max_visible = max(
+                1,
+                min(12, int(values.get("maxVisible") or self._notification_max_visible)),
+            )
+        if "muteNonCritical" in values:
+            self._notification_mute_non_critical = bool(values.get("muteNonCritical"))
+        if "auditRetention" in values:
+            self._audit_retention = max(
+                20,
+                min(5000, int(values.get("auditRetention") or self._audit_retention)),
+            )
+        self._config = self._settings.save_global({
+            "notifications": {
+                "position": self._notification_position,
+                "defaultTimeoutMs": self._notification_default_timeout_ms,
+                "maxVisible": self._notification_max_visible,
+                "muteNonCritical": self._notification_mute_non_critical,
+                "auditRetention": self._audit_retention,
+            }
+        })
+        self.reload()
+
+    @Property(str, notify=notificationsChanged)
+    def notificationPosition(self) -> str:
+        return self._notification_position
+
+    @Property(int, notify=notificationsChanged)
+    def notificationDefaultTimeoutMs(self) -> int:
+        return self._notification_default_timeout_ms
+
+    @Property(int, notify=notificationsChanged)
+    def notificationMaxVisible(self) -> int:
+        return self._notification_max_visible
+
+    @Property(bool, notify=notificationsChanged)
+    def notificationMuteNonCritical(self) -> bool:
+        return self._notification_mute_non_critical
+
+    @Property(int, notify=notificationsChanged)
+    def auditRetention(self) -> int:
+        return self._audit_retention
 
     # ── Workbench layout ─────────────────────────────────
 
