@@ -69,6 +69,30 @@ class PanelViewModel(QObject):
                 "order": 400,
                 "badge": 0,
             },
+            {
+                "id": "core.references",
+                "label": "REFERENCES",
+                "title": "References",
+                "icon": "link",
+                "component": "ReferencesPanel",
+                "location": "bottom",
+                "source": "core",
+                "order": 450,
+                "badge": 0,
+            },
+        ]
+        self._core_right_panels = [
+            {
+                "id": "core.outline",
+                "label": "OUTLINE",
+                "title": "Outline",
+                "icon": "syntax",
+                "component": "OutlinePanel",
+                "location": "right",
+                "source": "core",
+                "order": 100,
+                "badge": 0,
+            },
         ]
         self._core_sidebar_views = [
             {
@@ -131,7 +155,8 @@ class PanelViewModel(QObject):
         self.panelsChanged.emit()
 
     def _panels_for(self, location: str) -> list[dict]:
-        panels = [dict(panel) for panel in self._core_bottom_panels if panel["location"] == location]
+        core_panels = self._core_bottom_panels + self._core_right_panels
+        panels = [dict(panel) for panel in core_panels if panel["location"] == location]
         if self._manager:
             for panel in self._manager.get_panels(location):
                 payload = dict(panel)

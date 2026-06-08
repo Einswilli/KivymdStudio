@@ -198,6 +198,20 @@ ApplicationWindow {
                                                                                     root.externalChangedDirty = !!payload.dirty
                                                                                     externalFileDialog.open()
                                                                                 }
+                                                                                function onReferencesReady(locations)
+                                                                                {
+                                                                                    if (locations && locations.length > 0)
+                                                                                        root._openReferencesPanel()
+                                                                                }
+                                                                                function onSymbolsReady(symbols)
+                                                                                {
+                                                                                    if (root.rightPanelOpen && symbols && symbols.length > 0)
+                                                                                        root._openOutlinePanel()
+                                                                                }
+                                                                                function onNavigationReady(location)
+                                                                                {
+                                                                                    root._openEditorLocation(location)
+                                                                                }
                                                                             }
 
                                                                             function _updateCursor() {
@@ -366,6 +380,46 @@ function _openProblemLocation(problem) {
     root._openFileByPath(problem.path)
     root._revealInExplorer(problem.path)
     problemGotoTimer.restart()
+}
+
+function _openEditorLocation(location) {
+    if (!location) return
+    var path = location.path || ""
+    var line = location.line || 1
+    var col = location.col || 0
+    if (EditorVM && editorWorkspace.filePath)
+        EditorVM.pushNavigationLocation(editorWorkspace.filePath, editorWorkspace.cursorLine, Math.max(0, editorWorkspace.cursorCol - 1))
+    if (path && path !== editorWorkspace.filePath) {
+        root.pendingProblemPath = path
+        root.pendingProblemLine = line
+        root.pendingProblemCol = col
+        root.pendingProblemAttempts = 0
+        root.pendingQuickFix = false
+        root._openFileByPath(path)
+        problemGotoTimer.restart()
+    } else {
+        editorWorkspace.goToLocation(line, col)
+    }
+}
+
+function _openReferencesPanel() {
+    for (var i = 0; i < root.bottomPanels.length; i++) {
+        if ((root.bottomPanels[i] || {}).component === "ReferencesPanel") {
+            root._setActivePanelTab(i)
+            root._setPanelOpen(true)
+            return
+        }
+    }
+}
+
+function _openOutlinePanel() {
+    for (var i = 0; i < root.rightPanels.length; i++) {
+        if ((root.rightPanels[i] || {}).component === "OutlinePanel") {
+            root._setActiveRightPanelTab(i)
+            root._setRightPanelOpen(true, true)
+            return
+        }
+    }
 }
 
 function _quickFixProblem(problem) {
@@ -830,6 +884,7 @@ SplitView {
                             if (modelData.component === "ProblemsPanel") return problemsPanelComponent
                             if (modelData.component === "OutputPanel") return outputPanelComponent
                             if (modelData.component === "ActionsPanel") return actionsPanelComponent
+                            if (modelData.component === "ReferencesPanel") return referencesPanelComponent
                             if (modelData.component === "ConsolePanel") return consolePanelComponent
                             return pluginPanelHostComponent
                         }
@@ -937,9 +992,39 @@ Component {
 }
 
 Component {
+    id: referencesPanelComponent
+    ReferencesPanel {
+        theme: root.theme
+        references: EditorVM ? EditorVM.references : []
+        currentPath: EditorVM ? EditorVM.currentPath : ""
+        onLocationActivated: function(location) { root._openEditorLocation(location) }
+        onClearRequested: {
+            if (NotificationVM) NotificationVM.info("References", "References are refreshed from the editor with Shift+F12.", 2600)
+        }
+        onCopyRequested: function(text) {
+            if (ActionVM) ActionVM.runAction("clipboard.copy_text", {"text": text})
+            else if (StatusVM) StatusVM.copy_text(text)
+        }
+    }
+}
+
+Component {
     id: pluginPanelHostComponent
     PluginPanelHost {
         theme: root.theme
+    }
+}
+
+Component {
+    id: outlinePanelComponent
+    OutlinePanel {
+        theme: root.theme
+        symbols: EditorVM ? EditorVM.symbols : []
+        onSymbolActivated: function(symbol) { root._openEditorLocation(symbol) }
+        onRefreshRequested: {
+            if (editorWorkspace.plainText && EditorVM)
+                EditorVM.requestDocumentSymbols(editorWorkspace.plainText)
+        }
     }
 }
 
@@ -996,7 +1081,10 @@ DockPanel {
                     required property var modelData
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    sourceComponent: pluginPanelHostComponent
+                    sourceComponent: {
+                        if (modelData.component === "OutlinePanel") return outlinePanelComponent
+                        return pluginPanelHostComponent
+                    }
                     function injectProps() {
                         if (item && "theme" in item)
                             item.theme = root.theme
