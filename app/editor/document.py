@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from PySide6.QtCore import QObject, Signal, Slot, Property
+from PySide6.QtGui import QGuiApplication
 from app.services.editor_service import build_line_items, detect_language
+
+
+@dataclass(slots=True)
+class _Snapshot:
+    text: str
+    cursor: int
+    selection_start: int
 
 
 class EditorDocument(QObject):
@@ -25,17 +34,32 @@ class EditorDocument(QObject):
         self._line_tokens: dict[int, list] = {}
         self._line_cache: list[str] = []
         self._line_items: list[dict] = []
+        self._sel_start = -1
+        self._undo_stack: list[_Snapshot] = []
+        self._redo_stack: list[_Snapshot] = []
+        self._history_limit = 200
 
     @Slot(str)
     def loadText(self, text: str) -> None:
         self._text = text
         self._cursor = 0
+        self._sel_start = -1
         self._is_dirty = False
+        self._undo_stack = []
+        self._redo_stack = []
         self._re_tokenize()
         self.textChanged.emit()
+        self._emit_cursor()
+        self.selectionChanged.emit()
 
     @Slot(str)
     def typeText(self, text: str) -> None:
+        if not text:
+            return
+        self._push_undo()
+        if self.hasSelection():
+            self._replace_selection(text)
+            return
         before = self._text[:self._cursor]
         after = self._text[self._cursor:]
         self._text = before + text + after
@@ -44,10 +68,12 @@ class EditorDocument(QObject):
 
     @Slot()
     def doBackspace(self) -> None:
-        if self._cursor <= 0:
+        if self._cursor <= 0 and not self.hasSelection():
             return
-        if self._sel_start >= 0:
-            self._delete_selection()
+        self._push_undo()
+        if self.hasSelection():
+            self._delete_selection(notify=False)
+            self._on_change()
             return
         self._text = self._text[:self._cursor - 1] + self._text[self._cursor:]
         self._cursor -= 1
@@ -55,10 +81,12 @@ class EditorDocument(QObject):
 
     @Slot()
     def doDelete(self) -> None:
-        if self._sel_start >= 0:
-            self._delete_selection()
+        if self._cursor >= len(self._text) and not self.hasSelection():
             return
-        if self._cursor >= len(self._text):
+        self._push_undo()
+        if self.hasSelection():
+            self._delete_selection(notify=False)
+            self._on_change()
             return
         self._text = self._text[:self._cursor] + self._text[self._cursor + 1:]
         self._on_change()
@@ -102,8 +130,6 @@ class EditorDocument(QObject):
 
     # ── Selection ─────────────────────────────────────
 
-    _sel_start: int = -1
-
     @Slot()
     def selectAll(self) -> None:
         self._sel_start = 0
@@ -127,13 +153,94 @@ class EditorDocument(QObject):
             return self._cursor
         return max(self._sel_start, self._cursor)
 
-    def _delete_selection(self) -> None:
+    def _delete_selection(self, notify: bool = True) -> None:
+        if not self.hasSelection():
+            return
         start = min(self._sel_start, self._cursor)
         end = max(self._sel_start, self._cursor)
         self._text = self._text[:start] + self._text[end:]
         self._cursor = start
         self._sel_start = -1
+        if notify:
+            self._on_change()
+
+    def _replace_selection(self, text: str) -> None:
+        start = min(self._sel_start, self._cursor)
+        end = max(self._sel_start, self._cursor)
+        self._text = self._text[:start] + text + self._text[end:]
+        self._cursor = start + len(text)
+        self._sel_start = -1
         self._on_change()
+
+    @Slot(result=str)
+    def selectedText(self) -> str:
+        if not self.hasSelection():
+            return ""
+        start = min(self._sel_start, self._cursor)
+        end = max(self._sel_start, self._cursor)
+        return self._text[start:end]
+
+    @Slot()
+    def copySelection(self) -> None:
+        text = self.selectedText()
+        if text:
+            clipboard = QGuiApplication.clipboard()
+            if clipboard:
+                clipboard.setText(text)
+
+    @Slot()
+    def cutSelection(self) -> None:
+        if not self.hasSelection():
+            return
+        self.copySelection()
+        self._push_undo()
+        self._delete_selection(notify=False)
+        self._on_change()
+
+    @Slot()
+    def pasteClipboard(self) -> None:
+        clipboard = QGuiApplication.clipboard()
+        if clipboard:
+            self.typeText(clipboard.text() or "")
+
+    # ── Undo / Redo ───────────────────────────────────
+
+    def _snapshot(self) -> _Snapshot:
+        return _Snapshot(self._text, self._cursor, self._sel_start)
+
+    def _restore_snapshot(self, snapshot: _Snapshot) -> None:
+        self._text = snapshot.text
+        self._cursor = max(0, min(snapshot.cursor, len(self._text)))
+        self._sel_start = snapshot.selection_start
+        if self._sel_start >= 0:
+            self._sel_start = max(0, min(self._sel_start, len(self._text)))
+        self._is_dirty = True
+        self._re_tokenize()
+        self.textChanged.emit()
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    def _push_undo(self) -> None:
+        current = self._snapshot()
+        if self._undo_stack and self._undo_stack[-1] == current:
+            return
+        self._undo_stack.append(current)
+        self._undo_stack = self._undo_stack[-self._history_limit :]
+        self._redo_stack = []
+
+    @Slot()
+    def undo(self) -> None:
+        if not self._undo_stack:
+            return
+        self._redo_stack.append(self._snapshot())
+        self._restore_snapshot(self._undo_stack.pop())
+
+    @Slot()
+    def redo(self) -> None:
+        if not self._redo_stack:
+            return
+        self._undo_stack.append(self._snapshot())
+        self._restore_snapshot(self._redo_stack.pop())
 
     # ── Text access ────────────────────────────────────
 
