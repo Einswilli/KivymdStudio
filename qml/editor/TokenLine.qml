@@ -9,10 +9,13 @@ Item {
     property real fontWidth: 7
     property int gutterWidth: 56
     property int contentPadding: 8
+    property real horizontalOffset: 0
     property int selectionStartCol: -1
     property int selectionEndCol: -1
     property bool isActiveLine: false
     property bool hoverEnabled: true
+    property bool foldable: false
+    property bool folded: false
     property font editorFont: Qt.font({ family: "Menlo", pointSize: 12 })
     property var tokenColors: defaultTokenColors
     property var theme: ({})
@@ -20,6 +23,7 @@ Item {
 
     signal tokenClicked(int start, int end, string kind, int line)
     signal tokenHovered(string kind, string text, int start, int end, int mouseX, int mouseY)
+    signal foldClicked(int line)
 
     readonly property var defaultTokenColors: ({
         "comment": "#6A9955",
@@ -72,10 +76,19 @@ Item {
         color: root.isActiveLine ? (root.theme.editorLineHighlight || Qt.rgba(1, 1, 1, 0.035)) : "transparent"
     }
 
+    Rectangle {
+        x: root.horizontalOffset
+        y: 0
+        width: root.gutterWidth
+        height: parent.height
+        color: root.isActiveLine ? (root.theme.editorLineHighlight || Qt.rgba(1, 1, 1, 0.035)) : (root.theme.bg || root.theme.editorBg || "#1E1E1E")
+        z: 4
+    }
+
     Text {
         id: gutter
-        anchors.left: parent.left
-        anchors.top: parent.top
+        x: root.horizontalOffset
+        y: 0
         width: root.gutterWidth
         height: parent.height
         rightPadding: 12
@@ -86,15 +99,39 @@ Item {
         horizontalAlignment: Text.AlignRight
         verticalAlignment: Text.AlignVCenter
         renderType: Text.NativeRendering
+        z: 5
+    }
+
+    Text {
+        id: foldMarker
+        visible: root.foldable
+        x: root.horizontalOffset + 4
+        y: 0
+        width: 18
+        height: parent.height
+        text: root.folded ? "›" : "⌄"
+        color: foldMouse.containsMouse ? (root.theme.textStrong || "#E5E7EB") : (root.theme.textDim || "#858585")
+        font: root.editorFont
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        z: 7
+
+        MouseArea {
+            id: foldMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.foldClicked(root.lineNumber)
+        }
     }
 
     Rectangle {
-        anchors.left: parent.left
-        anchors.leftMargin: root.gutterWidth - 1
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        x: root.horizontalOffset + root.gutterWidth - 1
+        y: 0
+        height: parent.height
         width: 1
         color: root.theme.border || "#2B2B2B"
+        z: 6
     }
 
     Rectangle {
