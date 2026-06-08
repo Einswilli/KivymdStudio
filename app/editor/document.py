@@ -66,6 +66,19 @@ class EditorDocument(QObject):
         self._cursor += len(text)
         self._on_change()
 
+    @Slot(str, str)
+    def wrapSelection(self, prefix: str, suffix: str) -> None:
+        if not self.hasSelection():
+            return
+        self._push_undo()
+        start = min(self._sel_start, self._cursor)
+        end = max(self._sel_start, self._cursor)
+        selected = self._text[start:end]
+        self._text = self._text[:start] + prefix + selected + suffix + self._text[end:]
+        self._sel_start = start + len(prefix)
+        self._cursor = self._sel_start + len(selected)
+        self._on_change()
+
     @Slot()
     def doBackspace(self) -> None:
         if self._cursor <= 0 and not self.hasSelection():
@@ -225,12 +238,95 @@ class EditorDocument(QObject):
         self._emit_cursor()
         self.selectionChanged.emit()
 
+    @Slot(bool)
+    def moveWordLeft(self, select: bool = False) -> None:
+        pos = self._word_left(self._cursor)
+        if select:
+            self.moveCursorSelect(pos)
+        else:
+            self.moveCursor(pos)
+
+    @Slot(bool)
+    def moveWordRight(self, select: bool = False) -> None:
+        pos = self._word_right(self._cursor)
+        if select:
+            self.moveCursorSelect(pos)
+        else:
+            self.moveCursor(pos)
+
+    @Slot()
+    def deleteWordLeft(self) -> None:
+        if self.hasSelection():
+            self.doBackspace()
+            return
+        target = self._word_left(self._cursor)
+        if target == self._cursor:
+            return
+        self._push_undo()
+        self._text = self._text[:target] + self._text[self._cursor:]
+        self._cursor = target
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot()
+    def deleteWordRight(self) -> None:
+        if self.hasSelection():
+            self.doDelete()
+            return
+        target = self._word_right(self._cursor)
+        if target == self._cursor:
+            return
+        self._push_undo()
+        self._text = self._text[:self._cursor] + self._text[target:]
+        self._sel_start = -1
+        self._on_change()
+
     # ── Selection ─────────────────────────────────────
 
     @Slot()
     def selectAll(self) -> None:
         self._sel_start = 0
         self._cursor = len(self._text)
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot(int)
+    def selectWordAt(self, pos: int) -> None:
+        if not self._text:
+            return
+        pos = max(0, min(pos, len(self._text) - 1))
+        if not self._is_word_char(self._text[pos]) and pos > 0 and self._is_word_char(self._text[pos - 1]):
+            pos -= 1
+        if not self._is_word_char(self._text[pos]):
+            self.moveCursor(pos)
+            return
+        start = pos
+        end = pos + 1
+        while start > 0 and self._is_word_char(self._text[start - 1]):
+            start -= 1
+        while end < len(self._text) and self._is_word_char(self._text[end]):
+            end += 1
+        self._sel_start = start
+        self._cursor = end
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot(int)
+    def selectLineAt(self, line: int) -> None:
+        start, end = self._line_range_by_index(line, include_newline=True)
+        self._sel_start = start
+        self._cursor = end
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot(int, int)
+    def selectLineRange(self, start_line: int, end_line: int) -> None:
+        first = max(0, min(start_line, end_line))
+        last = max(0, max(start_line, end_line))
+        start, _ = self._line_range_by_index(first, include_newline=False)
+        _, end = self._line_range_by_index(last, include_newline=True)
+        self._sel_start = start
+        self._cursor = end
         self._emit_cursor()
         self.selectionChanged.emit()
 
@@ -281,6 +377,49 @@ class EditorDocument(QObject):
         elif include_newline:
             end += 1
         return start, end
+
+    def _line_range_by_index(self, line: int, include_newline: bool = False) -> tuple[int, int]:
+        line = max(0, min(line, max(0, len(self._line_cache) - 1)))
+        start = 0
+        for _ in range(line):
+            next_newline = self._text.find("\n", start)
+            if next_newline < 0:
+                return len(self._text), len(self._text)
+            start = next_newline + 1
+        end = self._text.find("\n", start)
+        if end < 0:
+            end = len(self._text)
+        elif include_newline:
+            end += 1
+        return start, end
+
+    @staticmethod
+    def _is_word_char(char: str) -> bool:
+        return bool(char) and (char.isalnum() or char == "_")
+
+    def _word_left(self, pos: int) -> int:
+        pos = max(0, min(pos, len(self._text)))
+        while pos > 0 and self._text[pos - 1].isspace():
+            pos -= 1
+        if pos > 0 and self._is_word_char(self._text[pos - 1]):
+            while pos > 0 and self._is_word_char(self._text[pos - 1]):
+                pos -= 1
+            return pos
+        while pos > 0 and not self._text[pos - 1].isspace() and not self._is_word_char(self._text[pos - 1]):
+            pos -= 1
+        return pos
+
+    def _word_right(self, pos: int) -> int:
+        pos = max(0, min(pos, len(self._text)))
+        while pos < len(self._text) and self._text[pos].isspace():
+            pos += 1
+        if pos < len(self._text) and self._is_word_char(self._text[pos]):
+            while pos < len(self._text) and self._is_word_char(self._text[pos]):
+                pos += 1
+            return pos
+        while pos < len(self._text) and not self._text[pos].isspace() and not self._is_word_char(self._text[pos]):
+            pos += 1
+        return pos
 
     def _edit_selected_lines(self, transform, keep_selection: bool = False) -> None:
         self._push_undo()
@@ -359,6 +498,43 @@ class EditorDocument(QObject):
         self._sel_start = -1
         self._on_change()
 
+    @Slot(int, int, str)
+    def replaceRange(self, start: int, end: int, replacement: str) -> None:
+        start = max(0, min(int(start), len(self._text)))
+        end = max(start, min(int(end), len(self._text)))
+        self._push_undo()
+        self._text = self._text[:start] + replacement + self._text[end:]
+        self._cursor = start + len(replacement)
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot(str, str, bool, result=int)
+    def replaceAllLiteral(self, needle: str, replacement: str, case_sensitive: bool = False) -> int:
+        if not needle:
+            return 0
+        source = self._text if case_sensitive else self._text.lower()
+        target = needle if case_sensitive else needle.lower()
+        pieces: list[str] = []
+        cursor = 0
+        count = 0
+        while True:
+            index = source.find(target, cursor)
+            if index < 0:
+                break
+            pieces.append(self._text[cursor:index])
+            pieces.append(replacement)
+            cursor = index + len(needle)
+            count += 1
+        if count == 0:
+            return 0
+        pieces.append(self._text[cursor:])
+        self._push_undo()
+        self._text = "".join(pieces)
+        self._cursor = 0
+        self._sel_start = -1
+        self._on_change()
+        return count
+
     @Slot(result=str)
     def selectedText(self) -> str:
         if not self.hasSelection():
@@ -366,6 +542,29 @@ class EditorDocument(QObject):
         start = min(self._sel_start, self._cursor)
         end = max(self._sel_start, self._cursor)
         return self._text[start:end]
+
+    @Slot()
+    def selectNextOccurrence(self) -> None:
+        needle = self.selectedText()
+        if not needle:
+            original_cursor = self._cursor
+            self.selectWordAt(self._cursor)
+            needle = self.selectedText()
+            if not needle:
+                self.moveCursor(original_cursor)
+            return
+        search_from = self.selectionEnd if self.hasSelection() else self._cursor
+        haystack = self._text.lower()
+        target = needle.lower()
+        index = haystack.find(target, search_from)
+        if index < 0 and search_from > 0:
+            index = haystack.find(target, 0)
+        if index < 0:
+            return
+        self._sel_start = index
+        self._cursor = index + len(needle)
+        self._emit_cursor()
+        self.selectionChanged.emit()
 
     @Slot()
     def copySelection(self) -> None:
