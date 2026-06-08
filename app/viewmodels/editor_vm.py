@@ -4,6 +4,7 @@ import os
 import json
 import asyncio
 import time
+import shutil
 from PySide6.QtCore import QObject, Signal, Slot, Property
 from app.core.async_tasks import schedule
 from app.core.events import EventBus
@@ -928,12 +929,44 @@ class EditorViewModel(QObject):
         edit = raw.get("edit") if isinstance(raw, dict) else {}
         if not isinstance(edit, dict):
             return
-        updated = self._apply_workspace_edit(code, edit, self._current_path)
-        if updated is None:
+        plan = await self._prepare_workspace_edit(code, edit, self._current_path)
+        changes = plan.get("text") or {}
+        file_ops = plan.get("fileOps") or []
+        if not changes and not file_ops:
             return
+        import aiofiles
+
+        active_path = self._normalize_path(self._current_path)
+        active_content = ""
+        changed_paths: list[str] = []
+        try:
+            changed_paths.extend(await self._apply_workspace_file_ops(file_ops))
+            for path, payload in changes.items():
+                updated = str(payload.get("after") or "")
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                async with aiofiles.open(path, "w", encoding="utf-8") as handle:
+                    await handle.write(updated)
+                self._mark_internal_write(path)
+                self._set_tab_dirty_by_path(path, False)
+                await self._lsp.sync_document(path, updated, self._detect_language(path))
+                changed_paths.append(path)
+                if path == active_path:
+                    active_content = updated
+        except Exception as exc:
+            if self._notification_vm:
+                self._notification_vm.error("Code action failed", str(exc), 4200)
+            return
+
         self._document_generation += 1
-        await self._sync_document_async(self._current_path, updated, self._document_generation)
-        self.codeActionApplied.emit(self._current_path, updated)
+        if active_content:
+            await self._sync_document_async(active_path, active_content, self._document_generation)
+            self.codeActionApplied.emit(active_path, active_content)
+        if self._notification_vm:
+            self._notification_vm.success(
+                "Code action applied",
+                f"{len(set(changed_paths))} file{'s' if len(set(changed_paths)) != 1 else ''} updated.",
+                2600,
+            )
 
     async def _preview_code_action_async(self, action: dict, code: str) -> None:
         raw = action.get("raw") if isinstance(action.get("raw"), dict) else action
@@ -948,22 +981,26 @@ class EditorViewModel(QObject):
                 "preview": "",
             })
             return
-        updated = self._apply_workspace_edit(code, edit, self._current_path)
-        if updated is None:
+        plan = await self._prepare_workspace_edit(code, edit, self._current_path)
+        changes = plan.get("text") or {}
+        file_ops = plan.get("fileOps") or []
+        if not changes and not file_ops:
             self.codeActionPreviewReady.emit({
                 "ok": False,
                 "title": title,
-                "message": "No changes affect the current file.",
+                "message": "No previewable workspace edits were returned by the language server.",
                 "action": action,
                 "preview": "",
             })
             return
+        preview = self._workspace_edit_preview(plan)
+        touched_count = len(set(list(changes.keys()) + [path for op in file_ops for path in (op.get("path"), op.get("newPath")) if path]))
         self.codeActionPreviewReady.emit({
             "ok": True,
             "title": title,
-            "message": "Review changes before applying.",
+            "message": f"Review changes in {touched_count} file{'s' if touched_count != 1 else ''} before applying.",
             "action": action,
-            "preview": self._diff_preview(code, updated),
+            "preview": preview,
         })
 
     @staticmethod
@@ -982,14 +1019,94 @@ class EditorViewModel(QObject):
         return "\n".join(lines)
 
     @classmethod
-    def _apply_workspace_edit(cls, code: str, edit: dict, current_path: str) -> str | None:
-        current_path = os.path.abspath(os.path.expanduser(current_path or ""))
-        edits: list[dict] = []
+    def _workspace_edit_preview(cls, plan: dict, max_lines: int = 320) -> str:
+        lines: list[str] = []
+        file_ops = plan.get("fileOps") or []
+        if file_ops:
+            lines.append("# File operations")
+            for op in file_ops:
+                kind = op.get("kind", "operation")
+                if kind == "rename":
+                    lines.append(f"rename {op.get('path', '')} -> {op.get('newPath', '')}")
+                else:
+                    lines.append(f"{kind} {op.get('path', '')}")
+            lines.append("")
+        diff = cls._workspace_diff_preview(plan.get("text") or {}, max_lines=max_lines)
+        if diff:
+            lines.append("# Text edits")
+            lines.extend(diff.splitlines())
+        if len(lines) > max_lines:
+            lines = lines[:max_lines] + ["… preview truncated …"]
+        return "\n".join(lines).strip()
+
+    @classmethod
+    def _workspace_diff_preview(cls, changes: dict[str, dict], max_lines: int = 260) -> str:
+        import difflib
+
+        lines: list[str] = []
+        for path in sorted(changes):
+            payload = changes[path]
+            before = str(payload.get("before") or "")
+            after = str(payload.get("after") or "")
+            diff = list(difflib.unified_diff(
+                before.splitlines(),
+                after.splitlines(),
+                fromfile=path,
+                tofile=path,
+                lineterm="",
+            ))
+            if diff:
+                if lines:
+                    lines.append("")
+                lines.extend(diff)
+            if len(lines) > max_lines:
+                return "\n".join(lines[:max_lines] + ["… diff truncated …"])
+        return "\n".join(lines)
+
+    async def _prepare_workspace_edit(
+        self,
+        code: str,
+        edit: dict,
+        current_path: str,
+    ) -> dict[str, object]:
+        grouped, file_ops = self._collect_workspace_edit_parts(edit)
+        active_path = self._normalize_path(current_path)
+        if active_path and active_path in grouped:
+            before_by_path = {active_path: code}
+        else:
+            before_by_path = {}
+
+        for path in grouped:
+            if path in before_by_path:
+                continue
+            if os.path.exists(path):
+                before = await self._read_async(path)
+                if before is None:
+                    continue
+                before_by_path[path] = before
+            else:
+                before_by_path[path] = ""
+
+        changes: dict[str, dict] = {}
+        for path, edits in grouped.items():
+            before = before_by_path.get(path)
+            if before is None:
+                continue
+            after = self._apply_text_edits(before, edits)
+            if after != before:
+                changes[path] = {"before": before, "after": after, "edits": edits}
+        return {"text": changes, "fileOps": file_ops}
+
+    @classmethod
+    def _collect_workspace_edit_parts(cls, edit: dict) -> tuple[dict[str, list[dict]], list[dict]]:
+        grouped: dict[str, list[dict]] = {}
+        file_ops: list[dict] = []
         changes = edit.get("changes")
         if isinstance(changes, dict):
             for uri, uri_edits in changes.items():
-                if uri and os.path.abspath(uri_to_path(uri)) == current_path and isinstance(uri_edits, list):
-                    edits.extend(uri_edits)
+                path = cls._path_from_lsp_uri(uri)
+                if path and isinstance(uri_edits, list):
+                    grouped.setdefault(path, []).extend(uri_edits)
         document_changes = edit.get("documentChanges")
         if isinstance(document_changes, list):
             for change in document_changes:
@@ -997,10 +1114,115 @@ class EditorViewModel(QObject):
                     continue
                 text_document = change.get("textDocument") or {}
                 uri = text_document.get("uri", "")
-                if uri and os.path.abspath(uri_to_path(uri)) == current_path and isinstance(change.get("edits"), list):
-                    edits.extend(change["edits"])
+                path = cls._path_from_lsp_uri(uri)
+                if path and isinstance(change.get("edits"), list):
+                    grouped.setdefault(path, []).extend(change["edits"])
+                    continue
+                op = cls._workspace_file_op_from_change(change)
+                if op:
+                    file_ops.append(op)
+        return grouped, file_ops
+
+    @classmethod
+    def _collect_workspace_text_edits(cls, edit: dict) -> dict[str, list[dict]]:
+        grouped, _file_ops = cls._collect_workspace_edit_parts(edit)
+        return grouped
+
+    @classmethod
+    def _workspace_file_op_from_change(cls, change: dict) -> dict:
+        kind = str(change.get("kind") or "").lower()
+        if kind == "rename" or ("oldUri" in change and "newUri" in change):
+            return {
+                "kind": "rename",
+                "path": cls._path_from_lsp_uri(change.get("oldUri", "")),
+                "newPath": cls._path_from_lsp_uri(change.get("newUri", "")),
+                "options": change.get("options") or {},
+            }
+        if kind == "create" or ("uri" in change and kind == "createfile"):
+            return {
+                "kind": "create",
+                "path": cls._path_from_lsp_uri(change.get("uri", "")),
+                "options": change.get("options") or {},
+            }
+        if kind == "delete" or ("uri" in change and kind == "deletefile"):
+            return {
+                "kind": "delete",
+                "path": cls._path_from_lsp_uri(change.get("uri", "")),
+                "options": change.get("options") or {},
+            }
+        return {}
+
+    async def _apply_workspace_file_ops(self, file_ops: list[dict]) -> list[str]:
+        changed: list[str] = []
+        for op in file_ops:
+            kind = op.get("kind")
+            path = self._normalize_path(str(op.get("path") or ""))
+            options = op.get("options") if isinstance(op.get("options"), dict) else {}
+            if not path:
+                continue
+            if kind == "create":
+                overwrite = bool(options.get("overwrite"))
+                ignore_if_exists = bool(options.get("ignoreIfExists"))
+                if os.path.exists(path) and not overwrite:
+                    if ignore_if_exists:
+                        continue
+                    raise FileExistsError(path)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                if os.path.isdir(path):
+                    continue
+                with open(path, "w" if overwrite else "x", encoding="utf-8"):
+                    pass
+                self._mark_internal_write(path)
+                changed.append(path)
+            elif kind == "rename":
+                new_path = self._normalize_path(str(op.get("newPath") or ""))
+                if not new_path:
+                    continue
+                overwrite = bool(options.get("overwrite"))
+                if os.path.exists(new_path):
+                    if not overwrite:
+                        raise FileExistsError(new_path)
+                    if os.path.isdir(new_path):
+                        shutil.rmtree(new_path)
+                    else:
+                        os.remove(new_path)
+                os.makedirs(os.path.dirname(new_path), exist_ok=True)
+                os.rename(path, new_path)
+                self._mark_internal_write(path)
+                self._mark_internal_write(new_path)
+                changed.extend([path, new_path])
+            elif kind == "delete":
+                if not os.path.exists(path):
+                    continue
+                recursive = bool(options.get("recursive"))
+                if os.path.isdir(path):
+                    if recursive:
+                        shutil.rmtree(path)
+                    else:
+                        os.rmdir(path)
+                else:
+                    os.remove(path)
+                self._mark_internal_write(path)
+                changed.append(path)
+        return changed
+
+    @staticmethod
+    def _path_from_lsp_uri(uri: str) -> str:
+        if not uri:
+            return ""
+        path = uri_to_path(uri) if str(uri).startswith("file://") else str(uri)
+        return os.path.abspath(os.path.expanduser(path))
+
+    @classmethod
+    def _apply_workspace_edit(cls, code: str, edit: dict, current_path: str) -> str | None:
+        current_path = os.path.abspath(os.path.expanduser(current_path or ""))
+        edits = cls._collect_workspace_text_edits(edit).get(current_path, [])
         if not edits:
             return None
+        return cls._apply_text_edits(code, edits)
+
+    @classmethod
+    def _apply_text_edits(cls, code: str, edits: list[dict]) -> str:
         output = code
         for item in sorted(edits, key=lambda e: cls._edit_start_offset(code, e), reverse=True):
             range_info = item.get("range") or {}

@@ -433,11 +433,16 @@ class ExternalLSPProcess:
             items = params.get("items") or []
             self._write_response(request_id, [{} for _ in items])
             return
+        if method == "workspace/applyEdit":
+            self._write_response(request_id, {
+                "applied": False,
+                "failureReason": "Editor-managed workspace edits are applied from code actions only.",
+            })
+            return
         if method in {
             "client/registerCapability",
             "client/unregisterCapability",
             "window/workDoneProgress/create",
-            "workspace/applyEdit",
             "window/showDocument",
         }:
             self._write_response(request_id, None)

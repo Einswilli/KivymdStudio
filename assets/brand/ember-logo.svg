@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ember-bg" x1="76" y1="36" x2="438" y2="478" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="0.52" stop-color="#151A26"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+    <linearGradient id="ember-flame" x1="173" y1="103" x2="341" y2="397" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="0.34" stop-color="#FF9F43"/>
+      <stop offset="0.72" stop-color="#F97316"/>
+      <stop offset="1" stop-color="#EF4444"/>
+    </linearGradient>
+    <linearGradient id="ember-code" x1="126" y1="190" x2="386" y2="331" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#93C5FD"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <filter id="soft-glow" x="58" y="54" width="396" height="408" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feGaussianBlur stdDeviation="18"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.976 0 0 0 0 0.451 0 0 0 0 0.086 0 0 0 0.38 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#ember-bg)"/>
+  <rect x="34" y="34" width="444" height="444" rx="110" stroke="white" stroke-opacity="0.08" stroke-width="4"/>
+  <path d="M113 346C88 301 92 240 123 194C145 161 176 140 192 104C197 91 214 91 220 104C234 134 229 169 218 195C243 178 263 151 271 119C275 102 297 98 306 114C331 158 336 202 321 244C337 232 349 215 354 194C358 178 379 174 388 188C418 234 421 292 394 341C365 394 312 424 253 422C196 420 139 393 113 346Z" fill="url(#ember-flame)" filter="url(#soft-glow)"/>
+  <path d="M244 386C208 376 181 350 174 313C169 286 177 260 197 240C207 230 222 238 220 252C216 276 225 295 242 306C238 278 251 253 272 235C283 225 300 235 296 250C291 271 299 290 315 302C334 317 341 343 329 365C314 394 278 404 244 386Z" fill="#FFF7ED" fill-opacity="0.88"/>
+  <path d="M175 213L117 256L175 299" stroke="url(#ember-code)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M337 213L395 256L337 299" stroke="url(#ember-code)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M280 189L232 323" stroke="#E5E7EB" stroke-opacity="0.88" stroke-width="22" stroke-linecap="round"/>
+</svg>
