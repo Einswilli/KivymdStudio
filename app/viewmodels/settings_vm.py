@@ -43,6 +43,9 @@ class SettingsViewModel(QObject):
         self._ui_font_size = int(self._get("ui.fontSize", 12))
         self._editor_line_spacing = int(self._get("editor.lineSpacing", 6))
         self._tab_size = int(self._get("editor.tabSize", 4))
+        self._editor_cursor_style = str(self._get("editor.cursor.style", "bar"))
+        self._editor_cursor_width = int(self._get("editor.cursor.width", 2))
+        self._editor_cursor_blink = bool(self._get("editor.cursor.blink", True))
         self._auto_save_enabled = bool(self._get("editor.autoSave.enabled", False))
         self._auto_save_delay_ms = int(self._get("editor.autoSave.delayMs", 1200))
         self._trim_trailing_whitespace = bool(self._get("editor.trimTrailingWhitespace", True))
@@ -229,6 +232,15 @@ class SettingsViewModel(QObject):
         self._ui_font_size = int(self._get("ui.fontSize", self._ui_font_size))
         self._editor_line_spacing = int(self._get("editor.lineSpacing", self._editor_line_spacing))
         self._tab_size = int(self._get("editor.tabSize", self._tab_size))
+        self._editor_cursor_style = str(
+            self._get("editor.cursor.style", self._editor_cursor_style)
+        )
+        self._editor_cursor_width = int(
+            self._get("editor.cursor.width", self._editor_cursor_width)
+        )
+        self._editor_cursor_blink = bool(
+            self._get("editor.cursor.blink", self._editor_cursor_blink)
+        )
         self._auto_save_enabled = bool(
             self._get("editor.autoSave.enabled", self._auto_save_enabled)
         )
@@ -648,6 +660,43 @@ class SettingsViewModel(QObject):
     def tabSize(self) -> int:
         return self._tab_size
 
+    @Slot(str)
+    def setEditorCursorStyle(self, value: str) -> None:
+        cursor_style = str(value or "bar")
+        self._editor_cursor_style = cursor_style if cursor_style in {"bar", "block", "underline"} else "bar"
+        self._config = self._settings.save_global(
+            {"editor": {"cursor": {"style": self._editor_cursor_style}}}
+        )
+        self.reload()
+
+    @Property(str, notify=editorMetricsChanged)
+    def editorCursorStyle(self) -> str:
+        return self._editor_cursor_style
+
+    @Slot(int)
+    def setEditorCursorWidth(self, value: int) -> None:
+        self._editor_cursor_width = max(1, min(8, int(value)))
+        self._config = self._settings.save_global(
+            {"editor": {"cursor": {"width": self._editor_cursor_width}}}
+        )
+        self.reload()
+
+    @Property(int, notify=editorMetricsChanged)
+    def editorCursorWidth(self) -> int:
+        return self._editor_cursor_width
+
+    @Slot(bool)
+    def setEditorCursorBlink(self, value: bool) -> None:
+        self._editor_cursor_blink = bool(value)
+        self._config = self._settings.save_global(
+            {"editor": {"cursor": {"blink": self._editor_cursor_blink}}}
+        )
+        self.reload()
+
+    @Property(bool, notify=editorMetricsChanged)
+    def editorCursorBlink(self) -> bool:
+        return self._editor_cursor_blink
+
     @Slot(bool)
     def setAutoSaveEnabled(self, value: bool) -> None:
         self._auto_save_enabled = bool(value)
@@ -829,6 +878,13 @@ class SettingsViewModel(QObject):
             self._editor_line_spacing = max(2, min(16, int(values.get("lineSpacing") or self._editor_line_spacing)))
         if "tabSize" in values:
             self._tab_size = max(1, min(12, int(values.get("tabSize") or self._tab_size)))
+        if "cursorStyle" in values:
+            cursor_style = str(values.get("cursorStyle") or self._editor_cursor_style)
+            self._editor_cursor_style = cursor_style if cursor_style in {"bar", "block", "underline"} else "bar"
+        if "cursorWidth" in values:
+            self._editor_cursor_width = max(1, min(8, int(values.get("cursorWidth") or self._editor_cursor_width)))
+        if "cursorBlink" in values:
+            self._editor_cursor_blink = bool(values.get("cursorBlink"))
         if "wordWrap" in values:
             self._word_wrap = bool(values.get("wordWrap"))
         if "rulersCsv" in values:
@@ -868,6 +924,11 @@ class SettingsViewModel(QObject):
                 "fontSize": self._font_size,
                 "lineSpacing": self._editor_line_spacing,
                 "tabSize": self._tab_size,
+                "cursor": {
+                    "style": self._editor_cursor_style,
+                    "width": self._editor_cursor_width,
+                    "blink": self._editor_cursor_blink,
+                },
                 "wordWrap": self._word_wrap,
                 "autoSave": {
                     "enabled": self._auto_save_enabled,
