@@ -1523,7 +1523,10 @@ Timer {
 
     Component {
         id: _gitComp
-        SourceControlFallback { theme: root.theme }
+        SourceControlFallback {
+            theme: root.theme
+            onOpenFileRequested: function(path) { root._openFileByPath(path) }
+        }
     }
 
     Component {

@@ -2,7 +2,7 @@
 Plugin registry — discovery, installation, and lifecycle management.
 
 Directory structure per plugin:
-    ~/.Ember/plugins/python/myPlugin/
+    ~/.Ember/plugins/myPlugin/
         manifest.json    — PluginManifest (required)
         backend.py       — Python entry point (optional)
         frontend.qml     — QML UI component (optional)
@@ -47,8 +47,10 @@ class PluginState:
 class PluginRegistry:
     def __init__(self):
         self._plugins: dict[str, PluginState] = {}
-        self._install_dir = os.path.join(PATHS["PLUGINS"], "python")
-        self._repo_plugin_dir = str(Path.cwd() / "plugins" / "python")
+        self._install_dir = PATHS["PLUGINS"]
+        self._repo_plugin_dir = str(Path.cwd() / "plugins")
+        self._legacy_install_dir = os.path.join(PATHS["PLUGINS"], "python")
+        self._legacy_repo_plugin_dir = str(Path.cwd() / "plugins" / "python")
         self._allow_user_plugins = True
 
     def configure(self, *, allow_user_plugins: bool = True) -> None:
@@ -61,15 +63,20 @@ class PluginRegistry:
         discovered: dict[str, PluginState] = {}
 
         plugin_dirs = []
-        roots = [self._repo_plugin_dir]
+        roots = [self._repo_plugin_dir, self._legacy_repo_plugin_dir]
         if self._allow_user_plugins:
-            roots.append(self._install_dir)
+            roots.extend([self._install_dir, self._legacy_install_dir])
         for root in roots:
             plugin_dirs.extend(glob.glob(os.path.join(root, "*")))
 
         seen: set[str] = set()
+        legacy_containers = {
+            os.path.abspath(self._legacy_install_dir),
+            os.path.abspath(self._legacy_repo_plugin_dir),
+        }
         for plugin_dir in plugin_dirs:
-            if not os.path.isdir(plugin_dir) or plugin_dir in seen:
+            plugin_dir = os.path.abspath(plugin_dir)
+            if not os.path.isdir(plugin_dir) or plugin_dir in seen or plugin_dir in legacy_containers:
                 continue
             seen.add(plugin_dir)
             dir_name = os.path.basename(plugin_dir)

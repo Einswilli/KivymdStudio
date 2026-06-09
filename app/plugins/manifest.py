@@ -275,6 +275,19 @@ class SearchProviderContribution(BaseModel):
     install: dict = Field(default_factory=dict)
 
 
+class SourceControlProviderContribution(BaseModel):
+    id: str = Field(..., min_length=1, pattern=r"^[a-zA-Z][a-zA-Z0-9._-]*$")
+    label: str = Field(..., min_length=1)
+    description: str = Field(default="")
+    providerType: str = Field(default="git")
+    command: str = Field(default="git")
+    capabilities: list[str] = Field(default_factory=list)
+    rootPatterns: list[str] = Field(default_factory=lambda: [".git"])
+    configSchema: dict = Field(default_factory=dict)
+    defaults: dict = Field(default_factory=dict)
+    install: dict = Field(default_factory=dict)
+
+
 class FileFormatterContribution(BaseModel):
     id: str = Field(..., min_length=1, pattern=r"^[a-zA-Z][a-zA-Z0-9._-]*$")
     label: str = Field(..., min_length=1)
@@ -398,6 +411,7 @@ class PluginContributes(BaseModel):
     aiProviders: list[AIProviderContribution] = Field(default_factory=list)
     lspProviders: list[LSPProviderContribution] = Field(default_factory=list)
     searchProviders: list[SearchProviderContribution] = Field(default_factory=list)
+    sourceControlProviders: list[SourceControlProviderContribution] = Field(default_factory=list)
     fileFormatters: list[FileFormatterContribution] = Field(default_factory=list)
     fileActions: list[FileActionContribution] = Field(default_factory=list)
     fileDecorations: list[FileDecorationContribution] = Field(default_factory=list)
@@ -422,6 +436,7 @@ class PluginContributes(BaseModel):
             or self.aiProviders
             or self.lspProviders
             or self.searchProviders
+            or self.sourceControlProviders
             or self.fileFormatters
             or self.fileActions
             or self.fileDecorations

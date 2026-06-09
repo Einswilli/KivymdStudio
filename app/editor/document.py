@@ -12,6 +12,7 @@ class _Snapshot:
     text: str
     cursor: int
     selection_start: int
+    extra_cursors: tuple[int, ...] = ()
 
 
 class EditorDocument(QObject):
@@ -19,6 +20,7 @@ class EditorDocument(QObject):
     cursorChanged = Signal(int, int)  # line, col
     selectionChanged = Signal()
     overwriteModeChanged = Signal()
+    extraCursorsChanged = Signal()
     languageChanged = Signal(str)
     suggestionChanged = Signal(str)
     tokensChanged = Signal(str)  # JSON: [[start,end,kind],...] per line
@@ -41,6 +43,7 @@ class EditorDocument(QObject):
         self._history_limit = 200
         self._preferred_col: int | None = None
         self._overwrite_mode = False
+        self._extra_cursors: list[int] = []
 
     @Slot(str)
     def loadText(self, text: str) -> None:
@@ -50,6 +53,7 @@ class EditorDocument(QObject):
         self._is_dirty = False
         self._undo_stack = []
         self._redo_stack = []
+        self._extra_cursors = []
         self._re_tokenize()
         self.textChanged.emit()
         self._emit_cursor()
@@ -62,6 +66,9 @@ class EditorDocument(QObject):
         self._push_undo()
         if self.hasSelection():
             self._replace_selection(text)
+            return
+        if self._extra_cursors:
+            self._type_text_multi_cursor(text)
             return
         if self._overwrite_mode and len(text) == 1 and text not in "\r\n":
             next_char = self._text[self._cursor:self._cursor + 1]
@@ -94,6 +101,10 @@ class EditorDocument(QObject):
         if self.hasSelection():
             self.wrapSelection(prefix, suffix)
             return
+        if self._extra_cursors:
+            self._push_undo()
+            self._insert_pair_multi_cursor(prefix, suffix)
+            return
         self._push_undo()
         self._text = self._text[:self._cursor] + prefix + suffix + self._text[self._cursor:]
         self._cursor += len(prefix)
@@ -114,12 +125,15 @@ class EditorDocument(QObject):
 
     @Slot()
     def doBackspace(self) -> None:
-        if self._cursor <= 0 and not self.hasSelection():
+        if self._cursor <= 0 and not self.hasSelection() and not any(pos > 0 for pos in self._extra_cursors):
             return
         self._push_undo()
         if self.hasSelection():
             self._delete_selection(notify=False)
             self._on_change()
+            return
+        if self._extra_cursors:
+            self._backspace_multi_cursor()
             return
         if self._cursor < len(self._text):
             previous_char = self._text[self._cursor - 1]
@@ -135,12 +149,19 @@ class EditorDocument(QObject):
 
     @Slot()
     def doDelete(self) -> None:
-        if self._cursor >= len(self._text) and not self.hasSelection():
+        if (
+            self._cursor >= len(self._text)
+            and not self.hasSelection()
+            and not any(pos < len(self._text) for pos in self._extra_cursors)
+        ):
             return
         self._push_undo()
         if self.hasSelection():
             self._delete_selection(notify=False)
             self._on_change()
+            return
+        if self._extra_cursors:
+            self._delete_multi_cursor()
             return
         self._text = self._text[:self._cursor] + self._text[self._cursor + 1:]
         self._on_change()
@@ -356,6 +377,7 @@ class EditorDocument(QObject):
         self._cursor = pos
         self._sel_start = -1
         self._preferred_col = None
+        self._clear_extra_cursors()
         self._emit_cursor()
         self.selectionChanged.emit()
 
@@ -366,6 +388,7 @@ class EditorDocument(QObject):
             self._sel_start = self._cursor
         self._cursor = pos
         self._preferred_col = None
+        self._clear_extra_cursors()
         self._emit_cursor()
         self.selectionChanged.emit()
 
@@ -417,6 +440,30 @@ class EditorDocument(QObject):
     def toggleOverwriteMode(self) -> None:
         self._overwrite_mode = not self._overwrite_mode
         self.overwriteModeChanged.emit()
+
+    @Slot(int)
+    def addCursorAt(self, pos: int) -> None:
+        pos = max(0, min(int(pos), len(self._text)))
+        if pos == self._cursor:
+            return
+        cursors = sorted(set(self._extra_cursors + [pos]))
+        if cursors == self._extra_cursors:
+            return
+        self._sel_start = -1
+        self._extra_cursors = cursors
+        self.selectionChanged.emit()
+        self.extraCursorsChanged.emit()
+
+    @Slot(int)
+    def addCursorLine(self, delta: int) -> None:
+        line, col = self._line_col_from_pos(self._cursor)
+        target_line = max(0, min(line + int(delta), max(0, len(self._line_cache) - 1)))
+        target_pos = self._pos_from_line_col(target_line, col)
+        self.addCursorAt(target_pos)
+
+    @Slot()
+    def clearExtraCursors(self) -> None:
+        self._clear_extra_cursors()
 
     @Slot(bool)
     def moveWordLeft(self, select: bool = False) -> None:
@@ -605,6 +652,97 @@ class EditorDocument(QObject):
         self._sel_start = -1
         if notify:
             self._on_change()
+
+    def _clear_extra_cursors(self) -> None:
+        if not self._extra_cursors:
+            return
+        self._extra_cursors = []
+        self.extraCursorsChanged.emit()
+
+    def _all_cursor_positions(self) -> list[int]:
+        return sorted(set([self._cursor] + self._extra_cursors))
+
+    def _type_text_multi_cursor(self, text: str) -> None:
+        if not text:
+            return
+        primary = self._cursor
+        replacements: dict[int, int] = {}
+        pieces = self._text
+        offset = 0
+        for pos in self._all_cursor_positions():
+            actual = pos + offset
+            replace_len = 0
+            if self._overwrite_mode and len(text) == 1 and text not in "\r\n":
+                next_char = pieces[actual:actual + 1]
+                if next_char and next_char != "\n":
+                    replace_len = 1
+            pieces = pieces[:actual] + text + pieces[actual + replace_len:]
+            replacements[pos] = actual + len(text)
+            offset += len(text) - replace_len
+        self._text = pieces
+        self._cursor = replacements.get(primary, self._cursor)
+        self._extra_cursors = sorted(
+            pos for original, pos in replacements.items() if original != primary
+        )
+        self._sel_start = -1
+        self._on_change()
+
+    def _insert_pair_multi_cursor(self, prefix: str, suffix: str) -> None:
+        primary = self._cursor
+        replacements: dict[int, int] = {}
+        pieces = self._text
+        offset = 0
+        insert = prefix + suffix
+        for pos in self._all_cursor_positions():
+            actual = pos + offset
+            pieces = pieces[:actual] + insert + pieces[actual:]
+            replacements[pos] = actual + len(prefix)
+            offset += len(insert)
+        self._text = pieces
+        self._cursor = replacements.get(primary, self._cursor)
+        self._extra_cursors = sorted(
+            pos for original, pos in replacements.items() if original != primary
+        )
+        self._sel_start = -1
+        self._on_change()
+
+    def _backspace_multi_cursor(self) -> None:
+        cursors = [pos for pos in self._all_cursor_positions() if pos > 0]
+        if not cursors:
+            return
+        primary = self._cursor
+        deleted_before: dict[int, int] = {pos: 0 for pos in cursors}
+        for pos in sorted(cursors, reverse=True):
+            self._text = self._text[:pos - 1] + self._text[pos:]
+            for cursor in cursors:
+                if cursor >= pos:
+                    deleted_before[cursor] += 1
+        next_positions = {pos: max(0, pos - deleted_before[pos]) for pos in cursors}
+        self._cursor = next_positions.get(primary, self._cursor)
+        self._extra_cursors = sorted(
+            next_pos for pos, next_pos in next_positions.items() if pos != primary
+        )
+        self._sel_start = -1
+        self._on_change()
+
+    def _delete_multi_cursor(self) -> None:
+        cursors = [pos for pos in self._all_cursor_positions() if pos < len(self._text)]
+        if not cursors:
+            return
+        primary = self._cursor
+        deleted_before: dict[int, int] = {pos: 0 for pos in cursors}
+        for pos in sorted(cursors, reverse=True):
+            self._text = self._text[:pos] + self._text[pos + 1:]
+            for cursor in cursors:
+                if cursor > pos:
+                    deleted_before[cursor] += 1
+        next_positions = {pos: max(0, pos - deleted_before[pos]) for pos in cursors}
+        self._cursor = next_positions.get(primary, self._cursor)
+        self._extra_cursors = sorted(
+            next_pos for pos, next_pos in next_positions.items() if pos != primary
+        )
+        self._sel_start = -1
+        self._on_change()
 
     def _line_bounds_for_span(self, start: int, end: int) -> tuple[int, int]:
         start = max(0, min(start, len(self._text)))
@@ -935,7 +1073,7 @@ class EditorDocument(QObject):
     # ── Undo / Redo ───────────────────────────────────
 
     def _snapshot(self) -> _Snapshot:
-        return _Snapshot(self._text, self._cursor, self._sel_start)
+        return _Snapshot(self._text, self._cursor, self._sel_start, tuple(self._extra_cursors))
 
     def _restore_snapshot(self, snapshot: _Snapshot) -> None:
         self._text = snapshot.text
@@ -943,11 +1081,17 @@ class EditorDocument(QObject):
         self._sel_start = snapshot.selection_start
         if self._sel_start >= 0:
             self._sel_start = max(0, min(self._sel_start, len(self._text)))
+        self._extra_cursors = [
+            max(0, min(position, len(self._text)))
+            for position in snapshot.extra_cursors
+            if position != self._cursor
+        ]
         self._is_dirty = True
         self._re_tokenize()
         self.textChanged.emit()
         self._emit_cursor()
         self.selectionChanged.emit()
+        self.extraCursorsChanged.emit()
 
     def _push_undo(self) -> None:
         current = self._snapshot()
@@ -1063,6 +1207,7 @@ class EditorDocument(QObject):
         self._preferred_col = None
         self._emit_cursor()
         self.selectionChanged.emit()
+        self.extraCursorsChanged.emit()
         self._re_tokenize()
         self.textChanged.emit()
 
@@ -1127,6 +1272,17 @@ class EditorDocument(QObject):
     @Property(bool, notify=overwriteModeChanged)
     def overwriteMode(self) -> bool:
         return self._overwrite_mode
+
+    @Property("QVariantList", notify=extraCursorsChanged)
+    def extraCursors(self) -> list[dict]:
+        return [
+            {
+                "position": position,
+                "line": self._line_col_from_pos(position)[0],
+                "col": self._line_col_from_pos(position)[1],
+            }
+            for position in self._extra_cursors
+        ]
 
     @Property(int, notify=textChanged)
     def lineCount(self) -> int:

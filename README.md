@@ -29,7 +29,7 @@
 
 
 <p align="center">
-  <img src="assets/screenshots/6.png" alt="Ember workbench screenshot" />
+  <img src="assets/screenshots/8.png" alt="Ember workbench screenshot" />
 </p>
 
 

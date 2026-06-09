@@ -638,6 +638,7 @@ class PluginManager:
             "aiProviders",
             "lspProviders",
             "searchProviders",
+            "sourceControlProviders",
             "fileFormatters",
             "fileActions",
             "fileDecorations",
@@ -1709,6 +1710,49 @@ class PluginManager:
                     "command": provider.command or "",
                     "args": list(provider.args),
                     "capabilities": list(provider.capabilities),
+                    "configSchema": dict(provider.configSchema),
+                    "defaults": dict(provider.defaults),
+                    "install": dict(provider.install),
+                    "active": state.active,
+                })
+        return self._dedupe_provider_options([*plugin_options, *fallback_options])
+
+    def get_source_control_provider_options(self) -> list[dict]:
+        fallback_options: list[dict] = [
+            {
+                "id": "core.git",
+                "name": "core.git",
+                "label": "Git",
+                "displayName": "Git",
+                "description": "Built-in lightweight Git provider using the git CLI.",
+                "plugin": "core",
+                "providerType": "git",
+                "command": "git",
+                "capabilities": ["status", "stage", "unstage", "discard", "diff"],
+                "rootPatterns": [".git"],
+                "configSchema": {},
+                "defaults": {},
+                "install": {},
+                "active": True,
+            }
+        ]
+        plugin_options: list[dict] = []
+        for state in self.registry.list_all():
+            if not state.active:
+                continue
+            manifest = state.manifest
+            for provider in manifest.contributes.sourceControlProviders:
+                plugin_options.append({
+                    "id": provider.id,
+                    "name": provider.id,
+                    "label": provider.label,
+                    "displayName": provider.label,
+                    "description": provider.description,
+                    "plugin": manifest.name,
+                    "providerType": provider.providerType,
+                    "command": provider.command,
+                    "capabilities": list(provider.capabilities),
+                    "rootPatterns": list(provider.rootPatterns),
                     "configSchema": dict(provider.configSchema),
                     "defaults": dict(provider.defaults),
                     "install": dict(provider.install),

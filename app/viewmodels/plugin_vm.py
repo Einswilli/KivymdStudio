@@ -314,6 +314,12 @@ class PluginViewModel(QObject):
             return self._manager.get_search_provider_options()
         return []
 
+    @Slot(result="QVariantList")
+    def getSourceControlProviders(self) -> list[dict]:
+        if self._manager:
+            return self._manager.get_source_control_provider_options()
+        return []
+
     @Slot("QVariantMap", result="QVariantList")
     def getFileBrowserActions(self, context: dict) -> list[dict]:
         if self._manager:
@@ -516,6 +522,7 @@ class PluginViewModel(QObject):
             "views": len(self.getPluginViews("sidebar")),
             "panels": len(self.getPluginPanels("bottom")) + len(self.getPluginPanels("right")),
             "searchProviders": len(self.getSearchProviders()),
+            "sourceControlProviders": len(self.getSourceControlProviders()),
             "permissions": len(self.getPermissionRequests()),
         }
 

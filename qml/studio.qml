@@ -86,7 +86,7 @@ ApplicationWindow {
         //     loader.sourceComponent = lbarcomp
         //     loader.item.parent = leftcol
         //     loader.item.anchors.horizontalCenter=leftcol.horizontalCenter
-        //     loader.item.icon='../plugins/python/'+i.icon
+        //     loader.item.icon='../plugins/'+i.icon
         // }
         //console.log(l)
     }
@@ -277,7 +277,7 @@ ApplicationWindow {
                     console.log(i.template)
                     var c=cc.createObject(Rectangle,{height:200,width:100})
                     pluglist.push(c)
-                    lbarmod.append({name:i.name,icon:'../plugins/python/'+i.icon,ui:c})
+                    lbarmod.append({name:i.name,icon:'../plugins/'+i.icon,ui:c})
                 }else{
                     console.log(cc.errorString())
                 }

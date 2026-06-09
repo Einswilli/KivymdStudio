@@ -189,6 +189,8 @@ class ThemeService:
     @staticmethod
     def _plugin_themes() -> list[dict[str, Any]]:
         roots = [
+            Path(PATHS["PLUGINS"]),
+            Path.cwd() / "plugins",
             Path(PATHS["PLUGINS"]) / "python",
             Path.cwd() / "plugins" / "python",
         ]
