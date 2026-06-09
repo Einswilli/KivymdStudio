@@ -18,6 +18,7 @@ class EditorDocument(QObject):
     textChanged = Signal()
     cursorChanged = Signal(int, int)  # line, col
     selectionChanged = Signal()
+    overwriteModeChanged = Signal()
     languageChanged = Signal(str)
     suggestionChanged = Signal(str)
     tokensChanged = Signal(str)  # JSON: [[start,end,kind],...] per line
@@ -39,6 +40,7 @@ class EditorDocument(QObject):
         self._redo_stack: list[_Snapshot] = []
         self._history_limit = 200
         self._preferred_col: int | None = None
+        self._overwrite_mode = False
 
     @Slot(str)
     def loadText(self, text: str) -> None:
@@ -61,6 +63,13 @@ class EditorDocument(QObject):
         if self.hasSelection():
             self._replace_selection(text)
             return
+        if self._overwrite_mode and len(text) == 1 and text not in "\r\n":
+            next_char = self._text[self._cursor:self._cursor + 1]
+            if next_char and next_char != "\n":
+                self._text = self._text[:self._cursor] + text + self._text[self._cursor + 1:]
+                self._cursor += 1
+                self._on_change()
+                return
         before = self._text[:self._cursor]
         after = self._text[self._cursor:]
         self._text = before + text + after
@@ -403,6 +412,11 @@ class EditorDocument(QObject):
             self.moveCursorSelect(len(self._text))
         else:
             self.moveCursor(len(self._text))
+
+    @Slot()
+    def toggleOverwriteMode(self) -> None:
+        self._overwrite_mode = not self._overwrite_mode
+        self.overwriteModeChanged.emit()
 
     @Slot(bool)
     def moveWordLeft(self, select: bool = False) -> None:
@@ -1046,6 +1060,7 @@ class EditorDocument(QObject):
 
     def _on_change(self) -> None:
         self._is_dirty = True
+        self._preferred_col = None
         self._emit_cursor()
         self.selectionChanged.emit()
         self._re_tokenize()
@@ -1108,6 +1123,10 @@ class EditorDocument(QObject):
     @Property(int, notify=cursorChanged)
     def cursorPosition(self) -> int:
         return self._cursor
+
+    @Property(bool, notify=overwriteModeChanged)
+    def overwriteMode(self) -> bool:
+        return self._overwrite_mode
 
     @Property(int, notify=textChanged)
     def lineCount(self) -> int:

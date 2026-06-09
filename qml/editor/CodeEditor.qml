@@ -26,6 +26,9 @@ Item {
     readonly property bool autoSaveEnabled: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.autoSaveEnabled : false
     readonly property int autoSaveDelayMs: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.autoSaveDelayMs : 1200
     readonly property bool wordWrapEnabled: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.wordWrap : false
+    readonly property string cursorStyle: doc.overwriteMode ? "block" : ((typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.editorCursorStyle : "bar")
+    readonly property int cursorWidth: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.editorCursorWidth : 2
+    readonly property bool cursorBlinkEnabled: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.editorCursorBlink : true
     readonly property real lineHeight: lineMetrics.height + lineSpacing
     readonly property real charWidth: Math.max(1, lineMetrics.advanceWidth || lineMetrics.width || 7.2)
     readonly property font editorFont: Qt.font({
@@ -101,6 +104,18 @@ Item {
     onVisibleChanged: if (!visible) resetTransientUi()
     onActiveFocusChanged: if (!activeFocus) suggestionBox.close()
     onAutoSaveDelayMsChanged: autoSaveTimer.interval = Math.max(250, autoSaveDelayMs)
+    onCursorStyleChanged: _resetCursorBlink()
+    onCursorBlinkEnabledChanged: _resetCursorBlink()
+
+    function _cursorOpaqueOpacity() {
+        return root.cursorStyle === "block" ? 0.42 : 1.0
+    }
+
+    function _resetCursorBlink() {
+        cursorBlink.opacity = root._cursorOpaqueOpacity()
+        if (root.cursorBlinkEnabled && cursorBlink.visible)
+            cursorBlinkTimer.restart()
+    }
 
     Timer {
         id: suppressWordNavigationTimer
@@ -1556,17 +1571,24 @@ Item {
                                            && cursorX <= scrollView.width
                                            && cursorY + root.lineHeight > 0
                                            && cursorY < scrollView.height
-        width: 2; height: root.lineHeight
+        width: root.cursorStyle === "block" ? Math.max(2, root.charWidth)
+                                             : Math.max(1, root.cursorWidth)
+        height: root.cursorStyle === "underline" ? Math.max(2, root.cursorWidth)
+                                                 : root.lineHeight
         color: root.theme.editorCursor || "#FFFFFF"
         visible: root.activeFocus && _lineItems.length > 0 && inViewport
+        opacity: root._cursorOpaqueOpacity()
         z: 10
 
         x: cursorX
-        y: cursorY
+        y: root.cursorStyle === "underline" ? cursorY + root.lineHeight - height : cursorY
 
         Timer {
-            interval: 500; running: cursorBlink.visible; repeat: true
-            onTriggered: cursorBlink.opacity = cursorBlink.opacity > 0.5 ? 0.2 : 1.0
+            id: cursorBlinkTimer
+            interval: 500
+            running: cursorBlink.visible && root.cursorBlinkEnabled
+            repeat: true
+            onTriggered: cursorBlink.opacity = cursorBlink.opacity > 0.5 ? 0.18 : root._cursorOpaqueOpacity()
         }
     }
 
@@ -2496,6 +2518,12 @@ Item {
             event.accepted = true; doc.rejectSuggestion(); return
         }
 
+        if (event.key === Qt.Key_Insert) {
+            event.accepted = true
+            doc.toggleOverwriteMode()
+            return
+        }
+
         // Navigation
         if (event.key === Qt.Key_Left) {
             event.accepted = true
@@ -2639,6 +2667,7 @@ Item {
             root._cursorLine = line; root._cursorCol = col
             root._updateBracketHighlights()
             root.cursorPositionChanged()
+            root._resetCursorBlink()
             suggestionBox.close()
             Qt.callLater(function() { root._ensureCursorVisible() })
         }
