@@ -495,6 +495,23 @@ Item {
         return visual
     }
 
+    function _activeIndentLevel() {
+        return Math.max(0, Math.floor(root._lineIndent(root._cursorLine) / Math.max(1, root.tabSize)) - 1)
+    }
+
+    function _indentGuidesForLine(lineIndex) {
+        var indent = root._lineIndent(lineIndex)
+        if (indent <= 0)
+            return []
+        var activeLevel = root._activeIndentLevel()
+        var items = []
+        for (var col = 0; col < indent; col += root.tabSize) {
+            var level = Math.floor(col / Math.max(1, root.tabSize))
+            items.push({ "col": col, "active": level === activeLevel && activeLevel >= 0 })
+        }
+        return items
+    }
+
     function _isLineFolded(lineIndex) {
         for (var key in root._foldedRanges) {
             var range = root._foldedRanges[key]
@@ -1211,6 +1228,7 @@ Item {
                 inlineDiagnostic: root._inlineDiagnosticForLine(index)
                 findHighlights: root._findHighlightsForLine(index)
                 bracketHighlights: root._bracketHighlightsForLine(index)
+                indentGuides: root._indentGuidesForLine(index)
                 selectionStartCol: root._selectionStartCol(index)
                 selectionEndCol: root._selectionEndCol(index)
                 isActiveLine: index === root._cursorLine

@@ -9,6 +9,8 @@
     "editor.findMatch": "#5C4D2D",
     "editor.findCurrent": "#D19A66",
     "editor.minimapFindMatch": "#E5C07B",
+    "editor.indentGuide": "#3B4048",
+    "editor.activeIndentGuide": "#636D83",
     "editor.cursor": "#528BFF",
     "editor.lineNumbers": "#636D83",
     "editor.activeLineNumber": "#ABB2BF",

@@ -22,6 +22,7 @@ Item {
     property var inlineDiagnostic: ({})
     property var findHighlights: []
     property var bracketHighlights: []
+    property var indentGuides: []
 
     signal tokenClicked(int start, int end, string kind, int line)
     signal tokenHovered(string kind, string text, int start, int end, int mouseX, int mouseY)
@@ -76,6 +77,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: root.isActiveLine ? (root.theme.editorLineHighlight || Qt.rgba(1, 1, 1, 0.035)) : "transparent"
+        z: 0
     }
 
     Rectangle {
@@ -144,6 +146,23 @@ Item {
         height: parent.height - 2
         color: root.theme.editorSelection || "#264F78"
         opacity: 0.75
+        z: 2
+    }
+
+    Repeater {
+        model: root.indentGuides || []
+        delegate: Rectangle {
+            required property var modelData
+            x: root.gutterWidth + root.contentPadding + Number(modelData.col || 0) * root.fontWidth
+            y: 0
+            width: 1
+            height: parent.height
+            color: modelData.active
+                   ? (root.theme.activeIndentGuide || Qt.rgba(1, 1, 1, 0.26))
+                   : (root.theme.indentGuide || Qt.rgba(1, 1, 1, 0.10))
+            opacity: modelData.active ? 1.0 : 0.8
+            z: 1
+        }
     }
 
     Repeater {
@@ -160,6 +179,7 @@ Item {
                    : (root.theme.findMatch || Qt.rgba(0.95, 0.68, 0.24, 0.18))
             border.width: modelData.current ? 1 : 0
             border.color: root.theme.warning || "#D19A66"
+            z: 2
         }
     }
 
@@ -179,6 +199,7 @@ Item {
             border.color: modelData.matched === false
                           ? (root.theme.error || "#E06C75")
                           : (root.theme.accent || "#60A5FA")
+            z: 2
         }
     }
 
@@ -188,6 +209,7 @@ Item {
         anchors.leftMargin: root.gutterWidth + root.contentPadding
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
+        z: 3
 
         Repeater {
             model: root.lineSpans && root.lineSpans.length > 0
@@ -243,5 +265,6 @@ Item {
         elide: Text.ElideRight
         verticalAlignment: Text.AlignVCenter
         renderType: Text.NativeRendering
+        z: 3
     }
 }
