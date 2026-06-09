@@ -120,6 +120,7 @@ def main():
     ctx.setContextProperty("ActionVM", provider.action_vm)
     ctx.setContextProperty("PanelVM", provider.panel_vm)
     ctx.setContextProperty("SearchVM", provider.search_vm)
+    ctx.setContextProperty("SourceControlVM", provider.source_control_vm)
 
     # Add components dir to import path
     engine.addImportPath(os.path.join(os.path.dirname(qml_path), "components"))

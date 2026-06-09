@@ -18,6 +18,7 @@ from app.viewmodels.ui_vm import UiViewModel
 from app.viewmodels.panel_vm import PanelViewModel
 from app.viewmodels.search_vm import SearchViewModel
 from app.viewmodels.action_vm import ActionViewModel
+from app.viewmodels.source_control_vm import SourceControlViewModel
 
 
 class ServiceProvider:
@@ -41,6 +42,7 @@ class ServiceProvider:
         self.ui_vm = UiViewModel(self.events, self.settings_vm)
         self.panel_vm = PanelViewModel()
         self.search_vm = SearchViewModel(self.events)
+        self.source_control_vm = SourceControlViewModel(self.events)
         self.notification_vm.configure(self.settings_vm.getNotificationsConfig())
         self.action_service.set_history_limit(self.settings_vm.auditRetention)
 
@@ -49,6 +51,7 @@ class ServiceProvider:
         self.file_vm.set_plugin_vm(self.plugin_vm)
         self.file_vm.set_settings_vm(self.settings_vm)
         self.search_vm.set_notification_vm(self.notification_vm)
+        self.source_control_vm.set_notification_vm(self.notification_vm)
         self.search_vm.applySettings(self.settings_vm.getSearchConfig())
         self.settings_vm.set_notification_vm(self.notification_vm)
         self.editor_vm.set_settings_vm(self.settings_vm)
@@ -68,6 +71,7 @@ class ServiceProvider:
         self.file_vm.folderChanged.connect(self.settings_vm.setProjectPath)
         self.file_vm.folderChanged.connect(self.terminal_vm.set_cwd)
         self.file_vm.folderChanged.connect(self.search_vm.setWorkspace)
+        self.file_vm.folderChanged.connect(self.source_control_vm.setWorkspace)
         self.settings_vm.searchConfigChanged.connect(self.search_vm.applySettings)
         self.settings_vm.notificationsChanged.connect(self.notification_vm.configure)
         self.settings_vm.notificationsChanged.connect(
