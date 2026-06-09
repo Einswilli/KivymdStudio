@@ -38,6 +38,7 @@ class EditorDocument(QObject):
         self._undo_stack: list[_Snapshot] = []
         self._redo_stack: list[_Snapshot] = []
         self._history_limit = 200
+        self._preferred_col: int | None = None
 
     @Slot(str)
     def loadText(self, text: str) -> None:
@@ -137,6 +138,28 @@ class EditorDocument(QObject):
 
     @Slot()
     def doNewline(self) -> None:
+        if self.hasSelection():
+            self.typeText("\n" + self._calc_auto_indent())
+            return
+        if 0 < self._cursor < len(self._text):
+            previous_char = self._text[self._cursor - 1]
+            next_char = self._text[self._cursor]
+            if self._matching_closer(previous_char) == next_char and previous_char in {"(", "[", "{"}:
+                base_indent = self._current_line_indent()
+                inner_indent = base_indent + " " * 4
+                self._push_undo()
+                self._text = (
+                    self._text[:self._cursor]
+                    + "\n"
+                    + inner_indent
+                    + "\n"
+                    + base_indent
+                    + self._text[self._cursor:]
+                )
+                self._cursor += 1 + len(inner_indent)
+                self._sel_start = -1
+                self._on_change()
+                return
         indent = self._calc_auto_indent()
         self.typeText("\n" + indent)
 
@@ -220,16 +243,82 @@ class EditorDocument(QObject):
         self._sel_start = -1
         self._on_change()
 
-    def _calc_auto_indent(self) -> str:
-        lines = self._text[:self._cursor].split("\n")
+    @Slot()
+    def joinLines(self) -> None:
+        if not self._text:
+            return
+        self._push_undo()
+        if self.hasSelection():
+            start, end = self._line_bounds_for_span(self.selectionStart, self.selectionEnd)
+        else:
+            start, end = self._current_line_range(include_newline=True)
+        block = self._text[start:end]
+        joined = " ".join(part.strip() for part in block.splitlines() if part.strip())
+        if not joined:
+            return
+        self._text = self._text[:start] + joined + self._text[end:]
+        self._cursor = start + len(joined)
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot()
+    def trimTrailingWhitespace(self) -> None:
+        lines = self._text.split("\n")
+        trimmed = [line.rstrip(" \t") for line in lines]
+        next_text = "\n".join(trimmed)
+        if next_text == self._text:
+            return
+        self._push_undo()
+        self._text = next_text
+        self._cursor = min(self._cursor, len(self._text))
+        self._sel_start = -1
+        self._on_change()
+
+    @Slot()
+    def toggleSelectionCase(self) -> None:
+        start, end = self._target_text_range()
+        if start >= end:
+            return
+        original = self._text[start:end]
+        changed = original.upper() if original != original.upper() else original.lower()
+        self._replace_range_keep_selection(start, end, changed)
+
+    @Slot()
+    def sortSelectedLines(self) -> None:
+        start, end = self._selected_or_current_line_bounds()
+        block = self._text[start:end]
+        lines = block.splitlines()
         if len(lines) < 2:
-            return ""
-        prev = lines[-2]
+            return
+        sorted_lines = sorted(lines, key=lambda value: value.casefold())
+        replacement = "\n".join(sorted_lines)
+        if block.endswith("\n"):
+            replacement += "\n"
+        self._replace_range_keep_selection(start, end, replacement)
+
+    @Slot()
+    def reverseSelectedLines(self) -> None:
+        start, end = self._selected_or_current_line_bounds()
+        block = self._text[start:end]
+        lines = block.splitlines()
+        if len(lines) < 2:
+            return
+        replacement = "\n".join(reversed(lines))
+        if block.endswith("\n"):
+            replacement += "\n"
+        self._replace_range_keep_selection(start, end, replacement)
+
+    def _calc_auto_indent(self) -> str:
+        prev = self._text[:self._cursor].split("\n")[-1]
         stripped = prev.lstrip(" \t")
         indent_len = len(prev) - len(stripped)
         if stripped.rstrip().endswith(":"):
             indent_len += 4
         return " " * indent_len
+
+    def _current_line_indent(self) -> str:
+        line = self._text[:self._cursor].split("\n")[-1]
+        return line[: len(line) - len(line.lstrip(" \t"))]
 
     def _line_comment_prefix(self) -> str:
         return {
@@ -257,6 +346,7 @@ class EditorDocument(QObject):
         pos = max(0, min(pos, len(self._text)))
         self._cursor = pos
         self._sel_start = -1
+        self._preferred_col = None
         self._emit_cursor()
         self.selectionChanged.emit()
 
@@ -266,8 +356,53 @@ class EditorDocument(QObject):
         if self._sel_start < 0:
             self._sel_start = self._cursor
         self._cursor = pos
+        self._preferred_col = None
         self._emit_cursor()
         self.selectionChanged.emit()
+
+    @Slot(int, bool)
+    def moveLine(self, delta: int, select: bool = False) -> None:
+        line, col = self._line_col_from_pos(self._cursor)
+        if self._preferred_col is None:
+            self._preferred_col = col
+        target_line = max(0, min(line + int(delta), max(0, len(self._line_cache) - 1)))
+        target_pos = self._pos_from_line_col(target_line, self._preferred_col)
+        if select:
+            if self._sel_start < 0:
+                self._sel_start = self._cursor
+            self._cursor = target_pos
+        else:
+            self._cursor = target_pos
+            self._sel_start = -1
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot(bool)
+    def moveSmartHome(self, select: bool = False) -> None:
+        line, col = self._line_col_from_pos(self._cursor)
+        start, end = self._line_range_by_index(line, include_newline=False)
+        text = self._text[start:end]
+        first_non_space = len(text) - len(text.lstrip(" \t"))
+        target_col = 0 if col == first_non_space else first_non_space
+        target = self._pos_from_line_col(line, target_col)
+        if select:
+            self.moveCursorSelect(target)
+        else:
+            self.moveCursor(target)
+
+    @Slot(bool)
+    def moveDocumentStart(self, select: bool = False) -> None:
+        if select:
+            self.moveCursorSelect(0)
+        else:
+            self.moveCursor(0)
+
+    @Slot(bool)
+    def moveDocumentEnd(self, select: bool = False) -> None:
+        if select:
+            self.moveCursorSelect(len(self._text))
+        else:
+            self.moveCursor(len(self._text))
 
     @Slot(bool)
     def moveWordLeft(self, select: bool = False) -> None:
@@ -361,6 +496,75 @@ class EditorDocument(QObject):
         self._emit_cursor()
         self.selectionChanged.emit()
 
+    @Slot()
+    def expandSelection(self) -> None:
+        if not self._text:
+            return
+        if not self.hasSelection():
+            self.selectWordAt(self._cursor)
+            return
+        start = self.selectionStart
+        end = self.selectionEnd
+        line_start, line_end = self._line_bounds_for_span(start, end)
+        if start != line_start or end != line_end:
+            self._sel_start = line_start
+            self._cursor = line_end
+        else:
+            self._sel_start = 0
+            self._cursor = len(self._text)
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot()
+    def shrinkSelection(self) -> None:
+        if not self.hasSelection():
+            return
+        start = self.selectionStart
+        end = self.selectionEnd
+        if start == 0 and end == len(self._text):
+            line_start, line_end = self._line_bounds_for_span(start, start)
+            self._sel_start = line_start
+            self._cursor = line_end
+        else:
+            self.selectWordAt(start)
+            return
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot()
+    def goToMatchingBracket(self) -> None:
+        bracket_pos = self._bracket_position_near_cursor()
+        if bracket_pos < 0:
+            return
+        pair_pos = self._matching_bracket_position(bracket_pos)
+        if pair_pos < 0:
+            return
+        self.moveCursor(pair_pos)
+
+    @Slot()
+    def selectInsideBrackets(self) -> None:
+        pair = self._enclosing_bracket_pair()
+        if not pair:
+            return
+        start, end = pair
+        if start + 1 > end:
+            return
+        self._sel_start = start + 1
+        self._cursor = end
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
+    @Slot()
+    def selectAroundBrackets(self) -> None:
+        pair = self._enclosing_bracket_pair()
+        if not pair:
+            return
+        start, end = pair
+        self._sel_start = start
+        self._cursor = end + 1
+        self._emit_cursor()
+        self.selectionChanged.emit()
+
     @Slot(result=bool)
     def hasSelection(self) -> bool:
         return self._sel_start >= 0 and self._sel_start != self._cursor
@@ -423,6 +627,89 @@ class EditorDocument(QObject):
         elif include_newline:
             end += 1
         return start, end
+
+    def _line_col_from_pos(self, position: int) -> tuple[int, int]:
+        position = max(0, min(position, len(self._text)))
+        line = self._text[:position].count("\n")
+        col = position
+        if line > 0:
+            col -= self._text[:position].rfind("\n") + 1
+        return line, col
+
+    def _pos_from_line_col(self, line: int, col: int) -> int:
+        line = max(0, min(line, max(0, len(self._line_cache) - 1)))
+        start, end = self._line_range_by_index(line, include_newline=False)
+        return start + max(0, min(col, end - start))
+
+    def _target_text_range(self) -> tuple[int, int]:
+        if self.hasSelection():
+            return self.selectionStart, self.selectionEnd
+        return self._current_line_range(include_newline=False)
+
+    def _selected_or_current_line_bounds(self) -> tuple[int, int]:
+        if self.hasSelection():
+            return self._line_bounds_for_span(self.selectionStart, self.selectionEnd)
+        return self._current_line_range(include_newline=False)
+
+    def _replace_range_keep_selection(self, start: int, end: int, replacement: str) -> None:
+        if self._text[start:end] == replacement:
+            return
+        self._push_undo()
+        self._text = self._text[:start] + replacement + self._text[end:]
+        self._sel_start = start
+        self._cursor = start + len(replacement)
+        self._on_change()
+
+    def _bracket_position_near_cursor(self) -> int:
+        for pos in (self._cursor, self._cursor - 1):
+            if 0 <= pos < len(self._text) and self._text[pos] in "()[]{}":
+                return pos
+        return -1
+
+    def _matching_bracket_position(self, pos: int) -> int:
+        if not (0 <= pos < len(self._text)):
+            return -1
+        char = self._text[pos]
+        openers = "([{"
+        closers = ")]}"
+        if char in openers:
+            target = closers[openers.index(char)]
+            direction = 1
+        elif char in closers:
+            target = openers[closers.index(char)]
+            direction = -1
+        else:
+            return -1
+        depth = 0
+        index = pos
+        while True:
+            index += direction
+            if index < 0 or index >= len(self._text):
+                return -1
+            current = self._text[index]
+            if current == char:
+                depth += 1
+            elif current == target:
+                if depth == 0:
+                    return index
+                depth -= 1
+
+    def _enclosing_bracket_pair(self) -> tuple[int, int] | None:
+        stack: list[tuple[str, int]] = []
+        pairs = {"(": ")", "[": "]", "{": "}"}
+        reverse_pairs = {value: key for key, value in pairs.items()}
+        cursor = max(0, min(self._cursor, len(self._text)))
+        for index, char in enumerate(self._text[:cursor]):
+            if char in pairs:
+                stack.append((char, index))
+            elif char in reverse_pairs and stack and stack[-1][0] == reverse_pairs[char]:
+                stack.pop()
+        while stack:
+            opener, start = stack.pop()
+            end = self._matching_bracket_position(start)
+            if end >= cursor:
+                return start, end
+        return None
 
     @staticmethod
     def _is_word_char(char: str) -> bool:
