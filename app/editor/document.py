@@ -111,6 +111,14 @@ class EditorDocument(QObject):
             self._delete_selection(notify=False)
             self._on_change()
             return
+        if self._cursor < len(self._text):
+            previous_char = self._text[self._cursor - 1]
+            next_char = self._text[self._cursor]
+            if self._matching_closer(previous_char) == next_char:
+                self._text = self._text[:self._cursor - 1] + self._text[self._cursor + 1:]
+                self._cursor -= 1
+                self._on_change()
+                return
         self._text = self._text[:self._cursor - 1] + self._text[self._cursor:]
         self._cursor -= 1
         self._on_change()
@@ -419,6 +427,17 @@ class EditorDocument(QObject):
     @staticmethod
     def _is_word_char(char: str) -> bool:
         return bool(char) and (char.isalnum() or char == "_")
+
+    @staticmethod
+    def _matching_closer(char: str) -> str:
+        return {
+            "(": ")",
+            "[": "]",
+            "{": "}",
+            '"': '"',
+            "'": "'",
+            "`": "`",
+        }.get(char, "")
 
     def _word_left(self, pos: int) -> int:
         pos = max(0, min(pos, len(self._text)))
