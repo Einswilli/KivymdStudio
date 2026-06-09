@@ -1294,6 +1294,13 @@ Item {
                     selecting = false
                     return
                 }
+                if ((mouse.modifiers & Qt.AltModifier) && !root._hasPrimaryModifier(mouse.modifiers)) {
+                    var multiHit = root._lineColFromPoint(mouse.x, mouse.y)
+                    doc.addCursorAt(multiHit.pos)
+                    mouse.accepted = true
+                    selecting = false
+                    return
+                }
                 if (root._hasPrimaryModifier(mouse.modifiers)) {
                     var codeHit = root._codeHitFromPoint(mouse.x, mouse.y)
                     if (codeHit.valid) {
@@ -1586,9 +1593,35 @@ Item {
         Timer {
             id: cursorBlinkTimer
             interval: 500
-            running: cursorBlink.visible && root.cursorBlinkEnabled
+            running: root.activeFocus && _lineItems.length > 0 && root.cursorBlinkEnabled
             repeat: true
             onTriggered: cursorBlink.opacity = cursorBlink.opacity > 0.5 ? 0.18 : root._cursorOpaqueOpacity()
+        }
+    }
+
+    Repeater {
+        model: doc.extraCursors
+        delegate: Rectangle {
+            required property var modelData
+            readonly property real cursorX: root.gutterWidth + root.contentPadding + root._visualColFromLogical(modelData.line || 0, modelData.col || 0) * root.charWidth - lineView.contentX
+            readonly property real cursorY: (modelData.line || 0) * root.lineHeight - lineView.contentY
+            readonly property bool inViewport: cursorX >= root.gutterWidth
+                                               && cursorX <= scrollView.width
+                                               && cursorY + root.lineHeight > 0
+                                               && cursorY < scrollView.height
+            x: cursorX
+            y: root.cursorStyle === "underline" ? cursorY + root.lineHeight - height : cursorY
+            width: root.cursorStyle === "block" ? Math.max(2, root.charWidth)
+                                                 : Math.max(1, root.cursorWidth)
+            height: root.cursorStyle === "underline" ? Math.max(2, root.cursorWidth)
+                                                     : root.lineHeight
+            visible: root.activeFocus && inViewport
+            color: root.theme.editorCursor || "#FFFFFF"
+            opacity: root.cursorBlinkEnabled
+                     ? (root.cursorStyle === "block" ? Math.min(0.32, cursorBlink.opacity * 0.72)
+                                                       : cursorBlink.opacity * 0.72)
+                     : (root.cursorStyle === "block" ? 0.28 : 0.72)
+            z: 9
         }
     }
 
@@ -2463,6 +2496,18 @@ Item {
             return
         }
 
+        if (event.key === Qt.Key_Up && (event.modifiers & Qt.AltModifier) && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.addCursorLine(-1)
+            return
+        }
+
+        if (event.key === Qt.Key_Down && (event.modifiers & Qt.AltModifier) && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.addCursorLine(1)
+            return
+        }
+
         if (event.key === Qt.Key_Up && (event.modifiers & Qt.AltModifier)) {
             event.accepted = true
             doc.moveLineOrSelectionUp()
@@ -2516,6 +2561,12 @@ Item {
 
         if (event.key === Qt.Key_Escape && doc.aiSuggestion.length > 0) {
             event.accepted = true; doc.rejectSuggestion(); return
+        }
+
+        if (event.key === Qt.Key_Escape && doc.extraCursors.length > 0) {
+            event.accepted = true
+            doc.clearExtraCursors()
+            return
         }
 
         if (event.key === Qt.Key_Insert) {
