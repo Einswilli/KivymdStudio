@@ -2308,6 +2308,66 @@ Item {
             root.selectCurrentLine()
             return
         }
+        if (event.key === Qt.Key_J && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.joinLines()
+            root._triggerCompletions()
+            return
+        }
+        if (event.key === Qt.Key_BracketRight && root._hasPrimaryModifier(event.modifiers) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.expandSelection()
+            root._ensureCursorVisible()
+            return
+        }
+        if (event.key === Qt.Key_BracketLeft && root._hasPrimaryModifier(event.modifiers) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.shrinkSelection()
+            root._ensureCursorVisible()
+            return
+        }
+        if (event.key === Qt.Key_T && root._hasPrimaryModifier(event.modifiers) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.trimTrailingWhitespace()
+            root._triggerCompletions()
+            return
+        }
+        if (event.key === Qt.Key_U && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.toggleSelectionCase()
+            root._triggerCompletions()
+            return
+        }
+        if (event.key === Qt.Key_S && (event.modifiers & Qt.AltModifier) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.sortSelectedLines()
+            root._triggerCompletions()
+            return
+        }
+        if (event.key === Qt.Key_R && (event.modifiers & Qt.AltModifier) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.reverseSelectedLines()
+            root._triggerCompletions()
+            return
+        }
+        if (event.key === Qt.Key_M && root._hasPrimaryModifier(event.modifiers) && root._hasShiftModifier(event.modifiers)) {
+            event.accepted = true
+            doc.selectInsideBrackets()
+            root._ensureCursorVisible()
+            return
+        }
+        if (event.key === Qt.Key_M && root._hasPrimaryModifier(event.modifiers) && (event.modifiers & Qt.AltModifier)) {
+            event.accepted = true
+            doc.selectAroundBrackets()
+            root._ensureCursorVisible()
+            return
+        }
+        if (event.key === Qt.Key_M && root._hasPrimaryModifier(event.modifiers)) {
+            event.accepted = true
+            doc.goToMatchingBracket()
+            root._ensureCursorVisible()
+            return
+        }
 
         if (event.matches(StandardKey.Copy)) {
             event.accepted = true; doc.copySelection(); return
@@ -2467,43 +2527,42 @@ Item {
         }
         if (event.key === Qt.Key_Up) {
             event.accepted = true
-            var upPos = _posFromLineCol(_cursorLine - 1, _cursorCol)
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(upPos)
-            else doc.moveCursor(upPos)
+            doc.moveLine(-1, root._hasShiftModifier(event.modifiers))
             return
         }
         if (event.key === Qt.Key_Down) {
             event.accepted = true
-            var downPos = _posFromLineCol(_cursorLine + 1, _cursorCol)
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(downPos)
-            else doc.moveCursor(downPos)
+            doc.moveLine(1, root._hasShiftModifier(event.modifiers))
             return
         }
         if (event.key === Qt.Key_Home) {
             event.accepted = true
-            var homePos = _posFromLineCol(_cursorLine, 0)
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(homePos)
-            else doc.moveCursor(homePos)
+            if (root._hasPrimaryModifier(event.modifiers)) doc.moveDocumentStart(root._hasShiftModifier(event.modifiers))
+            else doc.moveSmartHome(root._hasShiftModifier(event.modifiers))
             return
         }
         if (event.key === Qt.Key_End) {
             event.accepted = true
+            if (root._hasPrimaryModifier(event.modifiers)) {
+                doc.moveDocumentEnd(root._hasShiftModifier(event.modifiers))
+                return
+            }
             var endPos = _posFromLineCol(_cursorLine, (_lineItems[_cursorLine].text || "").length)
-            if (event.modifiers & Qt.ShiftModifier) doc.moveCursorSelect(endPos)
+            if (root._hasShiftModifier(event.modifiers)) doc.moveCursorSelect(endPos)
             else doc.moveCursor(endPos)
             return
         }
         if (event.key === Qt.Key_PageUp) {
             event.accepted = true
             var linesUp = Math.floor(scrollView.height / root.lineHeight)
-            var puPos = _posFromLineCol(_cursorLine - linesUp, _cursorCol)
-            doc.moveCursor(puPos); return
+            doc.moveLine(-linesUp, root._hasShiftModifier(event.modifiers))
+            return
         }
         if (event.key === Qt.Key_PageDown) {
             event.accepted = true
             var linesDown = Math.floor(scrollView.height / root.lineHeight)
-            var pdPos = _posFromLineCol(_cursorLine + linesDown, _cursorCol)
-            doc.moveCursor(pdPos); return
+            doc.moveLine(linesDown, root._hasShiftModifier(event.modifiers))
+            return
         }
 
         // Editing
