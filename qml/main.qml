@@ -367,6 +367,32 @@ function _revealInExplorer(path) {
     revealInExplorerTimer.restart()
 }
 
+function _copyTextToClipboard(text, title) {
+    if (!text) return
+    if (ActionVM) ActionVM.runAction("clipboard.copy_text", {"text": text})
+    else if (StatusVM) StatusVM.copy_text(text)
+    if (NotificationVM) NotificationVM.success(title || "Copied", text, 2200)
+}
+
+function _folderForPath(path) {
+    if (!path) return ""
+    if (FileVM && FileVM.is_dir(path)) return path
+    var index = path.lastIndexOf("/")
+    return index > 0 ? path.substring(0, index) : root.currentFolder
+}
+
+function _openTerminalAtPath(path) {
+    var folder = root._folderForPath(path)
+    if (!folder || !TerminalVM) return
+    TerminalVM.set_cwd(folder)
+    if (!TerminalVM.sessions || TerminalVM.sessions.length === 0)
+        TerminalVM.createSession()
+    root._setActivePanelTab(0)
+    root._setPanelOpen(true)
+    Qt.callLater(root._activateCurrentPanel)
+    if (NotificationVM) NotificationVM.info("Terminal", "Opened at " + folder, 2400)
+}
+
 function _openProblemLocation(problem) {
     if (!problem || !problem.path) {
         if (NotificationVM) NotificationVM.warning("Problem action unavailable", "This diagnostic has no file path.", 3600)
@@ -801,6 +827,7 @@ SplitView {
             dirtyTabs: EditorVM ? EditorVM.dirtyTabs : []
             currentTabIndex: EditorVM ? EditorVM.currentTabIndex : -1
             recentFiles: root.recentFiles
+            workspacePath: root.currentFolder
             lineSpacing: SettingsVM ? SettingsVM.editorLineSpacing : 6
             onTabActivated: function(index) {
             EditorVM.setCurrentTab(index)
@@ -811,6 +838,10 @@ SplitView {
         onOpenFolderRequested: _openFolder()
         onNewFileRequested: _newFile()
         onOpenRecentRequested: function(path) { _openFileByPath(path) }
+        onBreadcrumbPathRequested: function(path) { root._revealInExplorer(path) }
+        onBreadcrumbCopyPathRequested: function(path) { root._copyTextToClipboard(path, "Path copied") }
+        onBreadcrumbCopyRelativePathRequested: function(path) { root._copyTextToClipboard(path, "Relative path copied") }
+        onBreadcrumbOpenTerminalRequested: function(path) { root._openTerminalAtPath(path) }
     }
 
     DockPanel {
