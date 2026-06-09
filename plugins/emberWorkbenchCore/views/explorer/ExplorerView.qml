@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import "../../../../../qml/filebrowser"
-import "../../../../../qml/components"
+import "../../../../qml/filebrowser"
+import "../../../../qml/components"
 
 Rectangle {
     id: root

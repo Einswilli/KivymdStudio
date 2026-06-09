@@ -1,0 +1,38 @@
+{
+  "name": "ember-git",
+  "display_name": "Ember Git",
+  "version": "1.0.0",
+  "author": "AllDotPy",
+  "description": "Official lightweight Git source control provider for Ember.",
+  "icon": "assets/icons/git.svg",
+  "license": "Proprietary",
+  "keywords": ["git", "source-control", "scm", "version-control"],
+  "min_app_version": "2.0.0",
+  "proprietary": true,
+  "permissions": [],
+  "contributes": {
+    "sourceControlProviders": [
+      {
+        "id": "ember.git",
+        "label": "Git",
+        "description": "Fast Git integration backed by git status --porcelain=v2 -z.",
+        "providerType": "git",
+        "command": "git",
+        "capabilities": ["status", "stage", "unstage", "discard", "diff", "branch"],
+        "rootPatterns": [".git"],
+        "defaults": {
+          "refreshDebounceMs": 500,
+          "statusFormat": "porcelain-v2-z"
+        },
+        "install": {
+          "strategy": "systemCommand",
+          "command": "git",
+          "args": ["--version"],
+          "requiresApproval": false,
+          "description": "Use the system Git executable."
+        }
+      }
+    ]
+  },
+  "dependencies": {}
+}
