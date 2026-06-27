@@ -13,6 +13,7 @@ Rectangle {
     property var dirtyTabs: ({})
     property int currentTabIndex: -1
     property var recentFiles: []
+    property string workspacePath: ""
     property real lineSpacing: 6
 
     readonly property bool editorVisible: codeEditor.visible
@@ -29,6 +30,10 @@ Rectangle {
     signal openFolderRequested()
     signal newFileRequested()
     signal openRecentRequested(string path)
+    signal breadcrumbPathRequested(string path)
+    signal breadcrumbCopyPathRequested(string path)
+    signal breadcrumbCopyRelativePathRequested(string path)
+    signal breadcrumbOpenTerminalRequested(string path)
     signal cursorPositionChanged()
 
     color: theme.tabBg
@@ -125,6 +130,19 @@ Rectangle {
                     onMoveRequested: function(from, to) { root.tabMoveRequested(from, to) }
                 }
             }
+        }
+
+        EditorBreadcrumb {
+            Layout.fillWidth: true
+            Layout.preferredHeight: visible ? implicitHeight : 0
+            visible: codeEditor.visible && codeEditor.filePath.length > 0
+            theme: root.theme
+            filePath: codeEditor.filePath
+            workspacePath: root.workspacePath
+            onSegmentActivated: function(path) { root.breadcrumbPathRequested(path) }
+            onCopyPathRequested: function(path) { root.breadcrumbCopyPathRequested(path) }
+            onCopyRelativePathRequested: function(path) { root.breadcrumbCopyRelativePathRequested(path) }
+            onOpenTerminalRequested: function(path) { root.breadcrumbOpenTerminalRequested(path) }
         }
 
         Rectangle {
