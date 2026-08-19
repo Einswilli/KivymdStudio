@@ -225,6 +225,14 @@ Rectangle {
                                         visible: fileMouse.containsMouse
                                         ToolButton {
                                             implicitWidth: 24; implicitHeight: 24
+                                            onClicked: SourceControlVM.showDiff(modelData.path, modelData.section === "staged")
+                                            background: Rectangle { radius: 5; color: parent.hovered ? (theme.active || "#39414A") : "transparent" }
+                                            contentItem: Icon { icon: "syntax"; size: 13; color: theme.text || "#CCCCCC" }
+                                            ToolTip.visible: hovered
+                                            ToolTip.text: "Preview diff"
+                                        }
+                                        ToolButton {
+                                            implicitWidth: 24; implicitHeight: 24
                                             onClicked: modelData.section === "staged" ? SourceControlVM.unstage(modelData.path) : SourceControlVM.stage(modelData.path)
                                             background: Rectangle { radius: 5; color: parent.hovered ? (theme.active || "#39414A") : "transparent" }
                                             contentItem: Icon { icon: modelData.section === "staged" ? "close" : "plus"; size: 13; color: theme.text || "#CCCCCC" }
@@ -272,6 +280,134 @@ Rectangle {
                             font.pointSize: 11
                         }
                     }
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: SourceControlVM
+        function onDiffChanged() {
+            if (!SourceControlVM)
+                return
+            if (SourceControlVM.diffPath || SourceControlVM.diffText || SourceControlVM.diffError || SourceControlVM.diffLoading)
+                diffPopup.open()
+        }
+    }
+
+    Popup {
+        id: diffPopup
+        modal: false
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width: Math.max(300, root.width - 24)
+        height: Math.min(root.height - 32, 520)
+        x: Math.max(8, (root.width - width) / 2)
+        y: 16
+        padding: 0
+        background: Rectangle {
+            radius: 12
+            color: theme.popup || theme.panel || "#1F2428"
+            border.width: 1
+            border.color: theme.border || "#30363D"
+        }
+        onClosed: if (SourceControlVM) SourceControlVM.clearDiff()
+
+        contentItem: ColumnLayout {
+            spacing: 0
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 46
+                color: "transparent"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 8
+                    spacing: 8
+
+                    Icon {
+                        icon: "syntax"
+                        size: 16
+                        color: theme.accent || "#58A6FF"
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        Text {
+                            Layout.fillWidth: true
+                            text: SourceControlVM ? SourceControlVM.diffTitle : "Diff Preview"
+                            color: theme.text || "#CCCCCC"
+                            elide: Text.ElideRight
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 11
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: SourceControlVM ? SourceControlVM.diffPath : ""
+                            color: theme.textDim || "#858585"
+                            elide: Text.ElideLeft
+                            font.family: (typeof UiVM !== "undefined" && UiVM) ? UiVM.fontFamily : "Inter"
+                            font.pointSize: 9
+                        }
+                    }
+
+                    ToolButton {
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        onClicked: diffPopup.close()
+                        background: Rectangle {
+                            radius: 6
+                            color: parent.hovered ? (theme.hover || "#30363D") : "transparent"
+                        }
+                        contentItem: Icon {
+                            icon: "close"
+                            size: 14
+                            color: theme.text || "#CCCCCC"
+                        }
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Close"
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: theme.border || "#30363D"
+            }
+
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+
+                TextArea {
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.NoWrap
+                    text: SourceControlVM && SourceControlVM.diffLoading
+                        ? "Loading diff…"
+                        : SourceControlVM && SourceControlVM.diffError
+                            ? SourceControlVM.diffError
+                            : SourceControlVM ? SourceControlVM.diffText : ""
+                    color: SourceControlVM && SourceControlVM.diffError ? (theme.error || "#F85149") : (theme.text || "#CCCCCC")
+                    selectedTextColor: theme.selectionText || "#FFFFFF"
+                    selectionColor: theme.selection || theme.accent || "#264F78"
+                    font.family: (typeof SettingsVM !== "undefined" && SettingsVM) ? SettingsVM.editorFontFamily : "JetBrains Mono"
+                    font.pointSize: 10
+                    background: Rectangle {
+                        color: theme.editorBackground || theme.background || "#0D1117"
+                    }
+                    leftPadding: 12
+                    rightPadding: 12
+                    topPadding: 10
+                    bottomPadding: 10
                 }
             }
         }

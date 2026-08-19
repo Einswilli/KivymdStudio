@@ -11,6 +11,8 @@ class SourceControlViewModel(QObject):
     statusChanged = Signal()
     loadingChanged = Signal()
     messageChanged = Signal()
+    diffChanged = Signal()
+    diffLoadingChanged = Signal()
 
     def __init__(
         self,
@@ -32,6 +34,11 @@ class SourceControlViewModel(QObject):
         self._loading = False
         self._message = "No repository"
         self._generation = 0
+        self._diff_path = ""
+        self._diff_text = ""
+        self._diff_staged = False
+        self._diff_loading = False
+        self._diff_error = ""
 
     def set_notification_vm(self, notification_vm) -> None:
         self._notification_vm = notification_vm
@@ -59,6 +66,29 @@ class SourceControlViewModel(QObject):
     @Slot(str)
     def discard(self, path: str) -> None:
         self._run_action("Discarding changes…", self._discard_async(path))
+
+    @Slot(str, bool)
+    def showDiff(self, path: str, staged: bool = False) -> None:
+        self._diff_path = path or ""
+        self._diff_staged = bool(staged)
+        self._diff_text = ""
+        self._diff_error = ""
+        self.diffChanged.emit()
+        if not self._diff_path:
+            return
+        self._set_diff_loading(True)
+        schedule(self._show_diff_async(self._diff_path, self._diff_staged))
+
+    @Slot()
+    def clearDiff(self) -> None:
+        if not (self._diff_path or self._diff_text or self._diff_error or self._diff_loading):
+            return
+        self._diff_path = ""
+        self._diff_text = ""
+        self._diff_error = ""
+        self._diff_staged = False
+        self._set_diff_loading(False)
+        self.diffChanged.emit()
 
     @Property(str, notify=statusChanged)
     def root(self) -> str:
@@ -91,6 +121,33 @@ class SourceControlViewModel(QObject):
     @Property(str, notify=messageChanged)
     def message(self) -> str:
         return self._message
+
+    @Property(str, notify=diffChanged)
+    def diffPath(self) -> str:
+        return self._diff_path
+
+    @Property(str, notify=diffChanged)
+    def diffTitle(self) -> str:
+        if not self._diff_path:
+            return "Diff Preview"
+        mode = "Staged" if self._diff_staged else "Working Tree"
+        return f"{mode} · {self._diff_path.rsplit('/', 1)[-1]}"
+
+    @Property(str, notify=diffChanged)
+    def diffText(self) -> str:
+        return self._diff_text
+
+    @Property(str, notify=diffChanged)
+    def diffError(self) -> str:
+        return self._diff_error
+
+    @Property(bool, notify=diffChanged)
+    def diffStaged(self) -> bool:
+        return self._diff_staged
+
+    @Property(bool, notify=diffLoadingChanged)
+    def diffLoading(self) -> bool:
+        return self._diff_loading
 
     @Property(int, notify=statusChanged)
     def changedCount(self) -> int:
@@ -129,6 +186,25 @@ class SourceControlViewModel(QObject):
     async def _discard_async(self, path: str) -> None:
         await self._service.discard(self._workspace, path)
         self.refresh()
+
+    async def _show_diff_async(self, path: str, staged: bool) -> None:
+        try:
+            item = next((file for file in self._files if file.get("path") == path), None)
+            if item and item.get("section") == "untracked" and not staged:
+                self._diff_text = ""
+                self._diff_error = "Untracked files do not have a working-tree diff yet. Stage the file to preview its first diff."
+            else:
+                diff = await self._service.diff(self._workspace, path, staged)
+                self._diff_text = diff or "No diff available for this file."
+                self._diff_error = ""
+        except Exception as exc:
+            self._diff_text = ""
+            self._diff_error = str(exc)
+            if self._notification_vm:
+                self._notification_vm.error("Diff Preview", str(exc), 4200)
+        finally:
+            self._set_diff_loading(False)
+            self.diffChanged.emit()
 
     def _run_action(self, busy_message: str, coro) -> None:
         self._set_message(busy_message)
@@ -190,3 +266,9 @@ class SourceControlViewModel(QObject):
             return
         self._message = value
         self.messageChanged.emit()
+
+    def _set_diff_loading(self, value: bool) -> None:
+        if self._diff_loading == value:
+            return
+        self._diff_loading = value
+        self.diffLoadingChanged.emit()

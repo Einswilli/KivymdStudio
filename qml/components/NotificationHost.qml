@@ -75,13 +75,14 @@ Item {
                 required property var modelData
                 width: 360
                 height: Math.max(78, bodyColumn.implicitHeight + 24)
-                radius: 14
+                radius: 0 // 14
                 color: theme.toastBg || root.panelColor
                 border.color: Qt.rgba(toast.accent.r, toast.accent.g, toast.accent.b, mouse.containsMouse ? 0.58 : 0.32)
                 border.width: 1
                 opacity: 0
                 x: 26
                 scale: 0.985
+                clip: true
 
                 readonly property color accent: levelColor(modelData.level || "info")
                 readonly property string iconName: levelIcon(modelData.level || "info")
@@ -122,7 +123,7 @@ Item {
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     width: 3
-                    radius: 1.5
+                    // radius: 1.5
                     color: toast.accent
                 }
 
